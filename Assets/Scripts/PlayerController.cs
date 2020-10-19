@@ -12,8 +12,9 @@ public class PlayerController : MonoBehaviour
 
     [Header("Movement settings")]
     public float moveSpeed = 9;
-    public float jumpForce = 100;
-    public float diveForce = 100;
+    public float jumpForce = 6;
+    public float diveUpForce = 4;
+    public float diveForce = 4;
     private Vector3 move;
     [Range(0,1)]
     public float turnSpeed;
@@ -23,9 +24,9 @@ public class PlayerController : MonoBehaviour
     public bool isGrounded = false;
     public LayerMask collisionMask;
     public float checkDistance;
-    private bool isJumping = false;
+    public  bool isJumping = false;
     private bool isFalling = false;
-    private bool isDiving = false;
+    public bool isDiving = false;
 
     // Start is called before the first frame update
     void Start()
@@ -36,8 +37,6 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        CheckIsGrounded();
-
         if (!isDiving)
         {
             Movement();
@@ -48,31 +47,45 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if(!isDiving)
+        CheckIsGrounded();
+
+        if (!isDiving)
             rb.velocity = new Vector3(move.x, rb.velocity.y, move.z);
     }
 
     private void Dive()
     {
-        if (Input.GetKeyDown(KeyCode.E) && isGrounded) //  && !isDiving
+        if (Input.GetKeyDown(KeyCode.E) && !isDiving && (isGrounded || isJumping)) 
         {
+            if (isJumping)
+            {
+                isJumping = false;
+                anim.SetBool("isJumping", false);
+            }
+            //capsule collider's direction goes to the Z-Axis
+            cp.direction = 2;
             isDiving = true;
 
-            rb.AddForce((transform.forward * diveForce + Vector3.up * jumpForce), ForceMode.Impulse);
+            rb.AddForce((transform.forward * diveForce + Vector3.up * diveUpForce), ForceMode.Impulse);
 
-            /*//If jumping while falling, reset y velocity.
+            //If jumping while falling, reset y velocity.
             Vector3 vel = rb.velocity;
             if (rb.velocity.y < 0.5f)
                 rb.velocity = new Vector3(vel.x, 0, vel.z);
             else if (rb.velocity.y > 0)
-                rb.velocity = new Vector3(vel.x, vel.y / 2, vel.z);*/
+                rb.velocity = new Vector3(vel.x, vel.y / 2, vel.z);
+            //x
+            if (rb.velocity.x < 0.5f)
+                rb.velocity = new Vector3(0, vel.y, vel.z);
+            else if (rb.velocity.x > 0)
+                rb.velocity = new Vector3(0, vel.y, vel.z);
+            //z
+            if (rb.velocity.z < 0.5f)
+                rb.velocity = new Vector3(vel.x, vel.y, 0);
+            else if (rb.velocity.z > 0)
+                rb.velocity = new Vector3(vel.x, vel.y, 0);
 
             anim.SetBool("isDiving", true);
-        }
-        else if(isGrounded)
-        {
-            isDiving = false;
-            anim.SetBool("isDiving", false);
         }
     }
 
@@ -84,11 +97,6 @@ public class PlayerController : MonoBehaviour
             isJumping = true;
             anim.SetBool("isJumping", true);
         }
-        else if (isGrounded)
-        {
-            isJumping = false;
-            anim.SetBool("isJumping", false);
-        }
     }
 
     private void Movement()
@@ -99,7 +107,7 @@ public class PlayerController : MonoBehaviour
         move *= moveSpeed * Time.deltaTime;
 
         //player's current velocity
-        if (move.x != 0f || move.y != 0f)
+        if (Input.GetAxis("Horizontal") != 0f || Input.GetAxis("Vertical") != 0f)
         {
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(move), turnSpeed * Time.deltaTime);
             anim.SetBool("isRunning", true);
@@ -126,16 +134,25 @@ public class PlayerController : MonoBehaviour
         Physics.Raycast(cp.bounds.center, Vector3.down, out hit, cp.bounds.extents.y + checkDistance, collisionMask);
         if(hit.collider)
         {
-            isGrounded = true;
+            if (!isGrounded)
+            {
+                isGrounded = true;
+                if (isJumping)
+                {
+                    isJumping = false;
+                    anim.SetBool("isJumping", false);
+                }
+                else if (isDiving)
+                {
+                    isDiving = false;
+                    anim.SetBool("isDiving", false);
+                    cp.direction = 1;
+                }
+            }
         }
         else
         {
             isGrounded = false;
-            /*if (!isJumping)
-            {
-                isFalling = true;
-                //anim.SetBool("isFalling", true);
-            }*/
         }
     }
 }
