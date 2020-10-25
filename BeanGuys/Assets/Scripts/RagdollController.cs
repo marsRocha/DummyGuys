@@ -89,7 +89,7 @@ public class RagdollController : MonoBehaviour
         yield return new WaitForSecondsRealtime(time);
 
         //not working
-        foreach( Rigidbody r in ragdollRbs)
+        /*foreach( Rigidbody r in ragdollRbs)
         {
             foreach (Transform t in ragdollRs)
             {
@@ -97,7 +97,7 @@ public class RagdollController : MonoBehaviour
                 float lerp = 1 - Mathf.Clamp01((Time.time - transitionStartTime) / transitionDuration);
                 r.transform.localRotation = Quaternion.Lerp(animationRotation, r.rotation, lerp);
             }
-        }
+        }*/
         DeactivateRagdoll();
     }
 

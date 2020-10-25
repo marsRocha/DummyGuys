@@ -26,6 +26,11 @@ public class PlayerController : MonoBehaviour
     //private bool isFalling = false;
     public bool isDiving = false;
 
+    [Header("Particle Systems")]
+    public ParticleSystem jumpPS;
+    public ParticleSystem landingPS;
+
+
     // Start is called before the first frame update
     void Start()
     {
@@ -74,23 +79,6 @@ public class PlayerController : MonoBehaviour
             cp.direction = 2;
             isDiving = true;
 
-            //If jumping while falling, reset y velocity.
-            /*Vector3 vel = rb.velocity;
-            if (rb.velocity.y < 0.5f)
-                rb.velocity = new Vector3(vel.x, 0, vel.z);
-            else if (rb.velocity.y > 0)
-                rb.velocity = new Vector3(vel.x, 0, vel.z);
-            //x
-            if (rb.velocity.x != 0.5f)
-                rb.velocity = new Vector3(0, vel.y, vel.z);
-            else if (rb.velocity.x > 0)
-                rb.velocity = new Vector3(0, vel.y, vel.z);
-            //z
-            if (rb.velocity.z != 0.5f)
-                rb.velocity = new Vector3(vel.x, vel.y, 0);
-            else if (rb.velocity.z > 0)
-                rb.velocity = new Vector3(vel.x, vel.y, 0);*/
-
             rb.velocity = Vector3.zero;
 
             rb.AddForce((transform.forward * diveForce + Vector3.up * diveUpForce), ForceMode.Impulse);
@@ -107,7 +95,8 @@ public class PlayerController : MonoBehaviour
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             isJumping = true;
             anim.SetBool("isJumping", true);
-            anim.SetBool("isRunning", false);
+            //anim.SetBool("isRunning", false);
+            jumpPS.Play();
         }
     }
 
