@@ -4,7 +4,7 @@ public class PlayerController : MonoBehaviour
 {
     public Rigidbody rb;
     public CapsuleCollider cp;
-    public new Transform camera;
+    public Transform camera;
     public Animator anim;
 
     [Header("Movement settings")]
@@ -30,35 +30,46 @@ public class PlayerController : MonoBehaviour
     public ParticleSystem jumpPS;
     public ParticleSystem landingPS;
 
+    //variable controled by GameManager
+    [HideInInspector]
+    public bool isRunning;
+
 
     // Start is called before the first frame update
     void Start()
     {
+        isRunning = false;
         move = new Vector3();   
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (!isDiving)
+        if (isRunning)
         {
-            Movement();
-            Jump();
+            if (!isDiving)
+            {
+                Movement();
+                Jump();
+            }
+            Dive();
         }
-        Dive();
     }
 
     private void FixedUpdate()
     {
-        CheckIsGrounded();
+        if (isRunning)
+        {
+            CheckIsGrounded();
 
-        if (!isDiving)
-            rb.velocity = new Vector3(move.x, rb.velocity.y, move.z);
+            if (!isDiving)
+                rb.velocity = new Vector3(move.x, rb.velocity.y, move.z);
 
-        if (movingPlatform)
-            rb.velocity += movingPlatform.velocity;
+            if (movingPlatform)
+                rb.velocity += movingPlatform.velocity;
 
-        ExtraDownForce();
+            ExtraDownForce();
+        }
     }
 
     private void ExtraDownForce()

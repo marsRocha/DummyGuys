@@ -7,12 +7,20 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance = null;
 
-    public NetworkManager networkManager;
+    private CSceneManager sceneManager;
 
-    public Transform spawnpoint;
-    public GameObject Main, Slave;
-    public Transform mainCam;
-    private CSceneManager cSceneManager;
+    public GameObject player, localPlayer;
+    private GameObject playerObj;
+    //network id
+    public int myId;
+
+    private int qualifiedPlayers;
+    private int totalPlayers;
+
+
+    [Header("States")]
+    public bool isRunning;
+
 
     private void Awake()
     {
@@ -30,44 +38,62 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-
+        isRunning = false;
+        qualifiedPlayers = 0;
+        totalPlayers = 0;
     }
 
-    // Update is called once per frame
-    void Update()
+    public void LoadGameScene()
     {
-
-    }
-
-    public void LoadWorldTemplate()
-    {
-        SceneManager.LoadScene("TestMap");
+        SceneManager.LoadScene("Map");
     }
 
     private void OnLevelWasLoaded(int level)
     {
-        if (SceneManager.GetActiveScene().name == "TestMap")
-        {
-            Debug.Log("NOVA SCENE CARREGADA");
-            cSceneManager = GameObject.Find("SceneManager").GetComponent<CSceneManager>();
-            mainCam = cSceneManager.camera;
-            spawnpoint = cSceneManager.spawnPoint;
-            Debug.Log("dsadasdadadsaDADADSADS IS :" + networkManager.player);
-            Debug.Log("dsadasdadadsaDADADSADS IS :" + networkManager.player.GameState);
-            networkManager.SyncUp();
-        }
+        sceneManager = GameObject.Find("SceneManager").GetComponent<CSceneManager>();
+        SpawnPlayer();
+        Debug.Log("go countdown");
+        sceneManager.StartCountDown();
     }
 
     public void SpawnPlayer()
     {
-        GameObject player = GameObject.Instantiate(Main, spawnpoint.position, Quaternion.identity);
-        player.GetComponent<PlayerController>().camera = mainCam;
-        mainCam.GetComponent<PlayerCamera>().enabled = true;
-        mainCam.GetComponent<PlayerCamera>().ToFollow = player.transform;
+        GameObject p = GameObject.Instantiate(player, sceneManager.spawnPoints[myId], Quaternion.identity);
+        p.GetComponent<PlayerController>().camera = sceneManager.camera;
+        playerObj = p;
+        sceneManager.camera.GetComponent<PlayerCamera>().enabled = true;
+        sceneManager.camera.GetComponent<PlayerCamera>().ToFollow = p.transform;
+        totalPlayers++;
+        UpdateQualified();
     }
 
-    public void SpawnSlave()
+    public void SpawnLocalPlayer(int id)
     {
-        GameObject.Instantiate(Slave, spawnpoint.position, Quaternion.identity);
+        Instantiate(localPlayer, sceneManager.spawnPoints[id], Quaternion.identity);
+        totalPlayers++;
+        UpdateQualified();
+    }
+
+    //quando tiver multiplayer é melhor mandar mensagem para o servidor e depois se estiver correto entao começar o jogo
+    public void StartGame()
+    {
+        sceneManager.ActivateScene();
+        playerObj.GetComponent<PlayerController>().isRunning = true;
+        isRunning = true;
+    }
+
+    //receber mensagem do servidor para atualizar isto
+    public void UpdateQualified()
+    {
+        //qualifiedPlayers++;
+
+        if(qualifiedPlayers >= totalPlayers)
+        {
+            //finish game
+        }
+        else //only update UI
+        {
+            sceneManager.UpdateQualified(qualifiedPlayers, totalPlayers);
+        }
     }
 }
