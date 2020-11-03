@@ -403,7 +403,7 @@ MonoBehaviour:
   LockCursor: 1
   SightLayerMask:
     serializedVersion: 2
-    m_Bits: 3841
+    m_Bits: 7937
   CollisionOffset: 1
 --- !u!114 &963194230
 MonoBehaviour:

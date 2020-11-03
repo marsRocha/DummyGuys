@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -24,6 +25,7 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+
         if (instance != null && instance != this)
         {
             Destroy(this.gameObject);
@@ -36,16 +38,21 @@ public class GameManager : MonoBehaviour
     }
 
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
         isRunning = false;
         qualifiedPlayers = 0;
         totalPlayers = 0;
     }
 
+    private void Update()
+    {
+        //detetar pausar ou sair do jogo
+    }
+
     public void LoadGameScene()
     {
-        SceneManager.LoadScene("Map");
+        SceneManager.LoadScene("Map1");
     }
 
     private void OnLevelWasLoaded(int level)
