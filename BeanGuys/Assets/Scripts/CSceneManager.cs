@@ -29,6 +29,8 @@ public class CSceneManager : MonoBehaviour
             for(int j = 0; j <= 14; j++)
                 points[(14 * i) + j] = new Vector3(-18.06f + 2.58f * j, 0,-2.58f * i);
         }*/
+
+        exitUI.SetActive(false);
     }
 
     private void Update()
@@ -38,7 +40,6 @@ public class CSceneManager : MonoBehaviour
         {
             ActivateScene();
             GameObject.Find("Player").GetComponent<PlayerController>().isRunning = true;
-            Debug.Log("ACTIVATED");
         }
     }
 
@@ -63,7 +64,7 @@ public class CSceneManager : MonoBehaviour
             r.isRunning = true;
     }
 
-    public void ActivatePauseMenu()
+    public void ActivateExitMenu()
     {
         exitUI.SetActive(true);
         //camera.

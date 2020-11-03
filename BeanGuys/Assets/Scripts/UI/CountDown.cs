@@ -25,7 +25,6 @@ public class CountDown : MonoBehaviour
     {
         if (startCountdown)
         {
-            Debug.Log("started");
             if (!countdownText.enabled)
                 countdownText.enabled = true;
 
@@ -47,6 +46,5 @@ public class CountDown : MonoBehaviour
                 this.gameObject.SetActive(false);
             }
         }
-        Debug.Log("doing");
     }
 }

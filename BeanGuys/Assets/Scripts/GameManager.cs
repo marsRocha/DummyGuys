@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance = null;
-
+    [SerializeField]
     private CSceneManager sceneManager;
 
     public GameObject player, localPlayer;
@@ -48,6 +48,16 @@ public class GameManager : MonoBehaviour
     private void Update()
     {
         //detetar pausar ou sair do jogo
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            sceneManager.ActivateExitMenu();
+        }
+    }
+
+    public void ApplicationQuit()
+    {
+        Debug.Log("exit");
+        Application.Quit();
     }
 
     public void LoadGameScene()
@@ -55,12 +65,19 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene("Map1");
     }
 
+    public void LoadMainMenu()
+    {
+        SceneManager.LoadScene(0);
+    }
+
     private void OnLevelWasLoaded(int level)
     {
         sceneManager = GameObject.Find("SceneManager").GetComponent<CSceneManager>();
-        SpawnPlayer();
-        Debug.Log("go countdown");
-        sceneManager.StartCountDown();
+        if (level != 0) // not mainmenu
+        {
+            SpawnPlayer();
+            sceneManager.StartCountDown();
+        }
     }
 
     public void SpawnPlayer()

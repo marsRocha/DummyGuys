@@ -153,6 +153,8 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 12398}
     - Class: 114
+      Script: {instanceID: 12400}
+    - Class: 114
       Script: {instanceID: 12446}
     - Class: 114
       Script: {instanceID: 12448}
@@ -234,6 +236,8 @@ ScriptsOnlyBuild:
       Script: {instanceID: 15974}
     - Class: 114
       Script: {instanceID: 15982}
+    - Class: 114
+      Script: {instanceID: 22562}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -310,7 +314,11 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 12962}
     - Class: 114
+      Script: {instanceID: 13300}
+    - Class: 114
       Script: {instanceID: 13690}
+    - Class: 114
+      Script: {instanceID: 14084}
     - Class: 114
       Script: {instanceID: 14402}
     - Class: 114
@@ -325,6 +333,8 @@ ScriptsOnlyBuild:
       Script: {instanceID: 15380}
     - Class: 114
       Script: {instanceID: 15810}
+    - Class: 114
+      Script: {instanceID: 22562}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 135
@@ -886,7 +896,7 @@ ScriptsOnlyBuild:
     className: ControlTrack
   - hash:
       serializedVersion: 2
-      Hash: 6d64a5d2707002cb73d72cb2cf7364d1
+      Hash: c4260efbccc56e9f2310d216177c942a
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: GameManager
