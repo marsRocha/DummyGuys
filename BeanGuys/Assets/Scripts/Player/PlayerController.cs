@@ -18,7 +18,7 @@ public class PlayerController : MonoBehaviour
     public float extraGravity;
 
 
-    [Header("Collsion settings")]
+    [Header("Ground settings")]
     public bool isGrounded = false;
     public LayerMask collisionMask;
     public float checkDistance;
@@ -26,19 +26,23 @@ public class PlayerController : MonoBehaviour
     //private bool isFalling = false;
     public bool isDiving = false;
 
+    [Header("Collision Settings")]
+    private bool bounce = false;
+    public float bounceForce = 10;
+    private Vector3 collisionDirection;
+
     [Header("Particle Systems")]
     public ParticleSystem jumpPS;
     public ParticleSystem landingPS;
 
     //variable controled by GameManager
-    [HideInInspector]
-    public bool isRunning;
+    //[HideInInspector]
+    public bool isRunning = false;
 
 
     // Start is called before the first frame update
     void Start()
     {
-        isRunning = false;
         move = new Vector3();   
     }
 
@@ -60,15 +64,21 @@ public class PlayerController : MonoBehaviour
     {
         if (isRunning)
         {
-            CheckIsGrounded();
+            if (!bounce)
+            {
+                CheckIsGrounded();
 
-            if (!isDiving)
-                rb.velocity = new Vector3(move.x, rb.velocity.y, move.z);
+                if (!isDiving)
+                    rb.velocity = new Vector3(move.x, rb.velocity.y, move.z);
 
-            if (movingPlatform)
-                rb.velocity += movingPlatform.velocity;
-
-            ExtraDownForce();
+                ExtraDownForce();
+            }
+            else
+            {
+                rb.AddForce(collisionDirection * bounceForce, ForceMode.Impulse);
+                bounce = false;
+                Debug.Log("Bounced");
+            }
         }
     }
 
@@ -92,7 +102,7 @@ public class PlayerController : MonoBehaviour
 
             rb.velocity = Vector3.zero;
 
-            rb.AddForce((transform.forward * diveForce + Vector3.up * diveUpForce), ForceMode.Impulse);
+            rb.AddForce((transform.forward * diveForce + Vector3.up * diveUpForce), ForceMode.VelocityChange);
 
 
             anim.SetBool("isDiving", true);
@@ -143,8 +153,6 @@ public class PlayerController : MonoBehaviour
         return moveDirection;
     }
 
-    private Rigidbody movingPlatform;
-
     private void CheckIsGrounded()
     {
         RaycastHit hit;
@@ -165,18 +173,24 @@ public class PlayerController : MonoBehaviour
                     anim.SetBool("isDiving", false);
                     cp.direction = 1;
                 }
-
-                if(hit.transform.gameObject.layer == LayerMask.NameToLayer("Moving")){
-                    movingPlatform = hit.transform.GetComponent<Rigidbody>();
-                }
             }
         }
         else
         {
             isGrounded = false;
+        }
+    }
 
-            if (movingPlatform)
-                movingPlatform = null;
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Bounce"))
+        {
+            Debug.Log("collision");
+            Vector3 collisionDirection = collision.contacts[0].point - transform.position;
+            // We then get the opposite (-Vector3) and normalize it
+            collisionDirection = -collisionDirection.normalized;
+
+            rb.AddForce(collisionDirection * 150, ForceMode.Impulse);
         }
     }
 }

@@ -9,15 +9,14 @@ public class Swing : MonoBehaviour
     public float angle = 30;
     public float timeToWait = 1f;
     public bool Left;
-    [HideInInspector]
-    public bool isRunning;
+    //[HideInInspector]
+    public bool isRunning = false;
 
     Quaternion start, end;
 
     // Start is called before the first frame update
     void Start()
     {
-        isRunning = false;
         startTime = 0;
         start = SwingRotation(angle);
         end = SwingRotation(-angle);

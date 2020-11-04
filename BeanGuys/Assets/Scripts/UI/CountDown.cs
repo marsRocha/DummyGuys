@@ -8,7 +8,7 @@ public class CountDown : MonoBehaviour
     private float startTime;
     private float currentTime;
     private TextMeshProUGUI countdownText;
-    [HideInInspector]
+    //[HideInInspector]
     public bool startCountdown = false;
 
     // Start is called before the first frame update

@@ -12,13 +12,12 @@ public class MoveWait : MonoBehaviour
     public bool showPoints;
     public float timeToWait = 0;
     public bool wait = false;
-    [HideInInspector]
-    public bool isRunning;
+    //[HideInInspector]
+    public bool isRunning = false;
 
     // Start is called before the first frame update
     void Start()
     {
-        isRunning = false;
         initialPos = this.transform.position;
         rb = GetComponent<Rigidbody>();
         currentIndex = 0;

@@ -10,13 +10,12 @@ public class Moving : MonoBehaviour
     public Vector3[] points;
     private int currentIndex;
     public bool showPoints;
-    [HideInInspector]
-    public bool isRunning;
+    //[HideInInspector]
+    public bool isRunning = false;
 
     // Start is called before the first frame update
     void Start()
     {
-        isRunning = false;
         initialPos = this.transform.position;
         rb = GetComponent<Rigidbody>();
         currentIndex = 0;

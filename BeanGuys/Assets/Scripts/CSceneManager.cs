@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using TMPro;
 using UnityEngine;
 
@@ -21,6 +22,11 @@ public class CSceneManager : MonoBehaviour
     public Vector3[] spawnPoints;
     public Transform camera;
 
+    [Header("Dubug variables to remove")]
+    public bool debug;
+    public GameObject player;
+    private GameObject playerObj;
+
     private void Start()
     {
         /*points = new Vector3[60];
@@ -30,22 +36,21 @@ public class CSceneManager : MonoBehaviour
                 points[(14 * i) + j] = new Vector3(-18.06f + 2.58f * j, 0,-2.58f * i);
         }*/
 
-        exitUI.SetActive(false);
-    }
-
-    private void Update()
-    {
-        //this update is only for debugging
-        if (Input.GetKeyDown(KeyCode.P))
+        //only for debugging
+        if (debug)
         {
             ActivateScene();
-            GameObject.Find("Player").GetComponent<PlayerController>().isRunning = true;
+            GameObject p = GameObject.Instantiate(player, spawnPoints[10], Quaternion.identity);
+            p.GetComponent<PlayerController>().camera = camera;
+            playerObj = p;
+            camera.GetComponent<PlayerCamera>().enabled = true;
+            camera.GetComponent<PlayerCamera>().ToFollow = p.transform;
+            p.GetComponent<PlayerController>().isRunning = true;
         }
     }
 
     public void StartCountDown()
     {
-        Debug.Log("done");
         countDownUI.startCountdown = true;
     }
 
@@ -67,7 +72,12 @@ public class CSceneManager : MonoBehaviour
     public void ActivateExitMenu()
     {
         exitUI.SetActive(true);
-        //camera.
+        camera.GetComponent<PlayerCamera>().StopFollowMouse();
+    }
+
+    public void ActivateCameraFollow()
+    {
+        camera.GetComponent<PlayerCamera>().StartFollowMouse();
     }
 
     public void UpdateQualified(int qualified, int maxPlayers)

@@ -165,5 +165,19 @@ public class PlayerCamera : MonoBehaviour
         }
     }
 
+    public void StopFollowMouse()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        rotateCamera = false;
+    }
+
+    public void StartFollowMouse()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        rotateCamera = true;
+    }
+
     #endregion
 }

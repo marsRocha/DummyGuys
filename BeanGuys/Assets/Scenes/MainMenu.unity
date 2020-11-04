@@ -368,6 +368,8 @@ MonoBehaviour:
   rotatingObjs: []
   spawnPoints: []
   camera: {fileID: 0}
+  debug: 0
+  player: {fileID: 0}
 --- !u!4 &173087573
 Transform:
   m_ObjectHideFlags: 0
@@ -1164,7 +1166,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Are you sure you want to quit game?
+  m_text: Quit Game?
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8cb162572400abb4c9f6f376a06eb875, type: 2}
   m_sharedMaterial: {fileID: 2756343398992585237, guid: 8cb162572400abb4c9f6f376a06eb875, type: 2}
@@ -1833,7 +1835,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: NO!
+  m_text: CANCEL
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8cb162572400abb4c9f6f376a06eb875, type: 2}
   m_sharedMaterial: {fileID: 2756343398992585237, guid: 8cb162572400abb4c9f6f376a06eb875, type: 2}
@@ -2506,7 +2508,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: YES
+  m_text: OK
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8cb162572400abb4c9f6f376a06eb875, type: 2}
   m_sharedMaterial: {fileID: 2756343398992585237, guid: 8cb162572400abb4c9f6f376a06eb875, type: 2}

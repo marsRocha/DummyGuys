@@ -7,14 +7,8 @@ public class RotatingCylinder : MonoBehaviour
     public Transform[] toRotate;
     public float[] speeds;
 
-    [HideInInspector]
-    public bool isRunning;
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        isRunning = false;
-    }
+    //[HideInInspector]
+    public bool isRunning = false;
 
     // Update is called once per frame
     void Update()
