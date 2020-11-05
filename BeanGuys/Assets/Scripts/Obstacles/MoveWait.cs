@@ -10,8 +10,9 @@ public class MoveWait : MonoBehaviour
     public Vector3[] points;
     private int currentIndex;
     public bool showPoints;
-    public float timeToWait = 0;
-    public bool wait = false;
+    public float timeToWait;
+    private float currentWaitedTime;
+    public bool move;
     //[HideInInspector]
     public bool isRunning = false;
 
@@ -20,39 +21,59 @@ public class MoveWait : MonoBehaviour
     {
         initialPos = this.transform.position;
         rb = GetComponent<Rigidbody>();
+        move = true;
+        currentWaitedTime = 0.0f;
+
+        rb.isKinematic = true;
+        rb.useGravity = false;
+
         currentIndex = 0;
         currentPoint = (initialPos + points[currentIndex]);
     }
 
     void FixedUpdate()
     {
-        if(!wait && isRunning)
+        if(move && isRunning)
             rb.velocity = (currentPoint - this.transform.position).normalized * speed * Time.deltaTime;
     }
 
-    private void Update()
+    void Update()
     {
         if (isRunning)
         {
-            if (Vector3.Distance(transform.position, currentPoint) <= 0.5f) //going to point1
+            Debug.Log("Oioio2");
+            if (move)
             {
-                wait = true;
-                rb.isKinematic = true;
-                StartCoroutine(WaitFor(timeToWait));
+                if (rb.isKinematic)
+                {
+                    rb.isKinematic = false;
+                    //rb.useGravity = true;
+                }
+
+                if (Vector3.Distance(transform.position, currentPoint) < 0.1f)
+                {
+                    move = false;
+                    rb.isKinematic = true;
+                    rb.useGravity = false;
+                }
+            }
+            else
+            {
+                currentWaitedTime += Time.deltaTime;
+
+                if (currentWaitedTime > timeToWait)
+                {
+                    currentWaitedTime = 0.0f;
+
+                    currentIndex++;
+                    if (currentIndex >= points.Length)
+                        currentIndex = 0;
+                    currentPoint = (initialPos + points[currentIndex]);
+
+                    move = true;
+                }
             }
         }
-    }
-
-    private IEnumerator WaitFor(float time)
-    {
-        yield return new WaitForSeconds(time);
-
-        currentIndex++;
-        if (currentIndex >= points.Length)
-            currentIndex = 0;
-        currentPoint = (initialPos + points[currentIndex]);
-        wait = false;
-        rb.isKinematic = false;
     }
 
     private void OnDrawGizmos()
