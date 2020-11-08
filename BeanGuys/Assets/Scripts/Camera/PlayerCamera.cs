@@ -4,7 +4,10 @@ using UnityEngine;
 
 public class PlayerCamera : MonoBehaviour
 {
-    public Transform ToFollow;
+    public Transform player;
+    public Transform ragdoll;
+    [HideInInspector]
+    public bool followRagdoll;
     private Vector3 targetPosition;
 
     public Vector3 FollowingOffset = new Vector3(0f, 1.5f, 0f);
@@ -54,7 +57,7 @@ public class PlayerCamera : MonoBehaviour
 
     void LateUpdate()
     {
-        if (ToFollow)
+        if (player && ragdoll)
         {
             InputCalculations();
             ZoomCalculations();
@@ -91,7 +94,7 @@ public class PlayerCamera : MonoBehaviour
         Quaternion rotation = Quaternion.Euler(animatedSphericRotation.y, animatedSphericRotation.x, 0f);
         transform.rotation = rotation;
 
-        Vector3 targetPosition = ToFollow.transform.position + FollowingOffset;
+        Vector3 targetPosition = (followRagdoll ? ragdoll.position : player.position) + FollowingOffset;
 
         if (HardFollowValue < 1f)
         {
@@ -104,7 +107,7 @@ public class PlayerCamera : MonoBehaviour
 
     private void RaycastCalculations()
     {
-        Vector3 followPoint = ToFollow.transform.position + FollowingOffset + transform.TransformVector(FollowingOffsetDirection);
+        Vector3 followPoint = (followRagdoll ? ragdoll.position : player.position) + FollowingOffset + transform.TransformVector(FollowingOffsetDirection);
         Quaternion cameraDir = Quaternion.Euler(targetSphericRotation.y, targetSphericRotation.x, 0f);
         Ray directionRay = new Ray(followPoint, cameraDir * -Vector3.forward);
 

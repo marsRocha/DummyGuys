@@ -8,18 +8,22 @@ public class NPlayerRagdoll : MonoBehaviour
     public NPlayerController playerController;
     public Animator animator;
     public CapsuleCollider cp;
+    public Rigidbody pelvis;
 
-    //Ragdoll components
-    Rigidbody[] ragdollRbs;
-    Collider[] ragdollCols;
-    List<BodyPart> bodyParts;
+    [Header("Ragdoll components")]
+    private Rigidbody[] ragdollRbs;
+    private Collider[] ragdollCols;
+    private List<BodyPart> bodyParts;
 
-    [Header("Ragdoll states")]
+    [Header("Ragdoll Settings")]
     [SerializeField]
     RagdollState state;
     public bool ragdollActive;
     private float canRecover;
     public float recoverTime;
+    public LayerMask ragdollMask;
+    public float maxForce;
+    public float impactForce;
 
     //Time transitioning from ragdolled to animated
     public float ragdollToMecanimBlendTime = 0.5f;
@@ -72,15 +76,13 @@ public class NPlayerRagdoll : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Z) && state == RagdollState.Animated)
         {
             RagdollIn();
-            //animator.SetBool("isStandingUp", true); //GetUpFromBack
-            Debug.Log("Stading?");
-            canRecover = 0.0f;
         }
 
+        //Debug.Log("pelvis velocity:" + pelvis.velocity.magnitude);
 
-        if (state == RagdollState.Ragdolled && canRecover > recoverTime && GetComponentInChildren<Rigidbody>().velocity.magnitude < 0.0001f)
+        if (state == RagdollState.Ragdolled && canRecover > recoverTime //&& playerController.grounded
+            && pelvis.velocity.magnitude < 0.1f)
         {
-            Debug.Log("true af");
             RagdollOut();
         }
 
@@ -88,12 +90,13 @@ public class NPlayerRagdoll : MonoBehaviour
         /*if (state == RagdollState.Animated && onAirTime > 3f)
             RagdollIn();*/
 
-        //CheckImpact();
+        CheckImpact();
     }
 
     public void RagdollIn()
     {
-        Debug.Log("Going ragdoll");
+        Debug.Log("RagdollIn");
+        canRecover = 0.0f;
         state = RagdollState.Ragdolled;
         ActivateRagdollComponents(true);
 
@@ -104,13 +107,9 @@ public class NPlayerRagdoll : MonoBehaviour
         }
     }
 
-    private IEnumerator WaitFor(float time)
+    private void RagdollOut()
     {
-        yield return new WaitForSecondsRealtime(time);
-    }
-
-        private void RagdollOut()
-    {
+        Debug.Log("RagdollOut");
         state = RagdollState.BlendToAnim;
         ActivateRagdollComponents(false);
         playerController.enabled = false;
@@ -128,7 +127,7 @@ public class NPlayerRagdoll : MonoBehaviour
             b.storedPosition = b.transform.position;
         }
 
-        //Remember some key positions
+        //KeyBone positions to calculate new position
         ragdolledFeetPosition = 0.5f * (animator.GetBoneTransform(HumanBodyBones.LeftToes).position + animator.GetBoneTransform(HumanBodyBones.RightToes).position);
         ragdolledHeadPosition = animator.GetBoneTransform(HumanBodyBones.Head).position;
         ragdolledHipPosition = animator.GetBoneTransform(HumanBodyBones.Hips).position;
@@ -141,8 +140,7 @@ public class NPlayerRagdoll : MonoBehaviour
         {
             if (Time.time <= ragdollingEndTime + mecanimToGetUpTransitionTime)
             {
-                //If we are waiting for Mecanim to start playing the get up animations, update the root of the mecanim
-                //character to the best match with the ragdoll
+                //CALCULTATE POSITION
                 Vector3 animatedToRagdolled = ragdolledHipPosition - animator.GetBoneTransform(HumanBodyBones.Hips).position;
                 Vector3 newRootPosition = transform.position + animatedToRagdolled;
 
@@ -158,6 +156,7 @@ public class NPlayerRagdoll : MonoBehaviour
                 }
                 transform.position = newRootPosition;
 
+                //CALCULATE ROTATION
                 //Get body orientation in ground plane for both the ragdolled pose and the animated get up pose
                 Vector3 ragdolledDirection = ragdolledHeadPosition - ragdolledFeetPosition;
                 ragdolledDirection.y = 0;
@@ -166,8 +165,6 @@ public class NPlayerRagdoll : MonoBehaviour
                 Vector3 animatedDirection = animator.GetBoneTransform(HumanBodyBones.Head).position - meanFeetPosition;
                 animatedDirection.y = 0;
 
-                //Try to match the rotations. Note that we can only rotate around Y axis, as the animated characted must stay upright,
-                //hence setting the y components of the vectors to zero. 
                 transform.rotation *= Quaternion.FromToRotation(animatedDirection.normalized, ragdolledDirection.normalized);
             }
             //compute the ragdoll blend amount in the range 0...1
@@ -203,10 +200,9 @@ public class NPlayerRagdoll : MonoBehaviour
         ragdollActive = activate;
         cp.isTrigger = activate;
         this.GetComponent<Rigidbody>().isKinematic = activate;
-
+        playerController.camera.GetComponent<PlayerCamera>().followRagdoll = activate;
         playerController.enabled = !activate;
         animator.enabled = !activate;
-
 
         for (int i = 1; i < ragdollRbs.Length; i++)
             ragdollRbs[i].isKinematic = !activate;
@@ -216,18 +212,19 @@ public class NPlayerRagdoll : MonoBehaviour
 
     private void CheckImpact()
     {
-        if (Input.GetMouseButtonDown(0))
+        /*if (Input.GetMouseButtonDown(0))
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
             RaycastHit hit;
-            if (Physics.Raycast(ray, out hit))
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), ray, out hit))
             {
                 //check if the raycast target has a rigid body (belongs to the ragdoll)
                 if (hit.rigidbody != null)
                 {
                     //find the RagdollHelper component and activate ragdolling
                     RagdollIn();
+                    Debug.Log(hit.rigidbody.name);
 
                     //set the impact target to whatever the ray hit
                     impactTarget = hit.rigidbody;
@@ -239,11 +236,47 @@ public class NPlayerRagdoll : MonoBehaviour
                     impactEndTime = Time.time + 0.25f;
                 }
             }
+            Debug.Log(hit.transform.name);
         }
 
         //Check if we need to apply an impact
         if (Time.time < impactEndTime)
-            impactTarget.AddForce(impact, ForceMode.VelocityChange);
+            impactTarget.AddForce(impact, ForceMode.VelocityChange);*/
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        /*if (collision.gameObject.layer != LayerMask.NameToLayer("Floor") && state == RagdollState.Animated)
+        {
+            if (playerController.jumping)
+            {
+                RagdollIn();
+            }
+            //Debug.Log(collision.transform.name);
+            Vector3 collisionDirection = collision.contacts[0].normal;
+            //Debug.DrawRay(collision.contacts[0].point, collisionDirection * 5);
+
+            /*RaycastHit[] hits;
+            hits = Physics.RaycastAll(collision.contacts[0].point - collisionDirection * 2, collisionDirection, 5, ragdollMask);
+            if (hits != null)
+            {
+            //Debug.Log("collision force:" + collision.impulse.magnitude);
+            if (collision.impulse.magnitude >= maxForce)
+            {
+                RagdollIn();
+                //add force
+                pelvis.AddForceAtPosition(-collisionDirection * impactForce, collision.contacts[0].point, ForceMode.Impulse);
+            }
+        }
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Bounce"))
+        {
+            Debug.Log("collision");
+            Vector3 collisionDirection = collision.contacts[0].point - transform.position;
+            // We then get the opposite (-Vector3) and normalize it
+            collisionDirection = -collisionDirection.normalized;
+
+            rb.AddForce(collisionDirection * 15, ForceMode.Impulse);
+        }*/
     }
 }
 

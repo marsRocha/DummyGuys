@@ -86,7 +86,8 @@ public class GameManager : MonoBehaviour
         p.GetComponent<PlayerController>().camera = sceneManager.camera;
         playerObj = p;
         sceneManager.camera.GetComponent<PlayerCamera>().enabled = true;
-        sceneManager.camera.GetComponent<PlayerCamera>().ToFollow = p.transform;
+        //sceneManager.camera.GetComponent<PlayerCamera>().Player = p.transform;
+        //sceneManager.camera.GetComponent<PlayerCamera>().Ragdoll = p.pelvis;
         totalPlayers++;
         UpdateQualified();
     }

@@ -44,7 +44,8 @@ public class CSceneManager : MonoBehaviour
             p.GetComponent<PlayerController>().camera = camera;
             playerObj = p;
             camera.GetComponent<PlayerCamera>().enabled = true;
-            camera.GetComponent<PlayerCamera>().ToFollow = p.transform;
+            //camera.GetComponent<PlayerCamera>().Player = p.transform;
+            //camera.GetComponent<PlayerCamera>().Ragdoll = p.pelvis;
             p.GetComponent<PlayerController>().isRunning = true;
         }
     }
