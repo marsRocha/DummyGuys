@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 396445590}
   - component: {fileID: 396445589}
   m_Layer: 10
-  m_Name: donut_pole9
+  m_Name: donut_pole8
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -132,6 +132,7 @@ MonoBehaviour:
   - {x: 0, y: 0, z: 0}
   - {x: 18.1, y: 0, z: 0}
   showPoints: 0
+  isRunning: 0
 --- !u!1 &492806809624125386
 GameObject:
   m_ObjectHideFlags: 0
@@ -147,7 +148,7 @@ GameObject:
   - component: {fileID: 2116631511}
   - component: {fileID: 2116631510}
   m_Layer: 10
-  m_Name: donut_pole13
+  m_Name: donut_pole12
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -264,6 +265,7 @@ MonoBehaviour:
   - {x: 0, y: 0, z: 0}
   - {x: 18.1, y: 0, z: 0}
   showPoints: 0
+  isRunning: 0
 --- !u!1 &796091037590879319
 GameObject:
   m_ObjectHideFlags: 0
@@ -279,7 +281,7 @@ GameObject:
   - component: {fileID: 538175900}
   - component: {fileID: 538175899}
   m_Layer: 10
-  m_Name: donut_pole11
+  m_Name: donut_pole10
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -396,6 +398,7 @@ MonoBehaviour:
   - {x: -6.3, y: 0, z: 0}
   - {x: 12.3, y: 0, z: 0}
   showPoints: 1
+  isRunning: 0
 --- !u!1 &1352836603658638180
 GameObject:
   m_ObjectHideFlags: 0
@@ -411,7 +414,7 @@ GameObject:
   - component: {fileID: 1701398505}
   - component: {fileID: 1701398504}
   m_Layer: 10
-  m_Name: donut_poleBL6
+  m_Name: donut_pole2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -528,6 +531,7 @@ MonoBehaviour:
   - {x: -6.3, y: 0, z: 0}
   - {x: 12.3, y: 0, z: 0}
   showPoints: 1
+  isRunning: 0
 --- !u!1 &1486078603954926081
 GameObject:
   m_ObjectHideFlags: 0
@@ -543,7 +547,7 @@ GameObject:
   - component: {fileID: 317453003}
   - component: {fileID: 317453002}
   m_Layer: 10
-  m_Name: donut_pole4
+  m_Name: donut_pole3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -660,6 +664,7 @@ MonoBehaviour:
   - {x: 0, y: 0, z: 0}
   - {x: -18.1, y: 0, z: 0}
   showPoints: 0
+  isRunning: 0
 --- !u!1 &1492337025698632881
 GameObject:
   m_ObjectHideFlags: 0
@@ -675,7 +680,7 @@ GameObject:
   - component: {fileID: 1833706316}
   - component: {fileID: 1833706315}
   m_Layer: 10
-  m_Name: donut_pole5
+  m_Name: donut_pole4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -792,6 +797,7 @@ MonoBehaviour:
   - {x: 0, y: 0, z: 0}
   - {x: 18.1, y: 0, z: 0}
   showPoints: 0
+  isRunning: 0
 --- !u!1 &1599198669011192995
 GameObject:
   m_ObjectHideFlags: 0
@@ -807,7 +813,7 @@ GameObject:
   - component: {fileID: 1316762651}
   - component: {fileID: 1316762650}
   m_Layer: 10
-  m_Name: donut_pole7
+  m_Name: donut_pole6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -924,6 +930,7 @@ MonoBehaviour:
   - {x: -6.3, y: 0, z: 0}
   - {x: 12.3, y: 0, z: 0}
   showPoints: 1
+  isRunning: 0
 --- !u!1 &2074308470352019625
 GameObject:
   m_ObjectHideFlags: 0
@@ -1036,7 +1043,7 @@ GameObject:
   - component: {fileID: 580920333}
   - component: {fileID: 580920332}
   m_Layer: 10
-  m_Name: donut_pole10
+  m_Name: donut_pole9
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1153,6 +1160,7 @@ MonoBehaviour:
   - {x: 6.3, y: 0, z: 0}
   - {x: -12.3, y: 0, z: 0}
   showPoints: 0
+  isRunning: 0
 --- !u!1 &4344373991977704288
 GameObject:
   m_ObjectHideFlags: 0
@@ -1168,7 +1176,7 @@ GameObject:
   - component: {fileID: 1922213032}
   - component: {fileID: 1922213031}
   m_Layer: 10
-  m_Name: donut_pole6
+  m_Name: donut_pole5
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1285,6 +1293,7 @@ MonoBehaviour:
   - {x: 6.3, y: 0, z: 0}
   - {x: -12.3, y: 0, z: 0}
   showPoints: 0
+  isRunning: 0
 --- !u!1 &4783554285493586573
 GameObject:
   m_ObjectHideFlags: 0
@@ -1300,7 +1309,7 @@ GameObject:
   - component: {fileID: 3160492}
   - component: {fileID: 3160491}
   m_Layer: 10
-  m_Name: donut_pole12
+  m_Name: donut_pole11
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1417,6 +1426,7 @@ MonoBehaviour:
   - {x: 0, y: 0, z: 0}
   - {x: -18.1, y: 0, z: 0}
   showPoints: 0
+  isRunning: 0
 --- !u!1 &5535546088636573158
 GameObject:
   m_ObjectHideFlags: 0
@@ -1432,7 +1442,7 @@ GameObject:
   - component: {fileID: 1904080360}
   - component: {fileID: 1904080359}
   m_Layer: 10
-  m_Name: donut_pole8
+  m_Name: donut_pole7
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1549,6 +1559,7 @@ MonoBehaviour:
   - {x: 0, y: 0, z: 0}
   - {x: -18.1, y: 0, z: 0}
   showPoints: 0
+  isRunning: 0
 --- !u!1 &5640912226490952419
 GameObject:
   m_ObjectHideFlags: 0
@@ -1564,7 +1575,7 @@ GameObject:
   - component: {fileID: 413302534}
   - component: {fileID: 413302533}
   m_Layer: 10
-  m_Name: donut_pole14
+  m_Name: donut_pole13
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1681,6 +1692,7 @@ MonoBehaviour:
   - {x: 6.3, y: 0, z: 0}
   - {x: -12.3, y: 0, z: 0}
   showPoints: 0
+  isRunning: 0
 --- !u!1 &5960666686843220160
 GameObject:
   m_ObjectHideFlags: 0
@@ -1733,6 +1745,20 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!64 &1883154575
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5960666687055286363}
+  m_Material: {fileID: 13400000, guid: 430be4df1070b204997b5c022448dd70, type: 2}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 4
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 7710475446001343047, guid: f31ed370794440f43b3306439478fa6d, type: 3}
 --- !u!1 &5986466747579036856
 GameObject:
   m_ObjectHideFlags: 0
@@ -1926,7 +1952,7 @@ GameObject:
   - component: {fileID: 1982582576}
   - component: {fileID: 1982582575}
   m_Layer: 10
-  m_Name: donut_poleBL5
+  m_Name: donut_pole1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2043,6 +2069,7 @@ MonoBehaviour:
   - {x: 6.3, y: 0, z: 0}
   - {x: -12.3, y: 0, z: 0}
   showPoints: 0
+  isRunning: 0
 --- !u!1 &6731029665336822248
 GameObject:
   m_ObjectHideFlags: 0
@@ -2058,7 +2085,7 @@ GameObject:
   - component: {fileID: 929684335}
   - component: {fileID: 929684334}
   m_Layer: 10
-  m_Name: donut_pole16
+  m_Name: donut_pole14
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2175,20 +2202,7 @@ MonoBehaviour:
   - {x: -6.3, y: 0, z: 0}
   - {x: 12.3, y: 0, z: 0}
   showPoints: 1
---- !u!64 &1883154575
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5960666687055286363}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 4
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 7710475446001343047, guid: f31ed370794440f43b3306439478fa6d, type: 3}
+  isRunning: 0
 --- !u!1 &7100670357888644161
 GameObject:
   m_ObjectHideFlags: 0
@@ -2476,7 +2490,7 @@ MeshCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7982532706901760279}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 7893f502cfc9b8044b1913b8931d6b72, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 4
@@ -2638,6 +2652,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: f31ed370794440f43b3306439478fa6d, type: 3}
       propertyPath: m_Name
       value: Map_part6_wall_c
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f31ed370794440f43b3306439478fa6d, type: 3}
+      propertyPath: m_Layer
+      value: 11
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f31ed370794440f43b3306439478fa6d, type: 3}

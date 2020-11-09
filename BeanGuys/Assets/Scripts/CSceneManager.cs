@@ -6,10 +6,12 @@ using UnityEngine;
 
 public class CSceneManager : MonoBehaviour
 {
-    [Header("Scene stuff")]
+    [Header("UI stuff")]
     public CountDown countDownUI;
     public TextMeshProUGUI qualifiedTxt;
     public GameObject exitUI;
+    public GameObject qualifiedUI;
+    public GameObject unqualifiedUI;
 
     [Header("Movable Objects")]
     public Moving[] moveObjs;
@@ -45,8 +47,8 @@ public class CSceneManager : MonoBehaviour
             p.GetComponent<PlayerController>().camera = camera;
             playerObj = p;
             camera.GetComponent<PlayerCamera>().enabled = true;
-            //camera.GetComponent<PlayerCamera>().Player = p.transform;
-            //camera.GetComponent<PlayerCamera>().Ragdoll = p.pelvis;
+            camera.GetComponent<PlayerCamera>().player = p.transform;
+            camera.GetComponent<PlayerCamera>().ragdoll = p.GetComponent<PlayerController>().pelvis;
             p.GetComponent<PlayerController>().isRunning = true;
         }
     }
@@ -87,5 +89,20 @@ public class CSceneManager : MonoBehaviour
     public void UpdateQualified(int qualified, int maxPlayers)
     {
         qualifiedTxt.text = $"{qualified}/{maxPlayers}";
+    }
+
+    public void FinishRaceForPlayer()
+    {
+        qualifiedUI.SetActive(true);
+        StartCoroutine(CloseFinishUI(2f));
+
+        //camera looking at random player
+    }
+
+    IEnumerator CloseFinishUI(float delayTime)
+    {
+        yield return new WaitForSeconds(delayTime);
+
+        qualifiedUI.SetActive(false);
     }
 }

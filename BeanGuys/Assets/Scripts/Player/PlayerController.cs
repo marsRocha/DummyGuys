@@ -197,7 +197,7 @@ public class PlayerController : MonoBehaviour
         if (dive && !diving && (grounded || jumping) && !dashing && readyToDive)
         {
             readyToDive = false;
-            Debug.Log("DIVE");
+            //Debug.Log("DIVE");
             anim.SetBool("isRunning", false);
             if (jumping)
             {
@@ -242,7 +242,7 @@ public class PlayerController : MonoBehaviour
 
     private void ResetDash()
     {
-        Debug.Log("Dash has been reseted");
+        //Debug.Log("Dash has been reseted");
         dashing = false;
     }
     #endregion
@@ -308,10 +308,28 @@ public class PlayerController : MonoBehaviour
         {
             Vector3 collisionDirection = collision.contacts[0].normal;
 
-            Debug.Log("collision force:" + collision.impulse.magnitude);
-            Debug.Log("collision relative Velocity:" + collision.relativeVelocity.magnitude);
+            //Debug.Log("collision force:" + collision.impulse.magnitude);
+            //Debug.Log("collision relative Velocity:" + collision.relativeVelocity.magnitude);
             if (collision.impulse.magnitude >= ragdollController.maxForce || (jumping || diving))
             {
+                bumpPs.transform.position = collision.contacts[0].point;
+                bumpPs.Play();
+
+                ragdollController.RagdollIn();
+                ragdollController.pelvis.AddForceAtPosition(-collisionDirection * ragdollController.impactForce, collision.contacts[0].point, ForceMode.Impulse);
+            }
+        }
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle") && ragdollController.state == RagdollState.Animated)
+        {
+
+            if (collision.impulse.magnitude >= ragdollController.maxForce || (jumping || diving))
+            {
+                Vector3 collisionDirection = collision.contacts[0].normal;
+
                 bumpPs.transform.position = collision.contacts[0].point;
                 bumpPs.Play();
 

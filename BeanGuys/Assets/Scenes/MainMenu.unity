@@ -184,7 +184,7 @@ RectTransform:
   m_GameObject: {fileID: 105844717}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.76, y: 0.76, z: 0.76}
   m_Children:
   - {fileID: 339491470}
   m_Father: {fileID: 1221220750}
@@ -192,8 +192,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 115.1, y: 0}
-  m_SizeDelta: {x: 55, y: 55}
+  m_AnchoredPosition: {x: 127.8, y: 0}
+  m_SizeDelta: {x: 70, y: 70}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &105844719
 MonoBehaviour:
@@ -252,7 +252,7 @@ MonoBehaviour:
   m_CharacterValidation: 0
   m_RegexValue: 
   m_GlobalPointSize: 40.09
-  m_CharacterLimit: 0
+  m_CharacterLimit: 9
   m_OnEndEdit:
     m_PersistentCalls:
       m_Calls: []
@@ -280,7 +280,7 @@ MonoBehaviour:
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.7311321, g: 0.8485686, b: 1, a: 0.7529412}
-  m_Text: Fallguy01
+  m_Text: Beanguy01
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
   m_ReadOnly: 0
@@ -317,7 +317,7 @@ MonoBehaviour:
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
-  m_FillAmount: 1
+  m_FillAmount: 0.804
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
@@ -362,10 +362,13 @@ MonoBehaviour:
   countDownUI: {fileID: 0}
   qualifiedTxt: {fileID: 0}
   exitUI: {fileID: 258642342}
+  qualifiedUI: {fileID: 0}
+  unqualifiedUI: {fileID: 0}
   moveObjs: []
   moveWaitObjs: []
   swingObjs: []
-  rotatingObjs: []
+  blades: {fileID: 0}
+  spinObjs: []
   spawnPoints: []
   camera: {fileID: 0}
   debug: 0
@@ -832,7 +835,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -135.8, y: 4.3}
+  m_AnchoredPosition: {x: -205, y: 4.3}
   m_SizeDelta: {x: 146.10005, y: -13}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &339491471
@@ -2212,7 +2215,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Fallguy01\u200B"
+  m_text: "Beanguy01\u200B"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8cb162572400abb4c9f6f376a06eb875, type: 2}
   m_sharedMaterial: {fileID: 2756343398992585237, guid: 8cb162572400abb4c9f6f376a06eb875, type: 2}
@@ -3027,7 +3030,7 @@ PrefabInstance:
     - target: {fileID: 7803773044572950641, guid: ab82005eee36f7a4e86dc2242abdc560, type: 3}
       propertyPath: player
       value: 
-      objectReference: {fileID: 6579526926383179819, guid: b4de234d05774fe4d8b34e84199c875f, type: 3}
+      objectReference: {fileID: 8079707619113797751, guid: f5a855fd25148684580661d32f4519c1, type: 3}
     - target: {fileID: 7803773044572950641, guid: ab82005eee36f7a4e86dc2242abdc560, type: 3}
       propertyPath: myId
       value: 10

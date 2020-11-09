@@ -18,10 +18,12 @@ public class RagdollController : MonoBehaviour
     [Header("Ragdoll Settings")]
     [SerializeField]
     public RagdollState state;
+    public LayerMask collisionMask;
     private float canRecover;
     public float recoverTime;
     public float maxForce;
     public float impactForce;
+    private Vector3 hitPoint;
 
     //Time transitioning from ragdolled to animated
     public float ragdollToMecanimBlendTime = 0.5f;
@@ -61,10 +63,10 @@ public class RagdollController : MonoBehaviour
     {
         canRecover += Time.deltaTime;
 
-        if (Input.GetKeyDown(KeyCode.Z) && state == RagdollState.Animated)
+        /*if (Input.GetKeyDown(KeyCode.Z) && state == RagdollState.Animated)
         {
             RagdollIn();
-        }
+        }*/
 
         //Debug.Log("pelvis velocity:" + pelvis.velocity.magnitude);
 
@@ -129,16 +131,16 @@ public class RagdollController : MonoBehaviour
                 Vector3 animatedToRagdolled = ragdolledHipPosition - animator.GetBoneTransform(HumanBodyBones.Hips).position;
                 Vector3 newRootPosition = transform.position + animatedToRagdolled;
 
-                //Now cast a ray from the computed position downwards and find the highest hit that does not belong to the character 
-                RaycastHit[] hits = Physics.RaycastAll(new Ray(newRootPosition, Vector3.down));
+                //Now cast a ray from the computed position downwards and find the highest hit that does not belong to the character
+                RaycastHit hit;
+                Physics.Raycast(pelvis.position, Vector3.down, out hit, 1f, collisionMask);
                 newRootPosition.y = 0;
-                foreach (RaycastHit hit in hits)
+                if (hit.collider)
                 {
-                    if (!hit.transform.IsChildOf(transform))
-                    {
-                        newRootPosition.y = Mathf.Max(newRootPosition.y, hit.point.y);
-                    }
+                    newRootPosition.y = hit.point.y;
                 }
+                Debug.Log(newRootPosition);
+                hitPoint = newRootPosition;
                 transform.position = newRootPosition;
 
                 //CALCULATE ROTATION
@@ -210,6 +212,11 @@ public class RagdollController : MonoBehaviour
         animator.SetBool("isDiving", false);
     }
 
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawSphere(hitPoint, 1f);
+    }
 }
 
 public enum RagdollState

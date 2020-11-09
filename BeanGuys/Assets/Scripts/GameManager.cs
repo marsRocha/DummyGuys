@@ -86,8 +86,8 @@ public class GameManager : MonoBehaviour
         p.GetComponent<PlayerController>().camera = sceneManager.camera;
         playerObj = p;
         sceneManager.camera.GetComponent<PlayerCamera>().enabled = true;
-        //sceneManager.camera.GetComponent<PlayerCamera>().Player = p.transform;
-        //sceneManager.camera.GetComponent<PlayerCamera>().Ragdoll = p.pelvis;
+        sceneManager.camera.GetComponent<PlayerCamera>().player = p.transform;
+        sceneManager.camera.GetComponent<PlayerCamera>().ragdoll = p.GetComponent<PlayerController>().pelvis;
         totalPlayers++;
         UpdateQualified();
     }
@@ -110,15 +110,13 @@ public class GameManager : MonoBehaviour
     //receber mensagem do servidor para atualizar isto
     public void UpdateQualified()
     {
-        //qualifiedPlayers++;
+        qualifiedPlayers++;
+        sceneManager.UpdateQualified(qualifiedPlayers, totalPlayers);
+    }
 
-        if(qualifiedPlayers >= totalPlayers)
-        {
-            //finish game
-        }
-        else //only update UI
-        {
-            sceneManager.UpdateQualified(qualifiedPlayers, totalPlayers);
-        }
+    public void FinishRaceForPlayer()
+    {
+        UpdateQualified();
+        sceneManager.FinishRaceForPlayer();
     }
 }
