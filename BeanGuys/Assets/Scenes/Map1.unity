@@ -797,7 +797,7 @@ MonoBehaviour:
   - {x: 15.48, y: 0, z: -7.74}
   - {x: 18.06, y: 0, z: -7.74}
   camera: {fileID: 963194228}
-  debug: 1
+  debug: 0
   player: {fileID: 8079707619113797751, guid: f5a855fd25148684580661d32f4519c1, type: 3}
 --- !u!4 &1178525232
 Transform:
