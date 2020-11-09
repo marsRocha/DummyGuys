@@ -41,7 +41,6 @@ public class MoveWait : MonoBehaviour
     {
         if (isRunning)
         {
-            Debug.Log("Oioio2");
             if (move)
             {
                 if (rb.isKinematic)

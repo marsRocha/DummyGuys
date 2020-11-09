@@ -4,113 +4,224 @@ using UnityEngine;
 
 public class RagdollController : MonoBehaviour
 {
-    Rigidbody[] ragdollRbs;
-    Collider[] ragdollCols;
-    [SerializeField]
-    Transform[] ragdollRs;
+    [Header("Components")]
+    private PlayerController playerController;
+    private Animator animator;
+    private CapsuleCollider cp;
+    public Rigidbody pelvis;
 
-    public CapsuleCollider cp;
-    public Animator animator;
-    public PlayerController playerController;
+    [Header("Ragdoll components")]
+    private Rigidbody[] ragdollRbs;
+    private Collider[] ragdollCols;
+    private List<BodyPart> bodyParts;
 
-    [Header("Settings")]
+    [Header("Ragdoll Settings")]
     [SerializeField]
-    private float sensitiveForce;
-    [SerializeField]
-    private float ragdollTime;
-    [SerializeField]
-    private float lerpSpeed;
-    [SerializeField]
-    private float transitionStartTime = 2f;
-    [SerializeField]
-    private float transitionDuration = 4f;
+    public RagdollState state;
+    private float canRecover;
+    public float recoverTime;
+    public float maxForce;
+    public float impactForce;
 
-    private bool ragdollActive = false;
-    public Transform ragdollCenter;
+    //Time transitioning from ragdolled to animated
+    public float ragdollToMecanimBlendTime = 0.5f;
+    public float mecanimToGetUpTransitionTime = 0.05f;
+
+    //A helper variable to store the time when we transitioned from ragdolled to blendToAnim state
+    float ragdollingEndTime = -100;
+
+    //Additional vectores for storing the pose the ragdoll ended up in.
+    Vector3 ragdolledHipPosition, ragdolledHeadPosition, ragdolledFeetPosition;
 
 
-    // Start is called before the first frame update
     void Start()
     {
+        playerController = GetComponent<PlayerController>();
+        animator = GetComponent<Animator>();
+        cp = GetComponent<CapsuleCollider>();
+
         ragdollRbs = this.gameObject.GetComponentsInChildren<Rigidbody>();
         ragdollCols = this.gameObject.GetComponentsInChildren<Collider>();
-        DeactivateRagdoll();
+        bodyParts = new List<BodyPart>();
+
+        state = RagdollState.Animated;
+        canRecover = 0.0f;
+        ActivateRagdollComponents(false);
+
+        //For each of the transforms, create a BodyPart instance and store the transform 
+        foreach (Transform t in GetComponentsInChildren(typeof(Transform)))
+        {
+            BodyPart bodyPart = new BodyPart();
+            bodyPart.transform = t;
+            bodyParts.Add(bodyPart);
+        }
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if (Input.GetKey(KeyCode.Z))
+        canRecover += Time.deltaTime;
+
+        if (Input.GetKeyDown(KeyCode.Z) && state == RagdollState.Animated)
         {
-            ActivateRagdoll();
+            RagdollIn();
         }
-        if (Input.GetKey(KeyCode.X))
+
+        //Debug.Log("pelvis velocity:" + pelvis.velocity.magnitude);
+
+        if (state == RagdollState.Ragdolled && canRecover > recoverTime //&& playerController.grounded
+            && pelvis.velocity.magnitude < 0.1f)
         {
-            DeactivateRagdoll();
+            RagdollOut();
+        }
+
+        //verify this on collision
+        /*if (state == RagdollState.Animated && onAirTime > 3f)
+            RagdollIn();*/
+    }
+
+    public void RagdollIn()
+    {
+        Debug.Log("RagdollIn");
+        canRecover = 0.0f;
+        state = RagdollState.Ragdolled;
+        ActivateRagdollComponents(true);
+
+        foreach (BodyPart b in bodyParts)
+        {
+            b.storedRotation = b.transform.rotation;
+            b.storedPosition = b.transform.position;
         }
     }
 
-    public void ActivateRagdoll()
+    private void RagdollOut()
     {
-        ragdollActive = true;
-        cp.isTrigger = true;
-        this.GetComponent<Rigidbody>().isKinematic = true;
-
+        Debug.Log("RagdollOut");
+        state = RagdollState.BlendToAnim;
+        ActivateRagdollComponents(false);
         playerController.enabled = false;
-        animator.enabled = false;
-
-        for (int i = 1; i < ragdollRbs.Length; i++)
-            ragdollRbs[i].isKinematic = false;
-
-        for (int i = 1; i < ragdollCols.Length; i++)
-            ragdollCols[i].enabled = true;
-
-        StartCoroutine(DeactivateRagdoll(ragdollTime));
+        GetUp();
     }
 
-    private void DeactivateRagdoll()
+    private void GetUp()
     {
-        ragdollActive = false;
+        ragdollingEndTime = Time.time;//store the state change time
 
-        cp.isTrigger = false;
-        this.GetComponent<Rigidbody>().isKinematic = false;
-
-        for (int i = 1; i < ragdollRbs.Length; i++)
-            ragdollRbs[i].isKinematic = true;
-        for (int i = 1; i < ragdollCols.Length; i++)
-            ragdollCols[i].enabled = false;
-
-        animator.enabled = true;
-        playerController.enabled = true;
-    }
-
-    private IEnumerator DeactivateRagdoll(float time)
-    {
-        yield return new WaitForSecondsRealtime(time);
-
-        //not working
-        foreach( Rigidbody r in ragdollRbs)
+        //Store the ragdolled position for blending
+        foreach (BodyPart b in bodyParts)
         {
-            foreach (Transform t in ragdollRs)
+            b.storedRotation = b.transform.rotation;
+            b.storedPosition = b.transform.position;
+        }
+
+        //KeyBone positions to calculate new position
+        ragdolledFeetPosition = 0.5f * (animator.GetBoneTransform(HumanBodyBones.LeftToes).position + animator.GetBoneTransform(HumanBodyBones.RightToes).position);
+        ragdolledHeadPosition = animator.GetBoneTransform(HumanBodyBones.Head).position;
+        ragdolledHipPosition = animator.GetBoneTransform(HumanBodyBones.Hips).position;
+    }
+
+    void LateUpdate()
+    {
+        if (state == RagdollState.BlendToAnim)
+        {
+            if (Time.time <= ragdollingEndTime + mecanimToGetUpTransitionTime)
             {
-                Quaternion animationRotation = r.transform.localRotation;
-                float lerp = 1 - Mathf.Clamp01((Time.time - transitionStartTime) / transitionDuration);
-                r.transform.localRotation = Quaternion.Lerp(animationRotation, r.rotation, lerp);
+                //CALCULTATE POSITION
+                Vector3 animatedToRagdolled = ragdolledHipPosition - animator.GetBoneTransform(HumanBodyBones.Hips).position;
+                Vector3 newRootPosition = transform.position + animatedToRagdolled;
+
+                //Now cast a ray from the computed position downwards and find the highest hit that does not belong to the character 
+                RaycastHit[] hits = Physics.RaycastAll(new Ray(newRootPosition, Vector3.down));
+                newRootPosition.y = 0;
+                foreach (RaycastHit hit in hits)
+                {
+                    if (!hit.transform.IsChildOf(transform))
+                    {
+                        newRootPosition.y = Mathf.Max(newRootPosition.y, hit.point.y);
+                    }
+                }
+                transform.position = newRootPosition;
+
+                //CALCULATE ROTATION
+                //Get body orientation in ground plane for both the ragdolled pose and the animated get up pose
+                Vector3 ragdolledDirection = ragdolledHeadPosition - ragdolledFeetPosition;
+                ragdolledDirection.y = 0;
+
+                Vector3 meanFeetPosition = 0.5f * (animator.GetBoneTransform(HumanBodyBones.LeftFoot).position + animator.GetBoneTransform(HumanBodyBones.RightFoot).position);
+                Vector3 animatedDirection = animator.GetBoneTransform(HumanBodyBones.Head).position - meanFeetPosition;
+                animatedDirection.y = 0;
+
+                transform.rotation *= Quaternion.FromToRotation(animatedDirection.normalized, ragdolledDirection.normalized);
+            }
+            //compute the ragdoll blend amount in the range 0...1
+            float ragdollBlendAmount = 1.0f - (Time.time - ragdollingEndTime - mecanimToGetUpTransitionTime) / ragdollToMecanimBlendTime;
+            ragdollBlendAmount = Mathf.Clamp01(ragdollBlendAmount);
+
+            //In LateUpdate(), Mecanim has already updated the body pose according to the animations. 
+            //To enable smooth transitioning from a ragdoll to animation, we lerp the position of the hips 
+            //and slerp all the rotations towards the ones stored when ending the ragdolling
+            foreach (BodyPart b in bodyParts)
+            {
+                if (b.transform != transform)
+                { //this if is to prevent us from modifying the root of the character, only the actual body parts
+                  //position is only interpolated for the hips
+                    if (b.transform == animator.GetBoneTransform(HumanBodyBones.Hips))
+                        b.transform.position = Vector3.Lerp(b.transform.position, b.storedPosition, ragdollBlendAmount);
+                    //rotation is interpolated for all body parts
+                    b.transform.rotation = Quaternion.Slerp(b.transform.rotation, b.storedRotation, ragdollBlendAmount);
+                }
+            }
+
+            //if the ragdoll blend amount has decreased to zero, move to animated state
+            if (ragdollBlendAmount == 0)
+            {
+                state = RagdollState.Animated;
+                playerController.enabled = true;
             }
         }
-        DeactivateRagdoll();
     }
 
-    private void OnCollisionEnter(Collision collision)
+    private void ActivateRagdollComponents(bool activate)
     {
-        /*Debug.Log("collision: " + collision.relativeVelocity.magnitude);
-        if (collision.relativeVelocity.magnitude > sensitiveForce && transform.InverseTransformPoint(collision.contacts[0].point).y > 0.164f)
-        {
-            ActivateRagdoll();
-        }
-        else if (collision.gameObject.layer == LayerMask.NameToLayer("RotatingCylinder"))
-        {
-            //playerController.AddExplodingForce();
-        }*/
+        Vector3 playerSpeed = this.GetComponent<Rigidbody>().velocity;
+
+        cp.isTrigger = activate;
+        this.GetComponent<Rigidbody>().isKinematic = activate;
+
+        playerController.camera.GetComponent<PlayerCamera>().followRagdoll = activate;
+        playerController.enabled = !activate;
+
+        if (activate)
+            ResetAnimations();
+        animator.enabled = !activate;
+
+        for (int i = 1; i < ragdollRbs.Length; i++)
+            ragdollRbs[i].isKinematic = !activate;
+        for (int i = 1; i < ragdollCols.Length; i++)
+            ragdollCols[i].enabled = activate;
+
+        if (activate)
+            pelvis.velocity = playerSpeed * 4f;
     }
+
+    private void ResetAnimations()
+    {
+        animator.SetBool("isRunning", false);
+        animator.SetBool("isJumping", false);
+        animator.SetBool("isDiving", false);
+    }
+
+}
+
+public enum RagdollState
+{
+    Animated,    //Mecanim is fully in control
+    Ragdolled,   //Mecanim turned off, physics controls the ragdoll
+    BlendToAnim  //Mecanim in control, but LateUpdate() is used to partially blend in the last ragdolled pose
+}
+
+public class BodyPart
+{
+    public Transform transform;
+    public Vector3 storedPosition;
+    public Quaternion storedRotation;
 }

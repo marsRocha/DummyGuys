@@ -15,7 +15,8 @@ public class CSceneManager : MonoBehaviour
     public Moving[] moveObjs;
     public MoveWait[] moveWaitObjs;
     public Swing[] swingObjs;
-    public RotatingCylinder[] rotatingObjs;
+    public RotatingCylinder blades;
+    public Spinning[] spinObjs;
 
     [Header("Players Stuff")]
     [SerializeField]
@@ -66,8 +67,10 @@ public class CSceneManager : MonoBehaviour
         foreach (Swing s in swingObjs)
             s.isRunning = true;
 
-        foreach (RotatingCylinder r in rotatingObjs)
-            r.isRunning = true;
+        blades.isRunning = true;
+
+        foreach (Spinning s in spinObjs)
+            s.isRunning = true;
     }
 
     public void ActivateExitMenu()

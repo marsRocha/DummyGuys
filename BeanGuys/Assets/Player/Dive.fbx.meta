@@ -1,11 +1,11 @@
 fileFormatVersion: 2
-guid: 8690f7ccedcbc4e42a52d65908b43f53
+guid: b0c274d86fcd21f4f9cabeea3546d8db
 ModelImporter:
   serializedVersion: 20101
   internalIDToNameTable:
   - first:
       74: -203655887218126122
-    second: dive
+    second: Dive
   externalObjects: {}
   materials:
     materialImportMode: 1
@@ -35,11 +35,11 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: dive
+      name: Dive
       takeName: mixamo.com
       internalID: 0
-      firstFrame: 0
-      lastFrame: 135
+      firstFrame: 17
+      lastFrame: 18
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -47,10 +47,10 @@ ModelImporter:
       loop: 0
       hasAdditiveReferencePose: 0
       loopTime: 0
-      loopBlend: 0
+      loopBlend: 1
       loopBlendOrientation: 0
       loopBlendPositionY: 1
-      loopBlendPositionXZ: 0
+      loopBlendPositionXZ: 1
       keepOriginalOrientation: 0
       keepOriginalPositionY: 1
       keepOriginalPositionXZ: 0
@@ -286,19 +286,19 @@ ModelImporter:
         length: 0
         modified: 0
     skeleton:
-    - name: Dive(Clone)
+    - name: Idle(Clone)
       parentName: 
       position: {x: 0, y: 0, z: 0}
-      rotation: {x: -0.6450716, y: 0.05547802, z: 0.026117157, w: 0.7616579}
+      rotation: {x: -0.032921884, y: -0.032302536, z: -0.0022892298, w: 0.9989332}
       scale: {x: 1, y: 1, z: 1}
     - name: Bip001
-      parentName: Dive(Clone)
-      position: {x: -0.017348059, y: 0.7230765, z: -0.12253329}
-      rotation: {x: -0.07270982, y: 0.043316644, z: 0.66259706, w: 0.74417883}
+      parentName: Idle(Clone)
+      position: {x: 0.000218943, y: 0.6496501, z: -0.002214907}
+      rotation: {x: -0.46778616, y: 0.49781445, z: 0.5334102, w: 0.49882907}
       scale: {x: 1, y: 1, z: 1}
     - name: Bip001 Pelvis
       parentName: Bip001
-      position: {x: -0.72554165, y: -0.10396367, z: 0.6853528}
+      position: {x: 0.000029283634, y: 0, z: 0.036796477}
       rotation: {x: 0.5, y: -0.5, z: -0.5, w: -0.5}
       scale: {x: 1, y: 1, z: 1}
     - name: Bip001 Spine
