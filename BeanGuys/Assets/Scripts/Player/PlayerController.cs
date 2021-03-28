@@ -5,6 +5,16 @@ using UnityEngine.UIElements;
 
 public class PlayerController : MonoBehaviour
 {
+    [Header("Components")]
+    public Transform camera;
+    public Transform pelvis;
+    private CapsuleCollider cp;
+    private Rigidbody rb;
+    private Animator anim;
+    private RagdollController ragdollController;
+    [System.NonSerialized]
+    public PlayerInput pInput;
+
     [Header("Movement Variables")]
     public float gravityForce;
     public float moveSpeed, turnSpeed;
@@ -12,6 +22,7 @@ public class PlayerController : MonoBehaviour
     public float diveForwardForce, diveUpForce, diveCooldown;
     public float dashforce, dashTime;
     private Vector3 move;
+    private Inputs currentInput;
 
     [Header("Collision Variables")]
     public float checkDistance;
@@ -21,10 +32,6 @@ public class PlayerController : MonoBehaviour
     private Vector3 colDir;
     private Vector3 groundNormal;
     private float onAirTime;
-
-    //Inputs
-    private float x, y;
-    private bool jump, dive;
 
     [Header("States")]
     public bool grounded;
@@ -36,14 +43,6 @@ public class PlayerController : MonoBehaviour
     private bool readyToJump = true, readyToDive = true;
     private bool dashTriggered;
 
-    [Header("Components")]
-    public Transform camera;
-    public Transform pelvis;
-    private CapsuleCollider cp;
-    private Rigidbody rb;
-    private Animator anim;
-    private RagdollController ragdollController;
-
     [Header("Particle Systems")]
     public ParticleSystem jumpPs;
     public ParticleSystem bumpPs;
@@ -52,30 +51,39 @@ public class PlayerController : MonoBehaviour
     public bool debug;
 
     // Start is called before the first frame update
-    void Start()
+    public void StartController(bool controlable)
     {
         move = new Vector3();
         cp = GetComponent<CapsuleCollider>();
         rb = GetComponent<Rigidbody>();
         anim = GetComponent<Animator>();
         ragdollController = GetComponent<RagdollController>();
+        camera = GameObject.Find("Main Camera").transform;
+
+        if (controlable)
+        {
+            pInput = GetComponent<PlayerInput>();
+            pInput.controllable = controlable;
+        }
     }
 
     // Update is called once per frame
-    void Update()
+    public void UpdateController()
     {
-        GroundChecking();
-
         if (!ragdolled && !getUp && isRunning)
         {
-            MovementInput();
+            pInput.MovementInput();
             if (!grounded)
                 onAirTime += Time.deltaTime;
         }
     }
 
-    private void FixedUpdate()
+    public void FixedUpdateController(Inputs currentInput)
     {
+        this.currentInput = currentInput;
+
+        GroundChecking();
+
         //Extra gravity
         rb.AddForce(Vector3.down * gravityForce * Time.fixedDeltaTime);
 
@@ -86,16 +94,6 @@ public class PlayerController : MonoBehaviour
     }
 
     #region Movement
-    private void MovementInput()
-    {
-        //Walk
-        x = Input.GetAxis("Horizontal");
-        y = Input.GetAxis("Vertical");
-        //Jump
-        jump = Input.GetKey(KeyCode.Space);
-        dive = Input.GetKey(KeyCode.E);
-    }
-
     private Vector3 ToCameraSpace(Vector3 moveVector)
     {
         Vector3 camFoward = camera.forward.normalized;
@@ -143,7 +141,7 @@ public class PlayerController : MonoBehaviour
     {
         if (!diving && !dashing)
         {
-            move = new Vector3(x, 0f, y);
+            move = new Vector3(currentInput.x, 0f, currentInput.y);
 
             if (move.sqrMagnitude > 0.1f)
             {
@@ -175,9 +173,9 @@ public class PlayerController : MonoBehaviour
 
     private void Jump()
     {
-        if (jump && !jumping && grounded && !dashing && readyToJump)
+        if (currentInput.jump && !jumping && grounded && !dashing && readyToJump)
         {
-            Debug.Log("Jump");
+            //Debug.Log("Jump");
             readyToJump = false;
             rb.AddForce(Vector3.up * -rb.velocity.y, ForceMode.VelocityChange);//in case of slopes
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
@@ -194,7 +192,7 @@ public class PlayerController : MonoBehaviour
 
     private void Dive()
     {
-        if (dive && !diving && (grounded || jumping) && !dashing && readyToDive)
+        if (currentInput.dive && !diving && (grounded || jumping) && !dashing && readyToDive)
         {
             readyToDive = false;
             //Debug.Log("DIVE");

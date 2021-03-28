@@ -4,17 +4,27 @@ using UnityEngine;
 
 public class Spinning : MonoBehaviour
 {
+    private MapController mapController;
+
     public HingeJoint hinge;
-    public bool isRunning = false;
     private bool started = false;
 
-    // Update is called once per frame
+    private void Start()
+    {
+        mapController = GameObject.Find("MapController").GetComponent<MapController>();
+    }
+
     void Update()
     {
-        if(isRunning && !started)
+        if(mapController.isRunning && !started)
         {
             hinge.useMotor = true;
             started = true;
+        }
+        else if (started && mapController.isRunning)
+        {
+            hinge.useMotor = false;
+            started = false;
         }
     }
 }

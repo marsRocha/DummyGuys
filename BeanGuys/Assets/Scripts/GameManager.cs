@@ -9,20 +9,15 @@ public class GameManager : MonoBehaviour
     public static GameManager instance = null;
     [SerializeField]
     private CSceneManager sceneManager;
+    [SerializeField]
+    private MapController mapController;
 
-    public GameObject player, localPlayer;
-    private GameObject playerObj;
-    //network id
-    public int myId;
-
-    private int qualifiedPlayers;
-    private int totalPlayers;
-
+    public static GameObject RemotePlayerObj, LocalPlayerObj;
 
     [Header("States")]
     public bool isRunning;
 
-
+    #region Singleton
     private void Awake()
     {
 
@@ -36,13 +31,12 @@ public class GameManager : MonoBehaviour
         }
         DontDestroyOnLoad(this.gameObject);
     }
+    #endregion
 
     // Start is called before the first frame update
     private void Start()
     {
         isRunning = false;
-        qualifiedPlayers = 0;
-        totalPlayers = 0;
     }
 
     private void Update()
@@ -75,48 +69,36 @@ public class GameManager : MonoBehaviour
         sceneManager = GameObject.Find("SceneManager").GetComponent<CSceneManager>();
         if (level != 0) // not mainmenu
         {
-            SpawnPlayer();
+            mapController.SpawnLocalPlayer();
             sceneManager.StartCountDown();
         }
     }
 
-    public void SpawnPlayer()
+    public void SpawnRemotePlayer(int peerID, string username)
     {
-        GameObject p = GameObject.Instantiate(player, sceneManager.spawnPoints[myId], Quaternion.identity);
-        p.GetComponent<PlayerController>().camera = sceneManager.camera;
-        playerObj = p;
-        sceneManager.camera.GetComponent<PlayerCamera>().enabled = true;
-        sceneManager.camera.GetComponent<PlayerCamera>().player = p.transform;
-        sceneManager.camera.GetComponent<PlayerCamera>().ragdoll = p.GetComponent<PlayerController>().pelvis;
-        totalPlayers++;
-        UpdateQualified();
-    }
-
-    public void SpawnLocalPlayer(int id)
-    {
-        Instantiate(localPlayer, sceneManager.spawnPoints[id], Quaternion.identity);
-        totalPlayers++;
-        UpdateQualified();
+        mapController.SpawnRemotePlayer(peerID, username);
     }
 
     //quando tiver multiplayer é melhor mandar mensagem para o servidor e depois se estiver correto entao começar o jogo
     public void StartGame()
     {
-        sceneManager.ActivateScene();
-        playerObj.GetComponent<PlayerController>().isRunning = true;
-        isRunning = true;
+        mapController.StartRace();
     }
 
     //receber mensagem do servidor para atualizar isto
     public void UpdateQualified()
     {
-        qualifiedPlayers++;
-        sceneManager.UpdateQualified(qualifiedPlayers, totalPlayers);
+        mapController.UpdateQualified();
     }
 
     public void FinishRaceForPlayer()
     {
         UpdateQualified();
         sceneManager.FinishRaceForPlayer();
+    }
+
+    public void AddInputMessage(int peerID, int x, int y, bool jump, bool dive, int tick_number)
+    {
+        mapController.players[peerID].AddInputMessage( x, y, jump, dive, tick_number);
     }
 }

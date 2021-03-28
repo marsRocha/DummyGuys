@@ -6,6 +6,10 @@ using UnityEngine;
 
 public class CSceneManager : MonoBehaviour
 {
+    public static CSceneManager instance;
+
+    public int tick_number { get; private set; } = 0;
+
     [Header("UI stuff")]
     public CountDown countDownUI;
     public TextMeshProUGUI qualifiedTxt;
@@ -29,6 +33,21 @@ public class CSceneManager : MonoBehaviour
     public bool debug;
     public GameObject player;
     private GameObject playerObj;
+
+    #region Singleton
+    private void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+        }
+        else if (instance != this)
+        {
+            Destroy(this);
+        }
+    }
+    #endregion
+
 
     private void Start()
     {
@@ -71,8 +90,8 @@ public class CSceneManager : MonoBehaviour
 
         blades.isRunning = true;
 
-        foreach (Spinning s in spinObjs)
-            s.isRunning = true;
+        /*foreach (Spinning s in spinObjs)
+            s.isRunning = true;*/
     }
 
     public void ActivateExitMenu()

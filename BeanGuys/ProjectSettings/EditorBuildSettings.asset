@@ -5,10 +5,10 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/MainMenu.unity
     guid: 3d42d14e96b051a4c9f681d395502060
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Map1.unity
     guid: 56ff4d1990d43a443bdd6bb547a247cc
   - enabled: 0
@@ -17,4 +17,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/TestMap.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
+  - enabled: 1
+    path: Assets/Scenes/Multiplayer_Start.unity
+    guid: 59e837638717e304cb82504d65b3c4b0
   m_configObjects: {}

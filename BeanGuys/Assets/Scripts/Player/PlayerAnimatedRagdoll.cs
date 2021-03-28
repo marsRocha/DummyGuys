@@ -12,7 +12,7 @@ public class PlayerAnimatedRagdoll : MonoBehaviour
 
     [Header("Ragdoll Settings")]
     [SerializeField]
-    RagdollState state;
+    public RagdollState state;
     public bool ragdollActive;
     private float canRecover;
     public float recoverTime;
