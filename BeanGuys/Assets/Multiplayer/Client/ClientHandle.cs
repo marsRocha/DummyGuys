@@ -45,8 +45,8 @@ public class ClientHandle : MonoBehaviour
         ClientSend.WelcomeReceived(peerID);
 
         //Initiate udp connection
-        //Client.peers[peerID].udp.Connect(((IPEndPoint)Client.peers[peerID].tcp.socket.Client.LocalEndPoint).Address, ((IPEndPoint)Client.peers[peerID].tcp.socket.Client.LocalEndPoint).Port);
-        Client.peers[peerID].udp.Connect(((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint));
+        //This is a problem as peers have "..0.2+" but since testing on the same network it does not work like that
+        Client.peers[peerID].udp.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), ((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint).Port));
 
         //TODO: Instantiate player in the world
         GameManager.instance.SpawnRemotePlayer(peerID, "legend27");

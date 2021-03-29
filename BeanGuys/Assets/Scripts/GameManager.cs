@@ -12,7 +12,8 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private MapController mapController;
 
-    public static GameObject RemotePlayerObj, LocalPlayerObj;
+    //REMOVE THIS FROM HERE LATER ON
+    public GameObject RemotePlayerObj, LocalPlayerObj;
 
     [Header("States")]
     public bool isRunning;

@@ -5,7 +5,7 @@ using UnityEngine;
 public class MapController : MonoBehaviour
 {
     public Dictionary<int, RemotePlayerManager> players;
-    public PlayerManager localPlayer;
+    public PlayerManager localPlayer; // { get; private set;} = null;
 
     //Controls game
     public float Game_Clock { get; private set; } = 0;
@@ -57,7 +57,7 @@ public class MapController : MonoBehaviour
 
     public void SpawnLocalPlayer()
     {
-        GameObject p = GameObject.Instantiate(GameManager.LocalPlayerObj, Vector3.zero, Quaternion.identity); //sceneManager.spawnPoints[myId]
+        GameObject p = GameObject.Instantiate(GameManager.instance.LocalPlayerObj, Vector3.zero, Quaternion.identity); //sceneManager.spawnPoints[myId]
         p.GetComponent<PlayerController>().camera = camera;
 
         localPlayer = p.GetComponent<PlayerManager>();
@@ -71,7 +71,7 @@ public class MapController : MonoBehaviour
 
     public void SpawnRemotePlayer(int id, string username)
     {
-        GameObject p = Instantiate(GameManager.RemotePlayerObj, new Vector3(-2.6f, 0.0f, -5.2f), Quaternion.identity);
+        GameObject p = Instantiate(GameManager.instance.RemotePlayerObj, new Vector3(-2.6f, 0.0f, -5.2f), Quaternion.identity);
         players.Add(id, p.GetComponent<RemotePlayerManager>());
 
         totalPlayers++;

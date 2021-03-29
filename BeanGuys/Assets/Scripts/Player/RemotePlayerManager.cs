@@ -29,6 +29,7 @@ public class RemotePlayerManager : MonoBehaviour
         //Only for now, change later to false
         isRunning = true;
         pController.StartController(false);
+        Debug.Log("Remote player initiated");
     }
 
 
@@ -56,6 +57,7 @@ public class RemotePlayerManager : MonoBehaviour
     //Add inputs received to the queue
     public void AddInputMessage(int x, int y, bool jump, bool dive, int tick_number)
     {
+        Debug.Log("added input");
         InputMessage input_msg = new InputMessage(x, y, jump, dive, tick_number);
         inputMessage.Enqueue(input_msg);
     }

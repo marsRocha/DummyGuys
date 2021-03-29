@@ -111,41 +111,35 @@ public class Client : MonoBehaviour
             IPEndPoint clientEndPoint = new IPEndPoint(IPAddress.Parse(MyIP), MyPort);
             byte[] data = udpListener.EndReceive(result, ref clientEndPoint);
             udpListener.BeginReceive(UDPReceiveCallback, null);
-            Debug.Log("1");
 
             if (data.Length < 4)
-            {
-                Debug.Log("<4");
                 return;
-            }
 
             using (Packet packet = new Packet(data))
             {
                 int clientId = packet.ReadInt();
 
                 if (clientId == 0)
+                    return;
+
+                Debug.Log($"UDP from ip:{clientEndPoint.Address}, port:{clientEndPoint.Port}");
+                if (peers[1].udp.endPoint == null)
                 {
-                    Debug.Log("clientId == 0");
+                    Debug.Log($"UDP connected");
+                    peers[1].udp.Connect(clientEndPoint);
                     return;
                 }
 
-                if (peers[0].udp.endPoint == null)
-                {
-                    Debug.Log("UDP connected");
-                    //Client.peers[clientId].udp.Connect(((IPEndPoint)Client.peers[clientId].tcp.socket.Client.LocalEndPoint).Address,((IPEndPoint)Client.peers[clientId].tcp.socket.Client.LocalEndPoint).Port);
-                    Client.peers[0].udp.Connect(((IPEndPoint)Client.peers[0].tcp.socket.Client.LocalEndPoint));
-                    return;
-                }
-
+                Debug.Log($"client Endpoint:{clientEndPoint}, udpEndPoint:{peers[1].udp.endPoint}");
                 //verifiy if the endpoint corresponds to the endpoint that sent the data
                 //this is for security reasons otherwise hackers could inpersonate other clients by send a clientId that does not corresponds to them
                 //without the string conversion even if the endpoint matched it returned false
-                if (peers[0].udp.endPoint.Equals(clientEndPoint))
+                if (peers[1].udp.endPoint.Equals(clientEndPoint))
                 {
                     Debug.Log($"Handle data, peerID:{clientId}");
 
                     //peers[clientId].udp.HandleData(data);
-                    peers[0].udp.HandleData(packet);
+                    peers[1].udp.HandleData(packet);
                 }
                 Debug.Log("4");
             }
