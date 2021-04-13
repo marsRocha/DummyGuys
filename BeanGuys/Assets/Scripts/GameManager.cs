@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,6 +12,11 @@ public class GameManager : MonoBehaviour
     private CSceneManager sceneManager;
     [SerializeField]
     private MapController mapController;
+
+
+    //TODO: FOR NOW STAYS HERE
+    public TMP_Text playersCount;
+    public int totalPlayers = 0;
 
     //REMOVE THIS FROM HERE LATER ON
     public GameObject RemotePlayerObj, LocalPlayerObj;
@@ -43,9 +49,16 @@ public class GameManager : MonoBehaviour
     private void Update()
     {
         //detetar pausar ou sair do jogo
-        if (Input.GetKeyDown(KeyCode.Escape))
+        /*if (Input.GetKeyDown(KeyCode.Escape))
         {
             sceneManager.ActivateExitMenu();
+        }*/
+
+        //FOR DEBUG PURPOSES
+        if (Input.GetKeyDown(KeyCode.O))
+        {
+            ClientSend.StartGame();
+            StartGameDebug();
         }
     }
 
@@ -70,14 +83,31 @@ public class GameManager : MonoBehaviour
         sceneManager = GameObject.Find("SceneManager").GetComponent<CSceneManager>();
         if (level != 0) // not mainmenu
         {
-            mapController.SpawnLocalPlayer();
             sceneManager.StartCountDown();
         }
     }
 
-    public void SpawnRemotePlayer(int peerID, string username)
+    public void UpdatePlayerCount()
     {
-        mapController.SpawnRemotePlayer(peerID, username);
+        totalPlayers++;
+        playersCount.text = $"{totalPlayers}/60 Players";
+    }
+
+    public void SpawnRemotePlayers()
+    {
+        foreach(Peer peer in Client.peers.Values)
+        {
+            if(peer.tcp.socket != null)
+                mapController.SpawnRemotePlayer(peer.id, peer.username);
+        }
+    }
+
+    //DEBUG, simulate changing scene and spawn all players
+    public void StartGameDebug()
+    {
+        Debug.Log("Start Game");
+        playersCount.transform.root.gameObject.SetActive(false);
+        mapController.Initialize();
     }
 
     //quando tiver multiplayer é melhor mandar mensagem para o servidor e depois se estiver correto entao começar o jogo
@@ -86,20 +116,33 @@ public class GameManager : MonoBehaviour
         mapController.StartRace();
     }
 
-    //receber mensagem do servidor para atualizar isto
-    public void UpdateQualified()
+    public void PlayerMovement(int peerID, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, int tick_number)
     {
-        mapController.UpdateQualified();
+        mapController.players[peerID].UpdateMovement(position, rotation, velocity, angular_velocity, tick_number);
+    }
+    
+    public void PlayerAnim(int peerID, int animNum)
+    {
+        mapController.players[peerID].UpdateAnimaiton(animNum);
     }
 
-    public void FinishRaceForPlayer()
+    public void PlayerRespawn(int peerID, int checkPointNum)
     {
-        UpdateQualified();
-        sceneManager.FinishRaceForPlayer();
+        mapController.PlayerRespawn(peerID, checkPointNum);
     }
 
-    public void AddInputMessage(int peerID, int x, int y, bool jump, bool dive, int tick_number)
+    public void PlayerFinish(int peerID, float time)
     {
-        mapController.players[peerID].AddInputMessage( x, y, jump, dive, tick_number);
+        mapController.FinishRaceForPlayer(peerID, time);
+    }
+
+    public void Disconnect(int peerID)
+    {
+        ThreadManager.ExecuteOnMainThread(() =>
+        {
+            GameObject p = mapController.players[peerID].gameObject;
+            mapController.players.Remove(peerID);
+            Destroy(p);
+        });
     }
 }

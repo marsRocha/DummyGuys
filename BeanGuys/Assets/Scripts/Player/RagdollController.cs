@@ -139,7 +139,7 @@ public class RagdollController : MonoBehaviour
                 {
                     newRootPosition.y = hit.point.y;
                 }
-                Debug.Log(newRootPosition);
+                //Debug.Log(newRootPosition);
                 hitPoint = newRootPosition;
                 transform.position = newRootPosition;
 

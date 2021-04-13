@@ -9,6 +9,7 @@ using UnityEngine;
 public class PlayerManager : MonoBehaviour
 {
     private PlayerController pController;
+    private Rigidbody rb;
 
     //Store previous player stuff
     private const int CACHE_SIZE = 1024;
@@ -18,6 +19,7 @@ public class PlayerManager : MonoBehaviour
     private int lastCorrectedFrame = 0;
     private Inputs currentInput;
     private Inputs lastInput;
+    private animNum lastAnim;
 
     [Header("Correction")]
     public bool client_correction_smoothing;
@@ -32,6 +34,7 @@ public class PlayerManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        rb = GetComponent<Rigidbody>();
         pController = GetComponent<PlayerController>();
 
         client_state_buffer = new ClientState[CACHE_SIZE];
@@ -56,24 +59,34 @@ public class PlayerManager : MonoBehaviour
         if (isRunning)
         {
             lastInput = currentInput;
+            lastAnim = pController.currentAnim;
             currentInput = pController.pInput.GetInputs();
+
+            //Update player's movement
+            pController.FixedUpdateController(currentInput);
 
             if (isOnline)
             {
-                //buffer_slot = CSceneManager.instance.tick_number % CACHE_SIZE;
-                //client_input_buffer[buffer_slot] = currentInput;
-                //if (currentInput != lastInput)
-                    ClientSend.PlayerInput(currentInput.x, currentInput.y, currentInput.jump, currentInput.dive, 0);  //CSceneManager.instance.tick_number);
-                //client_state_buffer[buffer_slot] = new ClientState(rb.position, rb.rotation);
+                ClientSend.PlayerMovement(rb.position, rb.rotation, rb.velocity, rb.angularVelocity, MapController.instance.Game_Clock);
+                if (lastAnim != pController.currentAnim)
+                    ClientSend.PlayerAnim((int)pController.currentAnim);
             }
-
-            pController.FixedUpdateController(currentInput);
         }
     }
 
     public void PlayerInput(Inputs inputs, int tick_number)
     {
         currentInput = inputs;
+    }
+
+    public void Respawn( Vector3 position, Quaternion rotation)
+    {
+        rb.velocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        rb.position = position;
+        rb.rotation = rotation;
+
+        pController.Respawn();
     }
 }
 

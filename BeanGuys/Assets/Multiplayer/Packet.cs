@@ -18,8 +18,12 @@ public enum ClientPackets
 {
     welcomeReceived = 6,
     welcome,
-    playerInput,
-    udpTest
+    introduction,
+    playerMovement,
+    playerAnim,
+    playerRespawn,
+    playerFinish,
+    startGame
 }
 
 public class Packet : IDisposable

@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class ClientSend : MonoBehaviour
 {
+    #region methods of sending info
     private static void SendTCPDataToServer(Packet packet)
     {
         packet.WriteLength();
@@ -38,9 +39,9 @@ public class ClientSend : MonoBehaviour
         foreach(Peer p in Client.peers.Values)
             Client.SendUDPData(p.udp.endPoint, packet);
     }
+    #endregion
 
     #region Packets
-
     //Sent to server when it receives a welcome message
     public static void WelcomeReceived()
     {
@@ -75,28 +76,80 @@ public class ClientSend : MonoBehaviour
             SendTCPData(toClient, packet);
         }
     }
+    public static void Introduction(int toPeer)
+    {
+        using (Packet packet = new Packet((int)ClientPackets.introduction))
+        {
+            packet.Write(Client.instance.myId);
+            packet.Write($"legend27");
+
+            SendTCPData(toPeer, packet);
+        }
+    }
+
 
     #region GameInfo
-    //inputs = x and y axis, corresponding to the translation in units
-    //dive - bevaiour
-    //jump - behaviour
-    public static void PlayerInput(int x, int y, bool jump, bool dive, int tick_number)
+    //TODO: Remove from here, the Server should be the one to send this message
+    public static void StartGame()
     {
-        Debug.Log("Sent input");
-        using (Packet packet = new Packet((int)ClientPackets.playerInput))
+        using (Packet packet = new Packet((int)ClientPackets.startGame))
+        {
+            SendTCPDataToAll(packet);
+        }
+    }
+
+    public static void PlayerMovement(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
+    {
+        //Debug.Log("Sent input");
+        using (Packet packet = new Packet((int)ClientPackets.playerMovement))
         {
             packet.Write(Client.instance.myId);
 
-            packet.Write(x);
-            packet.Write(y);
-            packet.Write(jump);
-            packet.Write(dive);
+            packet.Write(position);
+            packet.Write(rotation);
+            packet.Write(velocity);
+            packet.Write(angular_velocity);
             packet.Write(tick_number);
 
             SendUDPDataToAll(packet);
         }
     }
 
+    public static void PlayerAnim(int anim)
+    {
+        //Debug.Log("Sent input");
+        using (Packet packet = new Packet((int)ClientPackets.playerAnim))
+        {
+            packet.Write(Client.instance.myId);
+            packet.Write(anim);
+
+            SendUDPDataToAll(packet);
+        }
+    }
+
+    public static void PlayerRespawn(int checkpointNum)
+    {
+        //Debug.Log("Sent input");
+        using (Packet packet = new Packet((int)ClientPackets.playerRespawn))
+        {
+            packet.Write(Client.instance.myId);
+            packet.Write(checkpointNum);
+
+            SendUDPDataToAll(packet);
+        }
+    }
+
+    public static void PlayerFinish(float time)
+    {
+        //Debug.Log("Sent input");
+        using (Packet packet = new Packet((int)ClientPackets.playerFinish))
+        {
+            packet.Write(Client.instance.myId);
+            packet.Write(time);
+
+            SendUDPDataToAll(packet);
+        }
+    }
     #endregion
 
     #endregion

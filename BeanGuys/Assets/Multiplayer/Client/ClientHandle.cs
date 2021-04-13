@@ -41,15 +41,18 @@ public class ClientHandle : MonoBehaviour
         int peerID = packet.ReadInt();
         //TODO: Receive username also
 
-        Debug.Log($"{"legend27"}(player {peerID}) has joined the game!");
         ClientSend.WelcomeReceived(peerID);
 
         //Initiate udp connection
         //This is a problem as peers have "..0.2+" but since testing on the same network it does not work like that
         Client.peers[peerID].udp.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), ((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint).Port));
+        
+        //Store it's information
+        //TODO: Store the players skin also
+        Client.peers[peerID].SetIdentification(peerID, "legend27");
+        GameManager.instance.UpdatePlayerCount();
 
-        //TODO: Instantiate player in the world
-        GameManager.instance.SpawnRemotePlayer(peerID, "legend27");
+        Debug.Log($"{"legend27"}(player {peerID}) has joined the game!");
     }
 
     public static void WelcomeReceived(Packet packet)
@@ -57,34 +60,55 @@ public class ClientHandle : MonoBehaviour
         int peerID = packet.ReadInt();
         string username = packet.ReadString();
 
-        Debug.Log($"{username}(player {peerID}) has joined the game!");
+        //Store it's information
+        //TODO: Store the players skin also
+        Client.peers[peerID].SetIdentification(peerID, username);
+        GameManager.instance.UpdatePlayerCount();
 
-        //TODO: Instantiate player in the world
-        GameManager.instance.SpawnRemotePlayer(peerID, username);
+        Debug.Log($"{username}(player {peerID}) has joined the game!");
     }
 
     #region Game packages
-    public static void PlayerInput(Packet packet)
+    public static void StartGame(Packet packet)
+    {
+        GameManager.instance.StartGameDebug();
+    }
+
+    public static void PlayerMovement(Packet packet)
     {
         int peerID = packet.ReadInt();
 
-        int x = packet.ReadInt();
-        int y = packet.ReadInt();
-        bool jump = packet.ReadBool();
-        bool dive = packet.ReadBool();
+        Vector3 position = packet.ReadVector3();
+        Quaternion rotation = packet.ReadQuaternion();
+        Vector3 velocity = packet.ReadVector3();
+        Vector3 angular_velocity = packet.ReadVector3();
         int tick_number = packet.ReadInt();
 
-        //CSceneManager.instance.players[peerID].SetInput(inputs, rotation);
-        Debug.Log($"id:{peerID}, Got input: x:{x}, y:{y}");
-        GameManager.instance.AddInputMessage(peerID, x, y, jump, dive, tick_number);
+        GameManager.instance.PlayerMovement(peerID, position, rotation, velocity, angular_velocity, tick_number);
     }
 
-    public static void UDPTest(Packet packet)
+    public static void PlayerAnim(Packet packet)
     {
-        string msg = packet.ReadString();
+        int peerID = packet.ReadInt();
+        int animNum = packet.ReadInt();
 
-        Debug.Log($"received message:{msg}");
+        GameManager.instance.PlayerAnim(peerID, animNum);
     }
 
+    public static void PlayerRespawn(Packet packet)
+    {
+        int id = packet.ReadInt();
+        int checkPointNum = packet.ReadInt();
+
+        GameManager.instance.PlayerRespawn(id, checkPointNum);
+    }
+
+    public static void PlayerFinish(Packet packet)
+    {
+        int id = packet.ReadInt();
+        float time = packet.ReadFloat();
+
+        GameManager.instance.PlayerFinish(id, time);
+    }
     #endregion
 }

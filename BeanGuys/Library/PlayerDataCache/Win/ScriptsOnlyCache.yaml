@@ -1,7 +1,9 @@
 ScriptsOnlyBuild:
   usedScripts:
     Assembly-CSharp.dll:
+    - CheckPoint
     - Client
+    - DeathCollider
     - DebugStuff.ConsoleToGUI
     - GameManager
     - MapController
@@ -12,6 +14,7 @@ ScriptsOnlyBuild:
     - PlayerController
     - PlayerInput
     - PlayerManager
+    - QualifyPlayer
     - RagdollController
     - RemotePlayerManager
     - RotatingCylinder
@@ -160,6 +163,8 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 12632}
     - Class: 114
+      Script: {instanceID: 12700}
+    - Class: 114
       Script: {instanceID: 12958}
     - Class: 114
       Script: {instanceID: 13006}
@@ -170,91 +175,95 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 13262}
     - Class: 114
-      Script: {instanceID: 13300}
+      Script: {instanceID: 13294}
     - Class: 114
-      Script: {instanceID: 13318}
+      Script: {instanceID: 13302}
     - Class: 114
-      Script: {instanceID: 13436}
+      Script: {instanceID: 13320}
     - Class: 114
-      Script: {instanceID: 13524}
+      Script: {instanceID: 13438}
     - Class: 114
-      Script: {instanceID: 13558}
+      Script: {instanceID: 13526}
     - Class: 114
-      Script: {instanceID: 13568}
+      Script: {instanceID: 13560}
     - Class: 114
-      Script: {instanceID: 13606}
+      Script: {instanceID: 13570}
     - Class: 114
-      Script: {instanceID: 13632}
+      Script: {instanceID: 13608}
     - Class: 114
-      Script: {instanceID: 13670}
+      Script: {instanceID: 13634}
     - Class: 114
-      Script: {instanceID: 13696}
+      Script: {instanceID: 13672}
     - Class: 114
-      Script: {instanceID: 13784}
+      Script: {instanceID: 13698}
     - Class: 114
-      Script: {instanceID: 13792}
+      Script: {instanceID: 13786}
     - Class: 114
-      Script: {instanceID: 13914}
+      Script: {instanceID: 13794}
     - Class: 114
-      Script: {instanceID: 13954}
+      Script: {instanceID: 13916}
     - Class: 114
-      Script: {instanceID: 14118}
+      Script: {instanceID: 13956}
     - Class: 114
-      Script: {instanceID: 14426}
+      Script: {instanceID: 14120}
     - Class: 114
-      Script: {instanceID: 14488}
+      Script: {instanceID: 14410}
     - Class: 114
-      Script: {instanceID: 14492}
+      Script: {instanceID: 14428}
     - Class: 114
-      Script: {instanceID: 14508}
+      Script: {instanceID: 14490}
     - Class: 114
-      Script: {instanceID: 14516}
+      Script: {instanceID: 14494}
     - Class: 114
-      Script: {instanceID: 14522}
+      Script: {instanceID: 14510}
     - Class: 114
-      Script: {instanceID: 14530}
+      Script: {instanceID: 14518}
     - Class: 114
-      Script: {instanceID: 14642}
+      Script: {instanceID: 14524}
     - Class: 114
-      Script: {instanceID: 14678}
+      Script: {instanceID: 14532}
     - Class: 114
-      Script: {instanceID: 14686}
+      Script: {instanceID: 14644}
     - Class: 114
-      Script: {instanceID: 14898}
+      Script: {instanceID: 14680}
     - Class: 114
-      Script: {instanceID: 15012}
+      Script: {instanceID: 14688}
     - Class: 114
-      Script: {instanceID: 15060}
+      Script: {instanceID: 14900}
     - Class: 114
-      Script: {instanceID: 15086}
+      Script: {instanceID: 15014}
     - Class: 114
-      Script: {instanceID: 15334}
+      Script: {instanceID: 15062}
     - Class: 114
-      Script: {instanceID: 15386}
+      Script: {instanceID: 15088}
+    - Class: 114
+      Script: {instanceID: 15336}
     - Class: 114
       Script: {instanceID: 15388}
     - Class: 114
-      Script: {instanceID: 15528}
+      Script: {instanceID: 15390}
     - Class: 114
-      Script: {instanceID: 15562}
+      Script: {instanceID: 15530}
     - Class: 114
-      Script: {instanceID: 15578}
+      Script: {instanceID: 15564}
     - Class: 114
-      Script: {instanceID: 15668}
+      Script: {instanceID: 15580}
     - Class: 114
-      Script: {instanceID: 15784}
+      Script: {instanceID: 15670}
     - Class: 114
       Script: {instanceID: 15786}
     - Class: 114
       Script: {instanceID: 15788}
     - Class: 114
-      Script: {instanceID: 15818}
+      Script: {instanceID: 15790}
     - Class: 114
-      Script: {instanceID: 15846}
+      Script: {instanceID: 15820}
     - Class: 114
-      Script: {instanceID: 15982}
+      Script: {instanceID: 15848}
     - Class: 114
-      Script: {instanceID: 15990}
+      Script: {instanceID: 15984}
+    - Class: 114
+      Script: {instanceID: 15992}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -362,7 +371,7 @@ ScriptsOnlyBuild:
     className: TMP_SelectionCaret
   - hash:
       serializedVersion: 2
-      Hash: 746308c700eb6c8625745e1954c8d6e3
+      Hash: 66e11d8d291808d56da88ba4660534b2
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: Moving
@@ -692,13 +701,19 @@ ScriptsOnlyBuild:
     className: TMP_SpriteAsset
   - hash:
       serializedVersion: 2
+      Hash: bdbccd2e1aea6879552d154ad7b9aaa2
+    assemblyName: Assembly-CSharp.dll
+    namespaceName: 
+    className: CheckPoint
+  - hash:
+      serializedVersion: 2
       Hash: c3d3430df9e3ea95e3e3d587961390fb
     assemblyName: Unity.Timeline.dll
     namespaceName: UnityEngine.Timeline
     className: ControlTrack
   - hash:
       serializedVersion: 2
-      Hash: 8c9d8ec2275a221269d67235798b97b4
+      Hash: 8b9dd292cd0ac70f6d15206a1bdd78da
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: GameManager
@@ -722,7 +737,7 @@ ScriptsOnlyBuild:
     className: FilmGrain
   - hash:
       serializedVersion: 2
-      Hash: de2b0e82340dd29ab9458d3ed18dbd6f
+      Hash: 26c34df67f828e4b6521796c49ae9407
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: PlayerController
@@ -758,7 +773,7 @@ ScriptsOnlyBuild:
     className: DebugUIHandlerIndirectToggle
   - hash:
       serializedVersion: 2
-      Hash: bf1bd3e46e08b0a1cec982e2bcc0d8eb
+      Hash: ca8085da884c98e03d655d0a529d0ec8
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: MapController
@@ -782,7 +797,7 @@ ScriptsOnlyBuild:
     className: ScrollRect
   - hash:
       serializedVersion: 2
-      Hash: 43ad8a811100d28dce21d10ff5e483a4
+      Hash: 054bd73c0ebe2e93257b536a5a3afa74
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: RotatingCylinder
@@ -1124,7 +1139,7 @@ ScriptsOnlyBuild:
     className: CountDown
   - hash:
       serializedVersion: 2
-      Hash: 2d979f0623a75ceb4ff540da430bd540
+      Hash: ff8783d65af28493120857c17e11fb95
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: Swing
@@ -1268,7 +1283,7 @@ ScriptsOnlyBuild:
     className: DebugUIHandlerVector4
   - hash:
       serializedVersion: 2
-      Hash: 126bcf8414256e197aec7d9a7a207848
+      Hash: 054bd73c0ebe2e93257b536a5a3afa74
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: Spinning

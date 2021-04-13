@@ -38,14 +38,16 @@ public class PlayerController : MonoBehaviour
     public bool ragdolled, getUp;
     //[HideInInspector]
     public bool isRunning = false;
-    [HideInInspector]
+    //[HideInInspector]
     public bool jumping = false, diving = false, dashing = false;
     private bool readyToJump = true, readyToDive = true;
     private bool dashTriggered;
+    public animNum currentAnim;
 
     [Header("Particle Systems")]
     public ParticleSystem jumpPs;
     public ParticleSystem bumpPs;
+    public ParticleSystem respawnPs;
 
     [Header("DEBUG")]
     public bool debug;
@@ -59,6 +61,7 @@ public class PlayerController : MonoBehaviour
         anim = GetComponent<Animator>();
         ragdollController = GetComponent<RagdollController>();
         camera = GameObject.Find("Main Camera").transform;
+        currentAnim = animNum.idle;
 
         if (controlable)
         {
@@ -115,6 +118,19 @@ public class PlayerController : MonoBehaviour
         Walk();
 
         CounterMovement();
+
+        //Check animation
+        if (move.magnitude != 0)
+            currentAnim = animNum.run;
+        else
+            currentAnim = animNum.idle;
+        if (jumping)
+            currentAnim = animNum.jump;
+        if (diving)
+            currentAnim = animNum.dive;
+        //on GroudChecking in diving currentAnim is set to idle, 
+        //this is because invoke makes it so we have to wait that the player is up to know that we are not diving
+        //look for a better solution?
     }
 
     private void CounterMovement()
@@ -165,9 +181,14 @@ public class PlayerController : MonoBehaviour
                 //Character rotation
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(transform.forward + new Vector3(move.x, 0f, move.z)), turnSpeed * Time.deltaTime);
                 if (!jumping)
+                {
                     anim.SetBool("isRunning", true);
+                }
             }
-            else anim.SetBool("isRunning", false);
+            else if ((move.x == 0f || move.z == 0f) && (currentInput.x == 0 && currentInput.y == 0))
+            {
+                anim.SetBool("isRunning", false);
+            }
         }
     }
 
@@ -265,9 +286,10 @@ public class PlayerController : MonoBehaviour
                 anim.SetBool("isJumping", false);
                 Invoke(nameof(ResetJump), jumpCooldown);
             }
-            else if (diving)
+            if (diving)
             {
                 diving = false;
+                currentAnim = animNum.idle;
                 CounterMovement();
                 anim.SetBool("isDiving", false);
 
@@ -288,6 +310,11 @@ public class PlayerController : MonoBehaviour
     }
 
     #endregion
+
+    public void Respawn()
+    {
+        respawnPs.Play();
+    }
 
     private void OnCollisionEnter(Collision collision)
     {
@@ -337,3 +364,5 @@ public class PlayerController : MonoBehaviour
         }
     }
 }
+
+public enum animNum { idle, run, jump, dive };

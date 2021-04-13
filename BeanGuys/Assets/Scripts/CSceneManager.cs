@@ -79,7 +79,7 @@ public class CSceneManager : MonoBehaviour
 
     public void ActivateScene()
     {
-        foreach (Moving m in moveObjs)
+        /*foreach (Moving m in moveObjs)
             m.isRunning = true;
 
         foreach (MoveWait m in moveWaitObjs)

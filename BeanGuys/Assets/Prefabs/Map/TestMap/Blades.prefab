@@ -274,10 +274,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af09edd63a2e06e4c958655dcfbabcef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  toRotate:
-  - {fileID: 1716531768}
-  speeds:
-  - -250
+  axis: {x: 1, y: 0, z: 0}
+  rb: {fileID: 1716531768}
+  rotationSpeed: -0.055
   isRunning: 1
 --- !u!1 &7507138923421249776
 GameObject:

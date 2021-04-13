@@ -10,13 +10,7 @@ public class QualifyPlayer : MonoBehaviour
     {
         if(other.gameObject.layer == LayerMask.NameToLayer("Player"))
         {
-            confetti.Play();
-
-            //finish game for him
-            other.gameObject.SetActive(false);
-
-            //appear UI
-            GameManager.instance.FinishRaceForPlayer();
+            MapController.instance.FinishRaceForLocalPlayer();
         }
     }
 }

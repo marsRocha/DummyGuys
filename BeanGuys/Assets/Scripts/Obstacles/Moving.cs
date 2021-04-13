@@ -5,13 +5,10 @@ using UnityEngine;
 public class Moving : MonoBehaviour
 {
     private Rigidbody rb;
-    public float speed;
+    public float speed, somthing;
     private Vector3 currentPoint, initialPos;
     public Vector3[] points;
     private int currentIndex;
-    public bool showPoints;
-    //[HideInInspector]
-    public bool isRunning = false;
 
     // Start is called before the first frame update
     void Start()
@@ -24,32 +21,25 @@ public class Moving : MonoBehaviour
 
     void FixedUpdate()
     {
-        if(isRunning)
-            rb.velocity = (currentPoint - this.transform.position).normalized * speed * Time.deltaTime;
+        transform.position = Vector3.Lerp(points[0], points[1], ((Mathf.Sin(MapController.instance.Game_Clock * speed + somthing) + 1.0f) / 2.0f));
     }
 
     private void Update()
     {
-        if (isRunning)
+        /*if (Vector3.Distance(transform.position, currentPoint) <= 0.5f) //going to point1
         {
-            if (Vector3.Distance(transform.position, currentPoint) <= 0.5f) //going to point1
-            {
-                currentIndex++;
-                if (currentIndex >= points.Length)
-                    currentIndex = 0;
-                currentPoint = (initialPos + points[currentIndex]);
-            }
-        }
+            currentIndex++;
+            if (currentIndex >= points.Length)
+                currentIndex = 0;
+            currentPoint = (initialPos + points[currentIndex]);
+        }*/
     }
 
     private void OnDrawGizmos()
     {
-        if (showPoints)
-        {
-            Gizmos.color = Color.red;
+        Gizmos.color = Color.red;
 
-            foreach (Vector3 p in points)
-                Gizmos.DrawSphere(this.transform.position + p, 0.1f);
-        }
+        foreach (Vector3 p in points)
+            Gizmos.DrawSphere(p, 0.1f);
     }
 }

@@ -20,7 +20,6 @@ public class Client : MonoBehaviour
     private static TcpListener tcpListener;
     private static UdpClient udpListener;
 
-
     //Server Info
     private string serverIP = "127.0.0.1";
     public int serverPort = 26950;
@@ -101,7 +100,8 @@ public class Client : MonoBehaviour
                 return;
             }
         }
-        Debug.Log($"{client.Client.RemoteEndPoint} failed to connect: Server full.");
+
+        Debug.Log($"{client.Client.RemoteEndPoint} failed to connect: No more peer slots available.");
     }
 
     private static void UDPReceiveCallback(IAsyncResult result)
@@ -122,26 +122,24 @@ public class Client : MonoBehaviour
                 if (clientId == 0)
                     return;
 
-                Debug.Log($"UDP from ip:{clientEndPoint.Address}, port:{clientEndPoint.Port}");
                 if (peers[1].udp.endPoint == null)
                 {
-                    Debug.Log($"UDP connected");
+                    //Debug.Log($"UDP connected");
                     peers[1].udp.Connect(clientEndPoint);
                     return;
                 }
 
-                Debug.Log($"client Endpoint:{clientEndPoint}, udpEndPoint:{peers[1].udp.endPoint}");
+                //Debug.Log($"client Endpoint:{clientEndPoint}, udpEndPoint:{peers[1].udp.endPoint}");
                 //verifiy if the endpoint corresponds to the endpoint that sent the data
                 //this is for security reasons otherwise hackers could inpersonate other clients by send a clientId that does not corresponds to them
                 //without the string conversion even if the endpoint matched it returned false
                 if (peers[1].udp.endPoint.Equals(clientEndPoint))
                 {
-                    Debug.Log($"Handle data, peerID:{clientId}");
+                    //Debug.Log($"Handle data, peerID:{clientId}");
 
                     //peers[clientId].udp.HandleData(data);
                     peers[1].udp.HandleData(packet);
                 }
-                Debug.Log("4");
             }
         }
         catch (Exception ex)
@@ -157,7 +155,7 @@ public class Client : MonoBehaviour
         try
         {
             //Send my id so who receives it knows who sent it
-            packet.InsertInt(Client.instance.myId);
+            packet.InsertInt(instance.myId);
 
             if (peerEndPoint != null)
             {
@@ -322,8 +320,11 @@ public class Client : MonoBehaviour
             { (int) ServerPackets.peer, ClientHandle.PeerList },
             { (int) ClientPackets.welcome, ClientHandle.WelcomePeer },
             { (int) ClientPackets.welcomeReceived, ClientHandle.WelcomeReceived },
-            { (int) ClientPackets.playerInput, ClientHandle.PlayerInput },
-            { (int) ClientPackets.udpTest, ClientHandle.UDPTest },
+            { (int) ClientPackets.playerMovement, ClientHandle.PlayerMovement },
+            { (int) ClientPackets.playerAnim, ClientHandle.PlayerAnim },
+            { (int) ClientPackets.playerRespawn, ClientHandle.PlayerRespawn },
+            { (int) ClientPackets.playerFinish, ClientHandle.PlayerFinish },
+            { (int) ClientPackets.startGame, ClientHandle.StartGame }, //TODO: REMOVE
         };
         //Debug.Log("Initializing packets");
     }
@@ -345,7 +346,6 @@ public class Client : MonoBehaviour
             udpListener.Close();
             //Clear peer dictionary
             peers = new Dictionary<int, Peer>();
-
             Debug.Log("Disconnected.");
         }
     }

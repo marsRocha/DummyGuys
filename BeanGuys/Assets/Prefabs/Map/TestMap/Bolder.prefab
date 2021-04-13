@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5236781866681450838}
   - component: {fileID: 9026009434532990788}
   m_Layer: 0
-  m_Name: Bolder5
+  m_Name: Bolder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -24,7 +24,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 503656319442122505}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 8.536575, y: 18.7, z: 341.902}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -48,7 +48,7 @@ MonoBehaviour:
   angle: 40
   timeToWait: 1.3
   Left: 1
-  isRunning: 0
+  isRunning: 1
 --- !u!1 &5567269223768486669
 GameObject:
   m_ObjectHideFlags: 0
