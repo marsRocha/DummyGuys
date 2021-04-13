@@ -58,10 +58,12 @@ namespace Multiplayer
         }
 
 
-        public static void Peer(string peerIP, string peerPort, int toClient)
+        public static void Peer(int peerId, string username, string peerIP, string peerPort, int toClient)
         {
             using (Packet packet = new Packet((int)ServerPackets.peer))
             {
+                packet.Write(peerId);
+                packet.Write(username);
                 packet.Write(peerIP);
                 packet.Write(peerPort);
 

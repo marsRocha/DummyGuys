@@ -90,6 +90,7 @@ public class RemotePlayerManager : MonoBehaviour
     public void UpdateMovement(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, int tick_number)
     {
         //player_state_msgs.Enqueue(new RemoteState(position, rotation, tick_number));
+        Debug.Log("Got pos");
 
         rb.position = position;
         rb.rotation = rotation;

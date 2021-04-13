@@ -15,6 +15,7 @@ public class Client : MonoBehaviour
 
     public delegate void PacketHandler(Packet packet);
     public static Dictionary<int, PacketHandler> packetHandlers;
+    public static Dictionary<int, NewConnection> newConnections = new Dictionary<int, NewConnection>();
     public static Dictionary<int, Peer> peers = new Dictionary<int, Peer>();
 
     private static TcpListener tcpListener;
@@ -91,17 +92,23 @@ public class Client : MonoBehaviour
         tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
         Debug.Log($"Incoming connection from {client.Client.RemoteEndPoint}...");
 
-        //Give peer an id and add to the list of peers
+        //Add to new connections until it's id is received
         for (int i = 1; i <= MaxPlayers; i++)
         {
-            if (peers[i].tcp.socket == null)
+            if (newConnections[i].tcp.socket == null)
             {
-                peers[i].tcp.Connect(client);
+                newConnections[i].tcp.Connect(client);
                 return;
             }
         }
-
         Debug.Log($"{client.Client.RemoteEndPoint} failed to connect: No more peer slots available.");
+    }
+
+    public static void AddPeer(int connectionId, int peerId, string username)
+    {
+        peers.Add(peerId, new Peer(peerId, username));
+        peers[peerId].tcp.Connect(newConnections[connectionId].tcp.socket);
+        newConnections.Remove(connectionId);
     }
 
     private static void UDPReceiveCallback(IAsyncResult result)
@@ -122,10 +129,10 @@ public class Client : MonoBehaviour
                 if (clientId == 0)
                     return;
 
-                if (peers[1].udp.endPoint == null)
+                if (peers[clientId].udp.endPoint == null)
                 {
                     //Debug.Log($"UDP connected");
-                    peers[1].udp.Connect(clientEndPoint);
+                    peers[clientId].udp.Connect(clientEndPoint);
                     return;
                 }
 
@@ -133,12 +140,12 @@ public class Client : MonoBehaviour
                 //verifiy if the endpoint corresponds to the endpoint that sent the data
                 //this is for security reasons otherwise hackers could inpersonate other clients by send a clientId that does not corresponds to them
                 //without the string conversion even if the endpoint matched it returned false
-                if (peers[1].udp.endPoint.Equals(clientEndPoint))
+                if (peers[clientId].udp.endPoint.Equals(clientEndPoint))
                 {
                     //Debug.Log($"Handle data, peerID:{clientId}");
 
                     //peers[clientId].udp.HandleData(data);
-                    peers[1].udp.HandleData(packet);
+                    peers[clientId].udp.HandleData(packet);
                 }
             }
         }
@@ -168,18 +175,12 @@ public class Client : MonoBehaviour
         }
     }
 
-    public void ConnectToPeer(string ip, int port)
+    public void ConnectToPeer(int id, string username, string ip, int port)
     {
         //store peer info
-        for (int i = 1; i <= MaxPlayers; i++)
-        {
-            if (peers[i].tcp.socket == null)
-            {
-                peers[i].tcp.Connect(ip, port);
-                Debug.Log($"Tried to connect to peer {i}");
-                return;
-            }
-        }
+        peers.Add(id, new Peer(id, username));
+        peers[id].tcp.Connect(ip, port);
+        Debug.Log($"Tried to connect to peer {id}");
     }
 
     public class TCP
@@ -311,7 +312,7 @@ public class Client : MonoBehaviour
         //Initialize dictionary of peers
         for (int i = 1; i <= MaxPlayers; i++)
         {
-            peers.Add(i, new Peer(i));
+            newConnections.Add(i, new NewConnection(i));
         }
 
         packetHandlers = new Dictionary<int, PacketHandler>()
@@ -320,6 +321,7 @@ public class Client : MonoBehaviour
             { (int) ServerPackets.peer, ClientHandle.PeerList },
             { (int) ClientPackets.welcome, ClientHandle.WelcomePeer },
             { (int) ClientPackets.welcomeReceived, ClientHandle.WelcomeReceived },
+            { (int) ClientPackets.introduction, ClientHandle.Introduction },
             { (int) ClientPackets.playerMovement, ClientHandle.PlayerMovement },
             { (int) ClientPackets.playerAnim, ClientHandle.PlayerAnim },
             { (int) ClientPackets.playerRespawn, ClientHandle.PlayerRespawn },

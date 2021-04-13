@@ -138,11 +138,15 @@ public class GameManager : MonoBehaviour
 
     public void Disconnect(int peerID)
     {
-        ThreadManager.ExecuteOnMainThread(() =>
+        //TODO: Change to server states
+        if (isRunning)
         {
-            GameObject p = mapController.players[peerID].gameObject;
-            mapController.players.Remove(peerID);
-            Destroy(p);
-        });
+            ThreadManager.ExecuteOnMainThread(() =>
+            {
+                GameObject p = mapController.players[peerID].gameObject;
+                mapController.players.Remove(peerID);
+                Destroy(p);
+            });
+        }
     }
 }

@@ -14,9 +14,10 @@ public class Peer
     public TCP tcp;
     public UDP udp;
 
-    public Peer(int clientId)
+    public Peer(int clientId, string username)
     {
         id = clientId;
+        this.username = username;
         tcp = new TCP(id);
         udp = new UDP(id);
     }
@@ -74,6 +75,7 @@ public class Peer
 
         //Used when peer reaches out to us 
         //try to connect and send a message with him
+        //no need to sen intro the other peer was the one who established the first connection, which means he has my data sent from the server
         public void Connect(TcpClient clientSocket)
         {
             socket = clientSocket;

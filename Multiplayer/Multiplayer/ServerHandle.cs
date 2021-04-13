@@ -24,7 +24,7 @@ namespace Multiplayer
             {
                 string peerPort = ((IPEndPoint)Server.clients[idFromClient].tcp.socket.Client.RemoteEndPoint).Port.ToString();
                 string peerIP = ((IPEndPoint)Server.clients[idFromClient].tcp.socket.Client.RemoteEndPoint).Address.ToString();
-                ServerSend.Peer(peerIP, peerPort, idFromClient);
+                ServerSend.Peer(idFromClient, username, peerIP, peerPort, 1);
                 Console.WriteLine("Sent peer");
             }
         }
