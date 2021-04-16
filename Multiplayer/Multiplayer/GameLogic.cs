@@ -8,11 +8,11 @@ namespace Multiplayer
     {
         public static void Update()
         {
-            foreach(Client client in Server.clients.Values)
+            /*foreach(Client client in Server.Clients.Values)
             {
-                if (client.player != null)
+                /*if (client.player != null)
                     client.player.Update();
-            }
+            }*/
 
             ThreadManager.UpdateMain();
         }

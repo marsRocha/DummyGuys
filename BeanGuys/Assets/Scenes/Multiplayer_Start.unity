@@ -3274,6 +3274,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   serverPort: 26950
   myId: 0
+  username: Legend27
   clientExeID: 1
 --- !u!114 &1735072225
 MonoBehaviour:

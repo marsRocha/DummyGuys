@@ -26,10 +26,16 @@ public class Client : MonoBehaviour
     public int serverPort = 26950;
     public TCP server { get; private set; }
 
+    //TODO: public for now, afterwards it will be the server to give the client this information
+    public static IPAddress _multicastIPaddress = IPAddress.Parse("239.1.1.1");
+    private static IPEndPoint _multicastEndPoint;
+    private static IPEndPoint _lolcalEndPoint;
+
     //Client Info
-    public static string MyIP;
+    public static IPAddress _localIPaddress;
     public static int MyPort;
     public int myId = 0;
+    public string username;
     private bool isConnected = false;
 
     public int clientExeID;
@@ -53,14 +59,36 @@ public class Client : MonoBehaviour
         serverIP = ip;
         serverPort = port;
 
+        _localIPaddress = IPAddress.Parse("127.0.0.1");// IPAddress.Any;
         //Depending on the id set on inspector, set a different ip and port to listen to peers
-        MyIP = $"127.0.0.{1 + clientExeID}";
         MyPort = 5000 + clientExeID;
-
 
         InitializeData();
         ConnectToServer();
-        ListenToPeers();
+
+        //Listen to peers
+        tcpListener = new TcpListener(_localIPaddress, MyPort);
+        tcpListener.Start();
+        tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
+
+        // Create endpoints
+        _multicastEndPoint = new IPEndPoint(_multicastIPaddress, 2222); //change this port to room port
+        _lolcalEndPoint = new IPEndPoint(_localIPaddress, MyPort);
+
+        // Create and configure UdpClient
+        udpListener = new UdpClient();
+        // The following three lines allow multiple clients on the same PC
+        udpListener.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+        udpListener.ExclusiveAddressUse = false;
+        // Bind, Join
+        udpListener.Client.Bind(_lolcalEndPoint);
+        udpListener.JoinMulticastGroup(_multicastIPaddress, _localIPaddress);
+        udpListener.MulticastLoopback = true;
+        udpListener.Client.MulticastLoopback = true;
+        // Start listening for incoming data
+        udpListener.BeginReceive(UDPReceiveCallback, null);
+
+        Debug.Log($"Client started listening on {MyPort}");
     }
 
     private void ConnectToServer()
@@ -69,18 +97,6 @@ public class Client : MonoBehaviour
 
         isConnected = true;
         server.Connect(serverIP, serverPort);
-    }
-
-    private void ListenToPeers()
-    {
-        tcpListener = new TcpListener(IPAddress.Parse(MyIP), MyPort);
-        tcpListener.Start();
-        tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
-
-        udpListener = new UdpClient(MyPort);
-        udpListener.BeginReceive(UDPReceiveCallback, null);
-
-        Debug.Log($"Client started listening on {MyPort}");
     }
 
     #region Callbacks
@@ -115,7 +131,9 @@ public class Client : MonoBehaviour
     {
         try
         {
-            IPEndPoint clientEndPoint = new IPEndPoint(IPAddress.Parse(MyIP), MyPort);
+            Debug.Log("got mail");
+            //IPEndPoint clientEndPoint = new IPEndPoint(_localIPaddress, MyPort);
+            IPEndPoint clientEndPoint = new IPEndPoint(0, 0);
             byte[] data = udpListener.EndReceive(result, ref clientEndPoint);
             udpListener.BeginReceive(UDPReceiveCallback, null);
 
@@ -131,7 +149,6 @@ public class Client : MonoBehaviour
 
                 if (peers[clientId].udp.endPoint == null)
                 {
-                    //Debug.Log($"UDP connected");
                     peers[clientId].udp.Connect(clientEndPoint);
                     return;
                 }
@@ -172,6 +189,19 @@ public class Client : MonoBehaviour
         catch (Exception ex)
         {
             Debug.Log($"Error sending UDP data: {ex}");
+        }
+    }
+
+    public static void MulticastUDPData(Packet packet)
+    {
+        try
+        {
+            packet.InsertInt(instance.myId);
+            udpListener.Send(packet.ToArray(), packet.Length(), _multicastEndPoint);
+        }
+        catch (Exception ex)
+        {
+            Debug.Log($"Error multicasting UDP data: {ex}");
         }
     }
 
@@ -319,8 +349,8 @@ public class Client : MonoBehaviour
         {
             { (int) ServerPackets.welcome, ClientHandle.WelcomeServer },
             { (int) ServerPackets.peer, ClientHandle.PeerList },
+            { (int) ServerPackets.joinedRoom, ClientHandle.JoinedRoom },
             { (int) ClientPackets.welcome, ClientHandle.WelcomePeer },
-            { (int) ClientPackets.welcomeReceived, ClientHandle.WelcomeReceived },
             { (int) ClientPackets.introduction, ClientHandle.Introduction },
             { (int) ClientPackets.playerMovement, ClientHandle.PlayerMovement },
             { (int) ClientPackets.playerAnim, ClientHandle.PlayerAnim },
@@ -328,7 +358,6 @@ public class Client : MonoBehaviour
             { (int) ClientPackets.playerFinish, ClientHandle.PlayerFinish },
             { (int) ClientPackets.startGame, ClientHandle.StartGame }, //TODO: REMOVE
         };
-        //Debug.Log("Initializing packets");
     }
 
     private void OnApplicationQuit()

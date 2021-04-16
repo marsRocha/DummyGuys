@@ -7,19 +7,22 @@ using System.Numerics;
 
 namespace Multiplayer
 {
-    class Client
+    public class Client
     {
+        public int Id { get; set; }
+        public string Username { get; set; }
+        public Guid RoomID { get; set; }
+
         public static int dataBufferSize = 4036;
-        public int id;
-        public Player player;
+
         public TCP tcp;
         public UDP udp;
 
         public Client(int clientId)
         {
-            id = clientId;
-            tcp = new TCP(id);
-            udp = new UDP(id);
+            Id = clientId;
+            tcp = new TCP(Id);
+            udp = new UDP(Id);
         }
 
         public class TCP
@@ -73,7 +76,7 @@ namespace Multiplayer
                     int byteLength = stream.EndRead(result);
                     if(byteLength <= 0)
                     {
-                        Server.clients[id].Disconnect();
+                        Server.Clients[id].Disconnect();
                         return;
                     }
 
@@ -179,7 +182,7 @@ namespace Multiplayer
             }
         }
     
-        public void SendIntoGame(string _playerName)
+        /*public void SendIntoGame(string _playerName)
         {
             player = new Player(id, _playerName, Vector3.Zero);
 
@@ -199,14 +202,16 @@ namespace Multiplayer
                     ServerSend.SpawnPlayer(c.player.id, player);
                 }
             }
-        }
+        }*/
 
         private void Disconnect()
         {
             Console.WriteLine($"{tcp.socket.Client.RemoteEndPoint} has disconnected.");
-            player = null;
+            
+            Server.Rooms[RoomID].RemovePlayer(Id);
             tcp.Disconnect();
             udp.Disconnect();
+            Server.Clients.Remove(Id);
         }
     }
 }

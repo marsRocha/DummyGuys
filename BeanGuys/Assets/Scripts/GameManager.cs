@@ -116,7 +116,7 @@ public class GameManager : MonoBehaviour
         mapController.StartRace();
     }
 
-    public void PlayerMovement(int peerID, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, int tick_number)
+    public void PlayerMovement(int peerID, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
     {
         mapController.players[peerID].UpdateMovement(position, rotation, velocity, angular_velocity, tick_number);
     }
@@ -138,8 +138,7 @@ public class GameManager : MonoBehaviour
 
     public void Disconnect(int peerID)
     {
-        //TODO: Change to server states
-        if (isRunning)
+        if (mapController != null && mapController.isRunning)
         {
             ThreadManager.ExecuteOnMainThread(() =>
             {

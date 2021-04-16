@@ -8,8 +8,9 @@ public enum ServerPackets
 {
     welcome = 1,
     peer,
-    spawnPlayer,
-    playerPosition,
+    playerJoined,
+    playerLeft,
+    joinedRoom,
     playerRotation
 }
 

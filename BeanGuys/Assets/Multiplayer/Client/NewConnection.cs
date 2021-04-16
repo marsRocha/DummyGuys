@@ -138,12 +138,4 @@ public class NewConnection
             socket = null;
         }
     }
-
-    private void Disconnect()
-    {
-        Debug.Log($"Player {id} has disconnected.");
-        GameManager.instance.Disconnect(id);
-
-        tcp.Disconnect();
-    }
 }

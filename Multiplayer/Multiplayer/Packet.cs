@@ -10,8 +10,9 @@ namespace Multiplayer
     {
         welcome = 1,
         peer,
-        spawnPlayer,
-        playerPosition,
+        playerJoined,
+        playerLeft,
+        joinedRoom,
         playerRotation
     }
 
@@ -20,6 +21,12 @@ namespace Multiplayer
     {
         welcomeReceived = 6,
         welcome,
+        introduction,
+        playerMovement,
+        playerAnim,
+        playerRespawn,
+        playerFinish,
+        startGame
     }
 
     public class Packet : IDisposable

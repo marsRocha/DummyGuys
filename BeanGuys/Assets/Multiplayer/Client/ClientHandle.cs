@@ -26,48 +26,31 @@ public class ClientHandle : MonoBehaviour
 
         Debug.Log($"received Ip:{ip} Port:{port}");
         if(Client.instance.clientExeID == 1)
-        {
-            Debug.Log($"using Ip:127.0.0.3 Port:5002");
-            Client.instance.ConnectToPeer(id, username, $"127.0.0.3", 5002);
-        }
+            Client.instance.ConnectToPeer(id, username, "127.0.0.1", 5002);
         else
-        {
-            Debug.Log($"using Ip:127.0.0.2 Port:5001");
-            Client.instance.ConnectToPeer(id, username, $"127.0.0.2", 5001);
-        }
+            Client.instance.ConnectToPeer(id, username, "127.0.0.1", 5001);
+    }
+
+    public static void JoinedRoom(Packet packet)
+    {
+        string ip = packet.ReadString();
+        int port = packet.ReadInt();
+
+        Debug.Log($"Joined room, multicast info Ip:{ip} Port:{port}");
     }
 
     //Received an welcome from the peer i tried to connect to
     public static void WelcomePeer(Packet packet)
     {
         int peerID = packet.ReadInt();
-        //TODO: Receive username also
+        //ClientSend.WelcomeReceived(peerID);
 
-        ClientSend.WelcomeReceived(peerID);
-
-        //Initiate udp connection
-        //This is a problem as peers have "..0.2+" but since testing on the same network it does not work like that
-        //Client.peers[peerID].udp.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), ((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint).Port));
-        
         //Store it's information
         //TODO: Store the players skin also
         //Client.peers[peerID].SetIdentification(peerID, "legend27");
         GameManager.instance.UpdatePlayerCount();
 
         Debug.Log($"{"legend27"}(player {peerID}) has joined the game!");
-    }
-
-    public static void WelcomeReceived(Packet packet)
-    {
-        int peerID = packet.ReadInt();
-        string username = packet.ReadString();
-
-        //Store it's information
-        //TODO: Store the players skin also
-        //Client.peers[peerID].SetIdentification(peerID, username);
-        //GameManager.instance.UpdatePlayerCount();
-
-        Debug.Log($"{username}(player {peerID}) has joined the game!");
     }
 
     public static void Introduction( Packet packet)
@@ -78,10 +61,17 @@ public class ClientHandle : MonoBehaviour
         //Delet new connection and add new peer since now we know their information
         Client.AddPeer(1, peerID, username);
         //Initiate udp connection
-        Client.peers[peerID].udp.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5002)); //((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint).Port));
-        
+        //TODO: fix this
+        //Client.peers[peerID].udp.Connect((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint);
+        if (Client.instance.clientExeID == 1)
+            Client.peers[peerID].udp.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5002)); //((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint).Port));
+        else
+            Client.peers[peerID].udp.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5001)); //((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint).Port));
+
         GameManager.instance.UpdatePlayerCount();
         Debug.Log($"Peer introduction finished, UDP connected!");
+        Debug.Log($"{"legend27"}(player {peerID}) has joined the game!");
+
     }
 
     #region Game packages

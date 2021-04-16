@@ -3,27 +3,40 @@ using System.Collections.Generic;
 using System.Text;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.NetworkInformation;
 
 namespace Multiplayer
 {
     class Server
     {
-        public static int MaxPlayers { get; private set; }
+        public const int MaxPlayersPerLobby = 4;
         public static int Port { get; private set; }
-        public static Dictionary<int, Client> clients = new Dictionary<int, Client>();
+        public static Dictionary<int, Client> Clients;
         public delegate void PacketHandler(int idFromClient, Packet packet);
         public static Dictionary<int, PacketHandler> packetHandlers;
+        public static Dictionary<Guid, Room> Rooms;
 
         private static TcpListener tcpListener;
         private static UdpClient udpListener;
 
-        public static void Start(int maxPlayers, int port)
-        {
-            MaxPlayers = maxPlayers;
-            Port = port;
+        //Multicast
+        private static List<IPAddress> multicastAddressesInUse;
+        public static int multicastPort = 7778;
+        private static int[] currentInUse;
 
-            Console.WriteLine($"Starting server");
+        public static void Start(int port)
+        {
+            Port = port;
+            Console.WriteLine($"Server started on {Port}.");
+            
             InitializeData();
+
+            currentInUse = new int[4];
+            currentInUse[0] = 233;
+            currentInUse[1] = 0;
+            currentInUse[2] = 0;
+            currentInUse[3] = 0;
+            GetMulticastAdresses();
 
             tcpListener = new TcpListener(IPAddress.Parse("127.0.0.1"), Port);
             tcpListener.Start();
@@ -32,7 +45,6 @@ namespace Multiplayer
             udpListener = new UdpClient(Port);
             udpListener.BeginReceive(UDPReceiveCallback, null);
 
-            Console.WriteLine($"Server started on {Port}.");
         }
 
         #region Callbacks
@@ -47,24 +59,19 @@ namespace Multiplayer
             tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
             Console.WriteLine($"Incoming connection from {client.Client.RemoteEndPoint}...");
 
+            //Add and Connect to Client
+            int id = Clients.Count;
+            Clients.Add(id, new Client(Clients.Count));
+            Clients[id].tcp.Connect(client);
 
-            //give client an id
-            for (int i = 1; i <= MaxPlayers; i++)
-            {
-                if (clients[i].tcp.socket == null)
-                {
-                    clients[i].tcp.Connect(client);
-                    return;
-                }
-            }
-            Console.WriteLine($"{client.Client.RemoteEndPoint} failed to connect: Server full.");
+            //Console.WriteLine($"{client.Client.RemoteEndPoint} failed to connect: Server full.");
         }
 
         private static void UDPReceiveCallback(IAsyncResult result)
         {
             try
             {
-                IPEndPoint clientEndPoint = new IPEndPoint(IPAddress.Any, 0);
+                IPEndPoint clientEndPoint = new IPEndPoint(IPAddress.Any, Port);
                 byte[] data = udpListener.EndReceive(result, ref clientEndPoint);
                 udpListener.BeginReceive(UDPReceiveCallback, null);
 
@@ -80,18 +87,18 @@ namespace Multiplayer
                     if (clientId == 0)
                         return;
 
-                    if (clients[clientId].udp.endPoint == null)
+                    if (Clients[clientId].udp.endPoint == null)
                     {
-                        clients[clientId].udp.Connect(clientEndPoint);
+                        Clients[clientId].udp.Connect(clientEndPoint);
                         return;
                     }
 
                     //verifiy if the endpoint corresponds to the endpoint that sent the data
                     //this is for security reasons otherwise hackers could inpersonate other clients by send a clientId that does not corresponds to them
                     //without the string conversion even if the endpoint matched it returned false
-                    if (clients[clientId].udp.endPoint.Equals(clientEndPoint))
+                    if (Clients[clientId].udp.endPoint.Equals(clientEndPoint))
                     {
-                        clients[clientId].udp.HandleData(packet);
+                        Clients[clientId].udp.HandleData(packet);
                     }
                 }
             }
@@ -119,16 +126,62 @@ namespace Multiplayer
 
         private static void InitializeData()
         {
-            for (int i = 1; i <= MaxPlayers; i++)
-            {
-                clients.Add(i, new Client(i));
-            }
+            Clients = new Dictionary<int, Client>();
+            Rooms = new Dictionary<Guid, Room>();
 
             packetHandlers = new Dictionary<int, PacketHandler>()
             {
                 { (int)ClientPackets.welcomeReceived, ServerHandle.WelcomeReceived },
             };
-            Console.WriteLine("Initializing packets.");
+            Console.WriteLine("Packets initialized.");
+        }
+
+        private static void GetMulticastAdresses()
+        {
+            multicastAddressesInUse = new List<IPAddress>();
+            Console.WriteLine("Multicast addresses in use:");
+            foreach (NetworkInterface adapter in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (adapter.Supports(NetworkInterfaceComponent.IPv4))
+                {
+                    foreach (IPAddressInformation multi in adapter.GetIPProperties().MulticastAddresses)
+                    {
+                        if (multi.Address.AddressFamily != AddressFamily.InterNetworkV6)
+                        {
+                            Console.WriteLine("    " + multi.Address);
+                            multicastAddressesInUse.Add(multi.Address);
+                        }
+                    }
+                }
+            }
+        }
+
+        public static string GetNextAdress()
+        {
+            string ipAddress;
+            do
+            {
+                currentInUse[3]++;
+                if (currentInUse[3] >= 256)
+                {
+                    currentInUse[3] = 0;
+                    currentInUse[2]++;
+                    if (currentInUse[2] >= 256)
+                    {
+                        currentInUse[2] = 0;
+                        currentInUse[1]++;
+                        if (currentInUse[1] >= 256)
+                        {
+                            currentInUse[1] = 0;
+                        }
+                    }
+                }
+                ipAddress = $"{currentInUse[0]}.{currentInUse[1]}.{currentInUse[2]}.{currentInUse[3]}";
+            } while (multicastAddressesInUse.Contains(IPAddress.Parse(ipAddress)));
+
+            //Does port need to change too?
+
+            return ipAddress;
         }
     }
 }

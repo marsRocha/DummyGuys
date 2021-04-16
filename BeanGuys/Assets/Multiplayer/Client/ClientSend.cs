@@ -28,7 +28,6 @@ public class ClientSend : MonoBehaviour
     private static void SendUDPData(int toClient, Packet packet)
     {
         packet.WriteLength();
-        //Client.peers[toClient].udp.SendData(packet);
         Client.SendUDPData(Client.peers[toClient].udp.endPoint, packet);
     }
 
@@ -36,57 +35,51 @@ public class ClientSend : MonoBehaviour
     {
         packet.WriteLength();
 
-        foreach(Peer p in Client.peers.Values)
-            Client.SendUDPData(p.udp.endPoint, packet);
+        foreach (Peer p in Client.peers.Values)
+            p.udp.SendData(packet);
+    }
+
+    private static void MulticastUDPData(Packet packet)
+    {
+        packet.WriteLength();
+        Client.MulticastUDPData(packet);
     }
     #endregion
 
     #region Packets
-    //Sent to server when it receives a welcome message
+    //Send to server when it receives a welcome message
     public static void WelcomeReceived()
     {
         using (Packet packet = new Packet((int)ClientPackets.welcomeReceived))
         {
             packet.Write(Client.instance.myId);
-            packet.Write($"legend27");
+            packet.Write(Client.instance.username);
 
             SendTCPDataToServer(packet);
         }
     }
 
-    public static void WelcomeReceived(int toClient)
-    {
-        using (Packet packet = new Packet((int)ClientPackets.welcomeReceived))
-        {
-            packet.Write(Client.instance.myId);
-            packet.Write($"legend27");
-
-            SendTCPData(toClient, packet);
-        }
-    }
-
-    //Sent to a peer trying to connect
-    public static void WelcomePeer(int toClient)
-    {
-        Debug.Log("WelcomePeer sent");
-        using (Packet packet = new Packet((int)ClientPackets.welcome))
-        {
-            packet.Write(Client.instance.myId);
-
-            SendTCPData(toClient, packet);
-        }
-    }
+    //Send identification to peer that we want to connect to 
     public static void Introduction(int toPeer)
     {
         using (Packet packet = new Packet((int)ClientPackets.introduction))
         {
             packet.Write(Client.instance.myId);
-            packet.Write($"legend27");
+            packet.Write(Client.instance.username);
 
             SendTCPData(toPeer, packet);
+            //MulticastUDPData(packet);
         }
     }
 
+    //Send acknoledgement of connection
+    public static void WelcomePeer(int toClient)
+    {
+        using (Packet packet = new Packet((int)ClientPackets.welcome))
+        {
+            SendTCPData(toClient, packet);
+        }
+    }
 
     #region GameInfo
     //TODO: Remove from here, the Server should be the one to send this message
@@ -100,7 +93,6 @@ public class ClientSend : MonoBehaviour
 
     public static void PlayerMovement(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
     {
-        //Debug.Log("Sent input");
         using (Packet packet = new Packet((int)ClientPackets.playerMovement))
         {
             packet.Write(Client.instance.myId);
@@ -117,37 +109,34 @@ public class ClientSend : MonoBehaviour
 
     public static void PlayerAnim(int anim)
     {
-        //Debug.Log("Sent input");
         using (Packet packet = new Packet((int)ClientPackets.playerAnim))
         {
             packet.Write(Client.instance.myId);
             packet.Write(anim);
 
-            SendUDPDataToAll(packet);
+            MulticastUDPData(packet);
         }
     }
 
     public static void PlayerRespawn(int checkpointNum)
     {
-        //Debug.Log("Sent input");
         using (Packet packet = new Packet((int)ClientPackets.playerRespawn))
         {
             packet.Write(Client.instance.myId);
             packet.Write(checkpointNum);
 
-            SendUDPDataToAll(packet);
+            MulticastUDPData(packet);
         }
     }
 
     public static void PlayerFinish(float time)
     {
-        //Debug.Log("Sent input");
         using (Packet packet = new Packet((int)ClientPackets.playerFinish))
         {
             packet.Write(Client.instance.myId);
             packet.Write(time);
 
-            SendUDPDataToAll(packet);
+            MulticastUDPData(packet);
         }
     }
     #endregion

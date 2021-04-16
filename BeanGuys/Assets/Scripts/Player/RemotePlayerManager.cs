@@ -41,43 +41,26 @@ public class RemotePlayerManager : MonoBehaviour
     {
         if (isRunning)
         {
-            /*if(player_state_msgs.Count > 0)
+            if (player_state_msgs.Count > 0)
             {
-                Debug.Log("Trying");
                 RemoteState movement_msg = player_state_msgs.Dequeue();
+                // Compute render timestamp.
+                double render_timestamp = MapController.instance.Game_Clock - (1000.0 / 30);
 
+                // Find the two positions surrounding the rendering timestamp.
                 // Drop older updates
                 while (player_state_msgs.Count >= 2 && movement_msg.tick_number <= MapController.instance.Game_Clock)
                     movement_msg = player_state_msgs.Dequeue();
 
-                if (movement_msg.tick_number < MapController.instance.Game_Clock)
+                if (player_state_msgs.Count >= 1 && movement_msg.tick_number <= MapController.instance.Game_Clock)
                 {
-                    RemoteState movement_msg0 = player_state_msgs.Dequeue();
                     RemoteState movement_msg1 = player_state_msgs.Dequeue();
 
                     //Position
-                    rb.position = movement_msg0.position + (movement_msg1.position - movement_msg0.position)
-                        * (MapController.instance.Game_Clock - movement_msg0.tick_number) / (movement_msg1.tick_number - movement_msg0.tick_number);
+                    rb.position = movement_msg.position + (movement_msg1.position - movement_msg.position)
+                        * (MapController.instance.Game_Clock - movement_msg.tick_number) / (movement_msg1.tick_number - movement_msg.tick_number);
                 }
             }
-
-            
-            if (player_state_msgs.Count > 0)
-            {
-                // Drop older updates
-                while (player_state_msgs.Count > 2)
-                    player_state_msgs.Dequeue();
-
-                if (player_state_msgs.Count >= 2)
-                {
-                    RemoteState movement_msg0 = player_state_msgs.Dequeue();
-                    RemoteState movement_msg1 = player_state_msgs.Dequeue();
-
-                    //Position
-                    rb.position = movement_msg0.position + (movement_msg1.position - movement_msg0.position)
-                        * (MapController.instance.Game_Clock - movement_msg0.tick_number) / (movement_msg1.tick_number - movement_msg0.tick_number);
-                }
-            }*/
         }
     }
 
@@ -87,15 +70,14 @@ public class RemotePlayerManager : MonoBehaviour
         this.username = username;
     }
 
-    public void UpdateMovement(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, int tick_number)
+    public void UpdateMovement(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
     {
-        //player_state_msgs.Enqueue(new RemoteState(position, rotation, tick_number));
-        Debug.Log("Got pos");
+        player_state_msgs.Enqueue(new RemoteState(position, rotation, tick_number));
 
-        rb.position = position;
+        /*rb.position = position;
         rb.rotation = rotation;
         rb.velocity = velocity;
-        rb.angularVelocity = angular_velocity;
+        rb.angularVelocity = angular_velocity;*/
     }
 
     public void UpdateAnimaiton(int animNum)
@@ -141,13 +123,13 @@ public class RemoteState
 {
     public Vector3 position;
     public Quaternion rotation;
-    public int tick_number;
+    public float tick_number;
 
     public RemoteState()
     {
     }
 
-    public RemoteState(Vector3 position, Quaternion rotation, int tick_number)
+    public RemoteState(Vector3 position, Quaternion rotation, float tick_number)
     {
         this.position = position;
         this.rotation = rotation;

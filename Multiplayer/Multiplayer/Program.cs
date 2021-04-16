@@ -14,7 +14,7 @@ namespace Multiplayer
             Thread mainThread = new Thread(new ThreadStart(MainThread));
             mainThread.Start();
 
-            Server.Start(10, 26950);
+            Server.Start(26950);
         }
 
         private static void MainThread()

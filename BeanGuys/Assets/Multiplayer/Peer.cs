@@ -88,7 +88,7 @@ public class Peer
 
             stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
 
-            //Welcome message
+            //Send acknoledge of connection
             ClientSend.WelcomePeer(id);
         }
 
