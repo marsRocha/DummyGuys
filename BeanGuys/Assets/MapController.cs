@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,7 +7,7 @@ public class MapController : MonoBehaviour
 {
     public static MapController instance;
 
-    public Dictionary<int, RemotePlayerManager> players;
+    public Dictionary<Guid, RemotePlayerManager> players;
     public PlayerManager localPlayer; // { get; private set;} = null;
 
     //TODO: TO MODIFY
@@ -46,7 +47,7 @@ public class MapController : MonoBehaviour
     // Start is called before the first frame update
     private void Start()
     {
-        players = new Dictionary<int, RemotePlayerManager>();
+        players = new Dictionary<Guid, RemotePlayerManager>();
 
         Game_Clock = 0;
         isRunning = false;
@@ -102,7 +103,7 @@ public class MapController : MonoBehaviour
 
     public void SpawnLocalPlayer()
     {
-        GameObject p = Instantiate(GameManager.instance.LocalPlayerObj, spawns[Client.instance.myId - 1].position, Quaternion.identity); //sceneManager.spawnPoints[myId]
+        GameObject p = Instantiate(GameManager.instance.LocalPlayerObj, spawns[Client.instance.clientExeID].position, Quaternion.identity); //sceneManager.spawnPoints[myId]
         p.GetComponent<PlayerController>().camera = camera;
 
         localPlayer = p.GetComponent<PlayerManager>();
@@ -112,9 +113,9 @@ public class MapController : MonoBehaviour
         camera.GetComponent<PlayerCamera>().ragdoll = p.GetComponent<PlayerController>().pelvis;
     }
 
-    public void SpawnRemotePlayer(int id, string username)
+    public void SpawnRemotePlayer(Guid id, string username)
     {
-        GameObject p = Instantiate(GameManager.instance.RemotePlayerObj, spawns[id - 1].position, Quaternion.identity);
+        GameObject p = Instantiate(GameManager.instance.RemotePlayerObj, spawns[Client.instance.clientExeID - 1].position, Quaternion.identity);
         players.Add(id, p.GetComponent<RemotePlayerManager>());
         players[id].SetIdentification(id, username);
     }
@@ -122,9 +123,9 @@ public class MapController : MonoBehaviour
 
     #region Respawn Player
     //Sent from other players to respawn
-    public void PlayerRespawn(int id, int checkPointNum)
+    public void PlayerRespawn(Guid id, int checkPointNum)
     {
-        Vector3 newPos = GetRespawnPosition(id, checkPointNum);
+        Vector3 newPos = GetRespawnPosition(Client.instance.clientExeID, checkPointNum);
 
         if (id == Client.instance.myId)
             localPlayer.Respawn(newPos, Quaternion.identity);
@@ -134,7 +135,7 @@ public class MapController : MonoBehaviour
 
     public void LocalPlayerRespawn()
     {
-        Vector3 newPos = GetRespawnPosition(Client.instance.myId, playerCheckPoint);
+        Vector3 newPos = GetRespawnPosition(Client.instance.clientExeID, playerCheckPoint);
         localPlayer.Respawn(newPos, Quaternion.identity);
         ClientSend.PlayerRespawn(playerCheckPoint);
     }
@@ -158,7 +159,7 @@ public class MapController : MonoBehaviour
     }
 
 
-    public void FinishRaceForPlayer(int id, float time)
+    public void FinishRaceForPlayer(Guid id, float time)
     {
         players[id].gameObject.SetActive(false);
         UpdateQualified();

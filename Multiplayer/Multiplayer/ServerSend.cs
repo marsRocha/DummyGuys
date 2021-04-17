@@ -7,7 +7,7 @@ namespace Multiplayer
     class ServerSend
     {
         #region methods of sending info
-        private static void SendTCPData(int toClient, Packet packet)
+        private static void SendTCPData(Guid toClient, Packet packet)
         {
             packet.WriteLength();
             Server.Clients[toClient].tcp.SendData(packet);
@@ -16,13 +16,13 @@ namespace Multiplayer
         private static void SendTCPDataToAll(Packet packet)
         {
             packet.WriteLength();
-            for (int i = 1; i <= Server.MaxPlayersPerLobby; i++)
+            foreach (Client client in Server.Clients.Values)
             {
-                Server.Clients[i].tcp.SendData(packet);
+                client.tcp.SendData(packet);
             }
         }
 
-        private static void SendUDPData(int toClient, Packet packet)
+        private static void SendUDPData(Guid toClient, Packet packet)
         {
             packet.WriteLength();
             Server.Clients[toClient].udp.SendData(packet);
@@ -31,28 +31,29 @@ namespace Multiplayer
         private static void SendUDPDataToAll(Packet packet)
         {
             packet.WriteLength();
-            for (int i = 1; i <= Server.MaxPlayersPerLobby; i++)
+            foreach (Client client in Server.Clients.Values)
             {
-                Server.Clients[i].udp.SendData(packet);
+                client.udp.SendData(packet);
             }
         }
 
-        private static void SendUDPDataToAll(int exceptionClient, Packet packet)
+        private static void SendUDPDataToAll(Guid exceptionClient, Packet packet)
         {
             packet.WriteLength();
-            for (int i = 1; i <= Server.MaxPlayersPerLobby; i++)
+            foreach (Client client in Server.Clients.Values)
             {
-                if (i != exceptionClient)
-                    Server.Clients[i].udp.SendData(packet);
+                if (client.Id != exceptionClient)
+                    client.udp.SendData(packet);
             }
         }
         #endregion
 
         #region Packets
-        public static void Welcome(int toClient)
+        public static void Welcome(Guid toClient)
         {
             using (Packet packet = new Packet((int)ServerPackets.welcome))
             {
+                Console.WriteLine(toClient);
                 packet.Write(toClient);
 
                 SendTCPData(toClient, packet);
@@ -60,7 +61,7 @@ namespace Multiplayer
         }
 
 
-        public static void Peer(int peerId, string username, string peerIP, string peerPort, int toClient)
+        public static void Peer(Guid toClient, Guid peerId, string username, string peerIP, string peerPort)
         {
             using (Packet packet = new Packet((int)ServerPackets.peer))
             {
@@ -73,7 +74,7 @@ namespace Multiplayer
             }
         }
 
-        public static void JoinedRoom(int toClient, string lobbyIP, int lobbyPort)
+        public static void JoinedRoom(Guid toClient, string lobbyIP, int lobbyPort)
         {
             using (Packet packet = new Packet((int)ServerPackets.joinedRoom))
             {

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEditor;
@@ -98,7 +99,7 @@ public class GameManager : MonoBehaviour
         foreach(Peer peer in Client.peers.Values)
         {
             if(peer.tcp.socket != null)
-                mapController.SpawnRemotePlayer(peer.id, peer.username);
+                mapController.SpawnRemotePlayer(peer.Id, peer.Username);
         }
     }
 
@@ -116,27 +117,27 @@ public class GameManager : MonoBehaviour
         mapController.StartRace();
     }
 
-    public void PlayerMovement(int peerID, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
+    public void PlayerMovement(Guid peerID, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
     {
         mapController.players[peerID].UpdateMovement(position, rotation, velocity, angular_velocity, tick_number);
     }
     
-    public void PlayerAnim(int peerID, int animNum)
+    public void PlayerAnim(Guid peerID, int animNum)
     {
         mapController.players[peerID].UpdateAnimaiton(animNum);
     }
 
-    public void PlayerRespawn(int peerID, int checkPointNum)
+    public void PlayerRespawn(Guid peerID, int checkPointNum)
     {
         mapController.PlayerRespawn(peerID, checkPointNum);
     }
 
-    public void PlayerFinish(int peerID, float time)
+    public void PlayerFinish(Guid peerID, float time)
     {
         mapController.FinishRaceForPlayer(peerID, time);
     }
 
-    public void Disconnect(int peerID)
+    public void Disconnect(Guid peerID)
     {
         if (mapController != null && mapController.isRunning)
         {

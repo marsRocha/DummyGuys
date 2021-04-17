@@ -8,29 +8,30 @@ namespace Multiplayer
 {
     class ServerHandle
     {
-        public static void WelcomeReceived(int idFromClient, Packet packet)
+        public static void WelcomeReceived(Guid idFromClient, Packet packet)
         {
-            int clientIdCheck = packet.ReadInt();
+            Guid id = packet.ReadGuid();
             string username = packet.ReadString();
+            Server.Clients[idFromClient].Username = username;
+            //TODO: Set skin aswell
 
             Console.WriteLine($"{Server.Clients[idFromClient].tcp.socket.Client.RemoteEndPoint} ({username}) connected successfully and is now player {idFromClient}.");
-            if(idFromClient != clientIdCheck)
-            {
-                Console.WriteLine($"Player \"{username}\" (ID: {idFromClient}) has assumed the wrong client ID ({clientIdCheck}).");
-                //TODO: disconect player?
-            }
 
             //Look for a room for player
             SearchForRoom(Server.Clients[idFromClient]);
 
             //////////
-            /*if (idFromClient > 1)
+            if (Server.Clients.Count > 1)
             {
                 string peerPort = ((IPEndPoint)Server.Clients[idFromClient].tcp.socket.Client.RemoteEndPoint).Port.ToString();
                 string peerIP = ((IPEndPoint)Server.Clients[idFromClient].tcp.socket.Client.RemoteEndPoint).Address.ToString();
-                ServerSend.Peer(idFromClient, username, peerIP, peerPort, 1);
+                foreach(Client client in Server.Clients.Values)
+                {
+                    ServerSend.Peer(client.Id, Server.Clients[idFromClient].Id, Server.Clients[idFromClient].Username, peerIP, peerPort);
+                    break;
+                }
                 Console.WriteLine("Sent peer");
-            }*/
+            }
         }
 
         public static void SearchForRoom(Client client)

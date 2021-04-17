@@ -15,8 +15,8 @@ public class Client : MonoBehaviour
 
     public delegate void PacketHandler(Packet packet);
     public static Dictionary<int, PacketHandler> packetHandlers;
-    public static Dictionary<int, NewConnection> newConnections = new Dictionary<int, NewConnection>();
-    public static Dictionary<int, Peer> peers = new Dictionary<int, Peer>();
+    public static Dictionary<Guid, NewConnection> newConnections = new Dictionary<Guid, NewConnection>();
+    public static Dictionary<Guid, Peer> peers = new Dictionary<Guid, Peer>();
 
     private static TcpListener tcpListener;
     private static UdpClient udpListener;
@@ -34,7 +34,7 @@ public class Client : MonoBehaviour
     //Client Info
     public static IPAddress _localIPaddress;
     public static int MyPort;
-    public int myId = 0;
+    public Guid myId;
     public string username;
     private bool isConnected = false;
 
@@ -109,22 +109,9 @@ public class Client : MonoBehaviour
         Debug.Log($"Incoming connection from {client.Client.RemoteEndPoint}...");
 
         //Add to new connections until it's id is received
-        for (int i = 1; i <= MaxPlayers; i++)
-        {
-            if (newConnections[i].tcp.socket == null)
-            {
-                newConnections[i].tcp.Connect(client);
-                return;
-            }
-        }
-        Debug.Log($"{client.Client.RemoteEndPoint} failed to connect: No more peer slots available.");
-    }
-
-    public static void AddPeer(int connectionId, int peerId, string username)
-    {
-        peers.Add(peerId, new Peer(peerId, username));
-        peers[peerId].tcp.Connect(newConnections[connectionId].tcp.socket);
-        newConnections.Remove(connectionId);
+        Guid pId = Guid.NewGuid();
+        newConnections.Add(pId, new NewConnection(pId));
+        newConnections[pId].tcp.Connect(client);
     }
 
     private static void UDPReceiveCallback(IAsyncResult result)
@@ -138,13 +125,16 @@ public class Client : MonoBehaviour
             udpListener.BeginReceive(UDPReceiveCallback, null);
 
             if (data.Length < 4)
+            {
+                Debug.Log("Connection packet received.");
                 return;
+            }
 
             using (Packet packet = new Packet(data))
             {
-                int clientId = packet.ReadInt();
+                Guid clientId = packet.ReadGuid();
 
-                if (clientId == 0)
+                if (clientId == null)
                     return;
 
                 if (peers[clientId].udp.endPoint == null)
@@ -179,7 +169,7 @@ public class Client : MonoBehaviour
         try
         {
             //Send my id so who receives it knows who sent it
-            packet.InsertInt(instance.myId);
+            //packet.InsertGuid(instance.myId);
 
             if (peerEndPoint != null)
             {
@@ -196,7 +186,7 @@ public class Client : MonoBehaviour
     {
         try
         {
-            packet.InsertInt(instance.myId);
+            packet.InsertGuid(instance.myId);
             udpListener.Send(packet.ToArray(), packet.Length(), _multicastEndPoint);
         }
         catch (Exception ex)
@@ -205,7 +195,7 @@ public class Client : MonoBehaviour
         }
     }
 
-    public void ConnectToPeer(int id, string username, string ip, int port)
+    public void ConnectToPeer(Guid id, string username, string ip, int port)
     {
         //store peer info
         peers.Add(id, new Peer(id, username));
@@ -339,19 +329,12 @@ public class Client : MonoBehaviour
 
     private void InitializeData()
     {
-        //Initialize dictionary of peers
-        for (int i = 1; i <= MaxPlayers; i++)
-        {
-            newConnections.Add(i, new NewConnection(i));
-        }
-
         packetHandlers = new Dictionary<int, PacketHandler>()
         {
             { (int) ServerPackets.welcome, ClientHandle.WelcomeServer },
             { (int) ServerPackets.peer, ClientHandle.PeerList },
             { (int) ServerPackets.joinedRoom, ClientHandle.JoinedRoom },
             { (int) ClientPackets.welcome, ClientHandle.WelcomePeer },
-            { (int) ClientPackets.introduction, ClientHandle.Introduction },
             { (int) ClientPackets.playerMovement, ClientHandle.PlayerMovement },
             { (int) ClientPackets.playerAnim, ClientHandle.PlayerAnim },
             { (int) ClientPackets.playerRespawn, ClientHandle.PlayerRespawn },
@@ -375,8 +358,9 @@ public class Client : MonoBehaviour
             //Stop listening to incoming messages
             tcpListener.Stop();
             udpListener.Close();
-            //Clear peer dictionary
-            peers = new Dictionary<int, Peer>();
+            //Clear peer/connections dictionary
+            peers = new Dictionary<Guid, Peer>();
+            newConnections = new Dictionary<Guid, NewConnection>();
             Debug.Log("Disconnected.");
         }
     }

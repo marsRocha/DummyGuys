@@ -7,10 +7,10 @@ namespace Multiplayer
 {
     public class Player
     {
-        public int id;
+        public Guid id;
         public string username;
 
-        public Player(int _id, string _username)
+        public Player(Guid _id, string _username)
         {
             id = _id;
             username = _username;

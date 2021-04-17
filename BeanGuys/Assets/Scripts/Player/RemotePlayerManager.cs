@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ public class RemotePlayerManager : MonoBehaviour
     private Animator anim;
 
     [Header("Player info")]
-    public int id;
+    public Guid id;
     public string username;
 
     private const int CACHE_SIZE = 1024;
@@ -64,7 +65,7 @@ public class RemotePlayerManager : MonoBehaviour
         }
     }
 
-    public void SetIdentification(int id, string username)
+    public void SetIdentification(Guid id, string username)
     {
         this.id = id;
         this.username = username;

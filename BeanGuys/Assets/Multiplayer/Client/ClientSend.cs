@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -11,7 +12,7 @@ public class ClientSend : MonoBehaviour
         Client.instance.server.SendData(packet);
     }
 
-    private static void SendTCPData(int toClient, Packet packet)
+    private static void SendTCPData(Guid toClient, Packet packet)
     {
         packet.WriteLength();
         Client.peers[toClient].tcp.SendData(packet);
@@ -25,7 +26,7 @@ public class ClientSend : MonoBehaviour
             p.tcp.SendData(packet);
     }
 
-    private static void SendUDPData(int toClient, Packet packet)
+    private static void SendUDPData(Guid toClient, Packet packet)
     {
         packet.WriteLength();
         Client.SendUDPData(Client.peers[toClient].udp.endPoint, packet);
@@ -60,7 +61,7 @@ public class ClientSend : MonoBehaviour
     }
 
     //Send identification to peer that we want to connect to 
-    public static void Introduction(int toPeer)
+    public static void Introduction(Guid toPeer)
     {
         using (Packet packet = new Packet((int)ClientPackets.introduction))
         {
@@ -73,10 +74,12 @@ public class ClientSend : MonoBehaviour
     }
 
     //Send acknoledgement of connection
-    public static void WelcomePeer(int toClient)
+    public static void WelcomePeer(Guid toClient)
     {
         using (Packet packet = new Packet((int)ClientPackets.welcome))
         {
+            packet.Write(Client.instance.myId);
+
             SendTCPData(toClient, packet);
         }
     }
@@ -93,7 +96,7 @@ public class ClientSend : MonoBehaviour
 
     public static void PlayerMovement(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
     {
-        using (Packet packet = new Packet((int)ClientPackets.playerMovement))
+        /*using (Packet packet = new Packet((int)ClientPackets.playerMovement))
         {
             packet.Write(Client.instance.myId);
 
@@ -104,7 +107,7 @@ public class ClientSend : MonoBehaviour
             packet.Write(tick_number);
 
             SendUDPDataToAll(packet);
-        }
+        }*/
     }
 
     public static void PlayerAnim(int anim)
@@ -120,13 +123,13 @@ public class ClientSend : MonoBehaviour
 
     public static void PlayerRespawn(int checkpointNum)
     {
-        using (Packet packet = new Packet((int)ClientPackets.playerRespawn))
+        /*using (Packet packet = new Packet((int)ClientPackets.playerRespawn))
         {
             packet.Write(Client.instance.myId);
             packet.Write(checkpointNum);
 
             MulticastUDPData(packet);
-        }
+        }*/
     }
 
     public static void PlayerFinish(float time)

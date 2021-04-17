@@ -7,25 +7,25 @@ using System;
 
 public class Peer
 {
-    public int id { get; private set; } = -1;
-    public string username { get; private set; } = "";
+    public Guid Id { get; private set; }
+    public string Username { get; private set; }
 
     public static int dataBufferSize = 4036;
     public TCP tcp;
     public UDP udp;
 
-    public Peer(int clientId, string username)
+    public Peer(Guid clientId, string username)
     {
-        id = clientId;
-        this.username = username;
-        tcp = new TCP(id);
-        udp = new UDP(id);
+        Id = clientId;
+        Username = username;
+        tcp = new TCP(Id);
+        udp = new UDP(Id);
     }
 
-    public void SetIdentification(int id, string username)
+    public void SetIdentification(Guid id, string username)
     {
-        this.id = id;
-        this.username = username;
+        Id = id;
+        Username = username;
     }
 
     public class TCP
@@ -34,9 +34,9 @@ public class Peer
         private NetworkStream stream;
         private Packet receivedData;
         private byte[] receiveBuffer;
-        private readonly int id;
+        private readonly Guid id;
 
-        public TCP(int clientId)
+        public TCP(Guid clientId)
         {
             id = clientId;
         }
@@ -182,8 +182,8 @@ public class Peer
     public class UDP
     {
         public IPEndPoint endPoint;
-        private int id;
-        public UDP(int clientId)
+        private readonly Guid id;
+        public UDP(Guid clientId)
         {
             id = clientId;
         }
@@ -197,6 +197,7 @@ public class Peer
             {
                 SendData(packet);
             }
+            Debug.Log("Connection packet sent");
         }
 
         public void SendData(Packet packet)
@@ -227,8 +228,8 @@ public class Peer
 
     private void Disconnect()
     {
-        Debug.Log($"Player {id} has disconnected.");
-        GameManager.instance.Disconnect(id);
+        Debug.Log($"Player {Id} has disconnected.");
+        GameManager.instance.Disconnect(Id);
 
         tcp.Disconnect();
         udp.Disconnect();

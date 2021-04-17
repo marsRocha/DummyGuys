@@ -7,23 +7,23 @@ using System;
 
 public class NewConnection
 {
-    public int id { get; private set; } = -1;
-    public string username { get; private set; } = "";
+    public Guid Id { get; private set; }
+    public string Username { get; private set; }
 
     public static int dataBufferSize = 4036;
     public TCP tcp;
 
-    public NewConnection(int clientId)
+    public NewConnection(Guid clientId)
     {
-        id = clientId;
-        this.username = username;
-        tcp = new TCP(id);
+        Id = clientId;
+        Username = Username;
+        tcp = new TCP(Id);
     }
 
-    public void SetIdentification(int id, string username)
+    public void SetIdentification(Guid id, string username)
     {
-        this.id = id;
-        this.username = username;
+        Id = id;
+        Username = username;
     }
 
     public class TCP
@@ -32,9 +32,9 @@ public class NewConnection
         private NetworkStream stream;
         private Packet receivedData;
         private byte[] receiveBuffer;
-        private readonly int id;
+        private readonly Guid id;
 
-        public TCP(int clientId)
+        public TCP(Guid clientId)
         {
             id = clientId;
         }
@@ -52,21 +52,6 @@ public class NewConnection
             stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
         }
 
-        public void SendData(Packet packet)
-        {
-            try
-            {
-                if (socket != null)
-                {
-                    stream.BeginWrite(packet.ToArray(), 0, packet.Length(), null, null);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.Log($"Error sending data to player {id} via TCP: {ex}");
-            }
-        }
-
         private void ReceiveCallback(IAsyncResult result)
         {
             try
@@ -82,8 +67,6 @@ public class NewConnection
                 Array.Copy(receiveBuffer, data, byteLength);
 
                 receivedData.Reset(HandleData(data));
-                //handle data
-                stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
             }
             catch (Exception ex)
             {
@@ -111,7 +94,34 @@ public class NewConnection
                     using (Packet packet = new Packet(packetBytes))
                     {
                         int packetId = packet.ReadInt();
-                        Client.packetHandlers[packetId](packet);
+
+                        //Check if it is an introduction packet(9)
+                        if(packetId == 9)
+                        {
+                            Guid peerID = packet.ReadGuid();
+                            string username = packet.ReadString();
+
+                            //Add new peer since now we know their information
+                            Client.peers.Add(peerID, new Peer(peerID, username));
+                            Client.peers[peerID].tcp.Connect(Client.newConnections[id].tcp.socket);
+
+                            //Initiate udp connection
+                            //TODO: fix this
+                            //Client.peers[peerID].udp.Connect((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint);
+                            if (Client.instance.clientExeID == 1)
+                                Client.peers[peerID].udp.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5002)); //((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint).Port));
+                            else
+                                Client.peers[peerID].udp.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5001)); //((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint).Port));
+
+                            GameManager.instance.UpdatePlayerCount();
+                            Debug.Log($"Peer[{peerID}] introduction finished, UDP connected! {username} has joined the game!");
+                        }
+                        else
+                        {
+                            Debug.Log($"Error receiving introduction data: Packet id does not match");
+                        }
+                        //Remove this connection, no longer needed
+                        Client.newConnections.Remove(id);
                     }
                 });
 

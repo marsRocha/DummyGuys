@@ -9,17 +9,17 @@ public class ClientHandle : MonoBehaviour
     //Receives id set to player by server
     public static void WelcomeServer(Packet packet)
     {
-        int myId = packet.ReadInt();
-
-        Debug.Log($"[SERVER] Welcome, your Id is {myId}");
+        Guid myId = packet.ReadGuid();
         Client.instance.myId = myId;
+        Debug.Log($"[SERVER] Welcome, your Id is {myId}");
+
         ClientSend.WelcomeReceived();
     }
 
     //Receives list of peers to connect to
     public static void PeerList(Packet packet)
     {
-        int id = packet.ReadInt();
+        Guid id = packet.ReadGuid();
         string username = packet.ReadString();
         string ip = packet.ReadString();
         string port = packet.ReadString();
@@ -42,36 +42,17 @@ public class ClientHandle : MonoBehaviour
     //Received an welcome from the peer i tried to connect to
     public static void WelcomePeer(Packet packet)
     {
-        int peerID = packet.ReadInt();
-        //ClientSend.WelcomeReceived(peerID);
+        Guid peerID = packet.ReadGuid();
 
-        //Store it's information
-        //TODO: Store the players skin also
-        //Client.peers[peerID].SetIdentification(peerID, "legend27");
-        GameManager.instance.UpdatePlayerCount();
-
-        Debug.Log($"{"legend27"}(player {peerID}) has joined the game!");
-    }
-
-    public static void Introduction( Packet packet)
-    {
-        int peerID = packet.ReadInt();
-        string username = packet.ReadString();
-
-        //Delet new connection and add new peer since now we know their information
-        Client.AddPeer(1, peerID, username);
-        //Initiate udp connection
-        //TODO: fix this
-        //Client.peers[peerID].udp.Connect((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint);
+        //Connect udp
         if (Client.instance.clientExeID == 1)
             Client.peers[peerID].udp.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5002)); //((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint).Port));
         else
             Client.peers[peerID].udp.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5001)); //((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint).Port));
 
         GameManager.instance.UpdatePlayerCount();
-        Debug.Log($"Peer introduction finished, UDP connected!");
-        Debug.Log($"{"legend27"}(player {peerID}) has joined the game!");
 
+        Debug.Log($"{"legend27"}(player {peerID}) has joined the game!");
     }
 
     #region Game packages
@@ -82,7 +63,7 @@ public class ClientHandle : MonoBehaviour
 
     public static void PlayerMovement(Packet packet)
     {
-        int peerID = packet.ReadInt();
+        Guid peerID = packet.ReadGuid();
 
         Vector3 position = packet.ReadVector3();
         Quaternion rotation = packet.ReadQuaternion();
@@ -95,7 +76,7 @@ public class ClientHandle : MonoBehaviour
 
     public static void PlayerAnim(Packet packet)
     {
-        int peerID = packet.ReadInt();
+        Guid peerID = packet.ReadGuid();
         int animNum = packet.ReadInt();
 
         GameManager.instance.PlayerAnim(peerID, animNum);
@@ -103,7 +84,7 @@ public class ClientHandle : MonoBehaviour
 
     public static void PlayerRespawn(Packet packet)
     {
-        int id = packet.ReadInt();
+        Guid id = packet.ReadGuid();
         int checkPointNum = packet.ReadInt();
 
         GameManager.instance.PlayerRespawn(id, checkPointNum);
@@ -111,7 +92,7 @@ public class ClientHandle : MonoBehaviour
 
     public static void PlayerFinish(Packet packet)
     {
-        int id = packet.ReadInt();
+        Guid id = packet.ReadGuid();
         float time = packet.ReadFloat();
 
         GameManager.instance.PlayerFinish(id, time);

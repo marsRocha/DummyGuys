@@ -9,7 +9,7 @@ namespace Multiplayer
 {
     public class Client
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string Username { get; set; }
         public Guid RoomID { get; set; }
 
@@ -18,7 +18,7 @@ namespace Multiplayer
         public TCP tcp;
         public UDP udp;
 
-        public Client(int clientId)
+        public Client(Guid clientId)
         {
             Id = clientId;
             tcp = new TCP(Id);
@@ -31,9 +31,9 @@ namespace Multiplayer
             private NetworkStream stream;
             private Packet receivedData;
             private byte[] receiveBuffer;
-            private readonly int id;
+            private readonly Guid id;
 
-            public TCP(int clientId)
+            public TCP(Guid clientId)
             {
                 id = clientId;
             }
@@ -145,8 +145,8 @@ namespace Multiplayer
         public class UDP
         {
             public IPEndPoint endPoint;
-            private int id;
-            public UDP(int clientId)
+            private readonly Guid id;
+            public UDP(Guid clientId)
             {
                 id = clientId;
             }

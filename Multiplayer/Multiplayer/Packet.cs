@@ -19,7 +19,7 @@ namespace Multiplayer
     /// <summary>Sent from client to server.</summary>
     public enum ClientPackets
     {
-        welcomeReceived = 6,
+        welcomeReceived = 7,
         welcome,
         introduction,
         playerMovement,
@@ -35,6 +35,7 @@ namespace Multiplayer
         private byte[] readableBuffer;
         private int readPos;
 
+        #region Constructors
         /// <summary>Creates a new empty packet (without an ID).</summary>
         public Packet()
         {
@@ -61,6 +62,7 @@ namespace Multiplayer
 
             SetBytes(_data);
         }
+        #endregion
 
         #region Functions
         /// <summary>Sets the packet's content and prepares it to be read.</summary>
@@ -82,6 +84,13 @@ namespace Multiplayer
         public void InsertInt(int _value)
         {
             buffer.InsertRange(0, BitConverter.GetBytes(_value)); // Insert the int at the start of the buffer
+        }
+
+        /// <summary>Inserts the given Guid at the start of the buffer.</summary>
+        /// <param name="_value">The Guid to insert.</param>
+        public void InsertGuid(Guid _value)
+        {
+            buffer.InsertRange(0, _value.ToByteArray()); // Insert the Guid at the start of the buffer
         }
 
         /// <summary>Gets the packet's content in array form.</summary>
@@ -151,6 +160,12 @@ namespace Multiplayer
         {
             buffer.AddRange(BitConverter.GetBytes(_value));
         }
+        /// <summary>Adds a Guid to the packet.</summary>
+        /// <param name="_value">The Guid to add.</param>
+        public void Write(Guid _value)
+        {
+            buffer.AddRange(_value.ToByteArray());
+        }
         /// <summary>Adds a float to the packet.</summary>
         /// <param name="_value">The float to add.</param>
         public void Write(float _value)
@@ -170,7 +185,7 @@ namespace Multiplayer
             Write(_value.Length); // Add the length of the string to the packet
             buffer.AddRange(Encoding.ASCII.GetBytes(_value)); // Add the string itself
         }
-        
+
         public void Write(Vector3 _value)
         {
             Write(_value.X);
@@ -312,6 +327,26 @@ namespace Multiplayer
             else
             {
                 throw new Exception("Could not read value of type 'float'!");
+            }
+        }
+
+        public Guid ReadGuid(bool _moveReadPos = true)
+        {
+            if (buffer.Count > readPos)
+            {
+                // If there are unread bytes
+                string strHex = BitConverter.ToString(readableBuffer, readPos, 16);
+                Guid _value = new Guid(strHex.Replace("-", ""));
+                if (_moveReadPos)
+                {
+                    // If _moveReadPos is true
+                    readPos += 16; // Increase readPos by 16
+                }
+                return _value; // Return the long
+            }
+            else
+            {
+                throw new Exception("Could not read value of type 'Guid'!");
             }
         }
 

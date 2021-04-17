@@ -10,7 +10,7 @@ namespace Multiplayer
     {
         public Guid Id { get; set; }
         public RoomState RoomState { get; set; }
-        public Dictionary<int, Player> Players { get; set; }
+        public Dictionary<Guid, Player> Players { get; set; }
 
         public string MulticastIP { get; set; }
         public int MulticastPort { get; set; }
@@ -25,7 +25,7 @@ namespace Multiplayer
             MulticastPort = multicastPort;
 
             RoomState = RoomState.looking;
-            Players = new Dictionary<int, Player>();
+            Players = new Dictionary<Guid, Player>();
 
             RoomUDP = new UdpClient();
             EndPoint = new IPEndPoint(IPAddress.Parse(multicastIP), multicastPort);
@@ -34,7 +34,7 @@ namespace Multiplayer
             Console.WriteLine($"New lobby created [{Id}]: listenning in {multicastIP}:{multicastPort}");
         }
 
-        public void AddPlayer(int id, string username, string peerIP, string peerPort)
+        public void AddPlayer(Guid id, string username, string peerIP, string peerPort)
         {
             Console.WriteLine($"Player[{id}] has joined the Room[{Id}]");
             Players.Add(id, new Player(id, username));
@@ -49,7 +49,7 @@ namespace Multiplayer
         }
         
 
-        public void RemovePlayer(int id)
+        public void RemovePlayer(Guid id)
         {
             Console.WriteLine($"Player[{id}] has left the Room[{Id}]");
             Players.Remove(id);

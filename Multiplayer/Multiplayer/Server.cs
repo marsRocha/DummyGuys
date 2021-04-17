@@ -11,8 +11,8 @@ namespace Multiplayer
     {
         public const int MaxPlayersPerLobby = 4;
         public static int Port { get; private set; }
-        public static Dictionary<int, Client> Clients;
-        public delegate void PacketHandler(int idFromClient, Packet packet);
+        public static Dictionary<Guid, Client> Clients;
+        public delegate void PacketHandler(Guid idFromClient, Packet packet);
         public static Dictionary<int, PacketHandler> packetHandlers;
         public static Dictionary<Guid, Room> Rooms;
 
@@ -60,9 +60,9 @@ namespace Multiplayer
             Console.WriteLine($"Incoming connection from {client.Client.RemoteEndPoint}...");
 
             //Add and Connect to Client
-            int id = Clients.Count;
-            Clients.Add(id, new Client(Clients.Count));
-            Clients[id].tcp.Connect(client);
+            Guid pId = Guid.NewGuid();
+            Clients.Add(pId, new Client(pId));
+            Clients[pId].tcp.Connect(client);
 
             //Console.WriteLine($"{client.Client.RemoteEndPoint} failed to connect: Server full.");
         }
@@ -82,9 +82,9 @@ namespace Multiplayer
 
                 using (Packet packet = new Packet(data))
                 {
-                    int clientId = packet.ReadInt();
+                    Guid clientId = packet.ReadGuid();
 
-                    if (clientId == 0)
+                    if (clientId == null)
                         return;
 
                     if (Clients[clientId].udp.endPoint == null)
@@ -126,7 +126,7 @@ namespace Multiplayer
 
         private static void InitializeData()
         {
-            Clients = new Dictionary<int, Client>();
+            Clients = new Dictionary<Guid, Client>();
             Rooms = new Dictionary<Guid, Room>();
 
             packetHandlers = new Dictionary<int, PacketHandler>()

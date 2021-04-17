@@ -995,7 +995,7 @@ ScriptsOnlyBuild:
     className: Physics2DRaycaster
   - hash:
       serializedVersion: 2
-      Hash: ed04aa478e1c2311d7c81279beaf3e92
+      Hash: f9782e619624e58496e8966f8c84d281
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: RemotePlayerManager
@@ -1229,7 +1229,7 @@ ScriptsOnlyBuild:
     className: AmbientOcclusion
   - hash:
       serializedVersion: 2
-      Hash: 22e3f18ef66274bde393554e8f9ed725
+      Hash: 85037a3c952e618be8226cff9f8b99c3
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: Client
