@@ -83,7 +83,7 @@ public class RagdollController : MonoBehaviour
 
     public void RagdollIn()
     {
-        Debug.Log("RagdollIn");
+        //Debug.Log("RagdollIn");
         canRecover = 0.0f;
         state = RagdollState.Ragdolled;
         ActivateRagdollComponents(true);
@@ -97,7 +97,7 @@ public class RagdollController : MonoBehaviour
 
     private void RagdollOut()
     {
-        Debug.Log("RagdollOut");
+        //Debug.Log("RagdollOut");
         state = RagdollState.BlendToAnim;
         ActivateRagdollComponents(false);
         playerController.enabled = false;

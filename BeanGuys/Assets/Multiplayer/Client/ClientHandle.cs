@@ -6,6 +6,7 @@ using UnityEngine;
 
 public class ClientHandle : MonoBehaviour
 {
+    #region Server Packets
     //Receives id set to player by server
     public static void WelcomeServer(Guid not_needed, Packet packet)
     {
@@ -31,14 +32,20 @@ public class ClientHandle : MonoBehaviour
             Client.instance.ConnectToPeer(id, username, "127.0.0.1", 5001);
     }
 
+    //Receives the information needed to start listening to room multicast messages
     public static void JoinedRoom(Guid not_needed, Packet packet)
     {
         string ip = packet.ReadString();
         int port = packet.ReadInt();
 
+        //Start listening to room
+        Client.ListenToRoom(ip, port);
+
         Debug.Log($"Joined room, multicast info Ip:{ip} Port:{port}");
     }
+    #endregion
 
+    #region Peer Packets
     //Received an welcome from the peer i tried to connect to
     public static void WelcomePeer(Guid id, Packet packet)
     {
@@ -90,5 +97,6 @@ public class ClientHandle : MonoBehaviour
 
         GameManager.instance.PlayerFinish(id, time);
     }
+    #endregion
     #endregion
 }

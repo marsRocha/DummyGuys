@@ -103,7 +103,7 @@ public class MapController : MonoBehaviour
 
     public void SpawnLocalPlayer()
     {
-        GameObject p = Instantiate(GameManager.instance.LocalPlayerObj, spawns[Client.instance.clientExeID].position, Quaternion.identity); //sceneManager.spawnPoints[myId]
+        GameObject p = Instantiate(GameManager.instance.LocalPlayerObj, spawns[Client.instance.clientExeID - 1].position, Quaternion.identity); //sceneManager.spawnPoints[myId]
         p.GetComponent<PlayerController>().camera = camera;
 
         localPlayer = p.GetComponent<PlayerManager>();

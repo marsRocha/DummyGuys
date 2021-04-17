@@ -66,7 +66,9 @@ namespace Multiplayer
         private void MulticastUDPData(Packet packet)
         {
             packet.WriteLength();
-            RoomUDP.Send(packet.ToArray(), packet.Length(), EndPoint);
+            RoomUDP.BeginSend(packet.ToArray(), packet.Length(), EndPoint, null, null);
+
+            Console.WriteLine($"Multicast sent");
         }
     }
 

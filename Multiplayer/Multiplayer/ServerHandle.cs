@@ -21,7 +21,7 @@ namespace Multiplayer
             SearchForRoom(Server.Clients[idFromClient]);
 
             //////////
-            if (Server.Clients.Count > 1)
+            /*if (Server.Clients.Count > 1)
             {
                 string peerPort = ((IPEndPoint)Server.Clients[idFromClient].tcp.socket.Client.RemoteEndPoint).Port.ToString();
                 string peerIP = ((IPEndPoint)Server.Clients[idFromClient].tcp.socket.Client.RemoteEndPoint).Address.ToString();
@@ -31,7 +31,7 @@ namespace Multiplayer
                     break;
                 }
                 Console.WriteLine("Sent peer");
-            }
+            }*/
         }
 
         public static void SearchForRoom(Client client)
