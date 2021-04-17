@@ -1,11 +1,11 @@
 fileFormatVersion: 2
-guid: 2660145fbf7947441b186d6148e6b949
+guid: 00e5d029c7f607941abecfbd3c94e686
 ModelImporter:
   serializedVersion: 20101
   internalIDToNameTable:
   - first:
       74: -203655887218126122
-    second: Run
+    second: Jump
   externalObjects: {}
   materials:
     materialImportMode: 1
@@ -35,21 +35,21 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Run
+      name: Jump
       takeName: mixamo.com
       internalID: 0
       firstFrame: 0
-      lastFrame: 33
+      lastFrame: 6.5
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
       cycleOffset: 0
       loop: 0
       hasAdditiveReferencePose: 0
-      loopTime: 1
+      loopTime: 0
       loopBlend: 0
       loopBlendOrientation: 0
-      loopBlendPositionY: 1
+      loopBlendPositionY: 0
       loopBlendPositionXZ: 0
       keepOriginalOrientation: 0
       keepOriginalPositionY: 1
@@ -286,19 +286,19 @@ ModelImporter:
         length: 0
         modified: 0
     skeleton:
-    - name: Running (2)(Clone)
+    - name: Jump(Clone)
       parentName: 
       position: {x: 0, y: 0, z: 0}
-      rotation: {x: -0.095872365, y: -0.011865925, z: -0.030896377, w: 0.9948433}
+      rotation: {x: -0.18212353, y: 0.14388365, z: 0.046709, w: 0.97156924}
       scale: {x: 1, y: 1, z: 1}
     - name: Bip001
-      parentName: Running (2)(Clone)
-      position: {x: 0.0009826475, y: 0.61330384, z: -0.006900964}
-      rotation: {x: -0.4587746, y: 0.4397623, z: 0.5669222, w: 0.52415097}
+      parentName: Jump(Clone)
+      position: {x: -0.0008043293, y: 0.57348067, z: -0.012652402}
+      rotation: {x: -0.44311816, y: 0.34586865, z: 0.48172724, w: 0.6722797}
       scale: {x: 1, y: 1, z: 1}
     - name: Bip001 Pelvis
       parentName: Bip001
-      position: {x: 0.00006805919, y: 0.040200256, z: 0.08540603}
+      position: {x: -0.2060681, y: -0.08619511, z: 0.1567926}
       rotation: {x: 0.5, y: -0.5, z: -0.5, w: -0.5}
       scale: {x: 1, y: 1, z: 1}
     - name: Bip001 Spine

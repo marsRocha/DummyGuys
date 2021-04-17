@@ -151,7 +151,7 @@ public class Peer
                     using (Packet packet = new Packet(packetBytes))
                     {
                         int packetId = packet.ReadInt();
-                        Client.packetHandlers[packetId](packet);
+                        Client.packetHandlers[packetId](id, packet);
                     }
                 });
 
@@ -215,7 +215,7 @@ public class Peer
                 using (Packet packet = new Packet(packetBytes))
                 {
                     int packetId = packet.ReadInt();
-                    Client.packetHandlers[packetId](packet);
+                    Client.packetHandlers[packetId]( id, packet);
                 }
             });
         }

@@ -13,7 +13,7 @@ public class Client : MonoBehaviour
     public static int dataBufferSize = 4096;
     public static int MaxPlayers { get; private set; } = 10;
 
-    public delegate void PacketHandler(Packet packet);
+    public delegate void PacketHandler(Guid id, Packet packet);
     public static Dictionary<int, PacketHandler> packetHandlers;
     public static Dictionary<Guid, NewConnection> newConnections = new Dictionary<Guid, NewConnection>();
     public static Dictionary<Guid, Peer> peers = new Dictionary<Guid, Peer>();
@@ -298,7 +298,7 @@ public class Client : MonoBehaviour
                     using (Packet packet = new Packet(packetBytes))
                     {
                         int packetId = packet.ReadInt();
-                        packetHandlers[packetId](packet);
+                        packetHandlers[packetId](Guid.Empty, packet);
                     }
                 });
 

@@ -1,11 +1,11 @@
 fileFormatVersion: 2
-guid: 2660145fbf7947441b186d6148e6b949
+guid: df3922b604b090d40aeb9ea295308cfd
 ModelImporter:
   serializedVersion: 20101
   internalIDToNameTable:
   - first:
       74: -203655887218126122
-    second: Run
+    second: Idle
   externalObjects: {}
   materials:
     materialImportMode: 1
@@ -35,11 +35,11 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Run
+      name: Idle
       takeName: mixamo.com
       internalID: 0
       firstFrame: 0
-      lastFrame: 33
+      lastFrame: 75
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -51,7 +51,7 @@ ModelImporter:
       loopBlendOrientation: 0
       loopBlendPositionY: 1
       loopBlendPositionXZ: 0
-      keepOriginalOrientation: 0
+      keepOriginalOrientation: 1
       keepOriginalPositionY: 1
       keepOriginalPositionXZ: 0
       heightFromFeet: 0
@@ -286,19 +286,19 @@ ModelImporter:
         length: 0
         modified: 0
     skeleton:
-    - name: Running (2)(Clone)
+    - name: Idle(Clone)
       parentName: 
       position: {x: 0, y: 0, z: 0}
-      rotation: {x: -0.095872365, y: -0.011865925, z: -0.030896377, w: 0.9948433}
+      rotation: {x: -0.032921884, y: -0.032302536, z: -0.0022892298, w: 0.9989332}
       scale: {x: 1, y: 1, z: 1}
     - name: Bip001
-      parentName: Running (2)(Clone)
-      position: {x: 0.0009826475, y: 0.61330384, z: -0.006900964}
-      rotation: {x: -0.4587746, y: 0.4397623, z: 0.5669222, w: 0.52415097}
+      parentName: Idle(Clone)
+      position: {x: 0.000218943, y: 0.6496501, z: -0.002214907}
+      rotation: {x: -0.46778616, y: 0.49781445, z: 0.5334102, w: 0.49882907}
       scale: {x: 1, y: 1, z: 1}
     - name: Bip001 Pelvis
       parentName: Bip001
-      position: {x: 0.00006805919, y: 0.040200256, z: 0.08540603}
+      position: {x: 0.000029283634, y: 0, z: 0.036796477}
       rotation: {x: 0.5, y: -0.5, z: -0.5, w: -0.5}
       scale: {x: 1, y: 1, z: 1}
     - name: Bip001 Spine
