@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System;
 using System.Security.Cryptography;
 using System.Net.Http.Headers;
+using System.Threading;
 
 public class Client : MonoBehaviour
 {
@@ -20,14 +21,14 @@ public class Client : MonoBehaviour
 
     private static TcpListener tcpListener;
     private static UdpClient udpClient;
+    private static Thread _thread;
 
     //Server Info
     private string serverIP = "127.0.0.1";
     public int serverPort = 26950;
     public TCP server { get; private set; }
 
-    //TODO: public for now, afterwards it will be the server to give the client this information
-    public static IPAddress _roomMulticastIPaddress;
+    private static IPAddress _roomMulticastIPaddress;
     private static IPEndPoint _roomMulticastEndPoint;
     private static IPEndPoint _lolcalEndPoint;
 
@@ -59,7 +60,7 @@ public class Client : MonoBehaviour
         serverIP = ip;
         serverPort = port;
 
-        _localIPaddress = IPAddress.Parse("127.0.0.1");// IPAddress.Any;
+        _localIPaddress = IPAddress.Parse("127.0.0.1"); //Parse(GetLocalIPAddress()); //IPAddress.Any; //Parse("127.0.0.1");
         //Depending on the id set on inspector, set a different ip and port to listen to peers
         MyPort = 5000 + clientExeID;
 
@@ -75,16 +76,16 @@ public class Client : MonoBehaviour
         _lolcalEndPoint = new IPEndPoint(_localIPaddress, MyPort);
 
         // Create and configure UdpClient
-        udpClient = new UdpClient();
+        /*udpClient = new UdpClient();
         // The following two lines allow multiple clients on the same PC
         udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
         udpClient.ExclusiveAddressUse = false;
         // Bind, Join
         udpClient.Client.Bind(_lolcalEndPoint);
         // Start listening for incoming data
-        udpClient.BeginReceive(UDPReceiveCallback, null);
+        udpClient.BeginReceive(UDPReceiveCallback, null);*/
 
-        Debug.Log($"Client started listening on {MyPort}");
+        Debug.Log($"Client started listening[TCP only] on {MyPort}");
     }
 
     private void ConnectToServer()
@@ -110,52 +111,48 @@ public class Client : MonoBehaviour
         newConnections[pId].tcp.Connect(client);
     }
 
-    private static void UDPReceiveCallback(IAsyncResult result)
+    private static void UDPReceive()
     {
-        try
+        while (true)
         {
-            Debug.Log("got mail");
-            //IPEndPoint clientEndPoint = new IPEndPoint(_localIPaddress, MyPort);
-            IPEndPoint clientEndPoint = new IPEndPoint(0, 0);
-            byte[] data = udpClient.EndReceive(result, ref clientEndPoint);
-            udpClient.BeginReceive(UDPReceiveCallback, null);
-
-            if (data.Length < 4)
+            try
             {
-                Debug.Log("Connection packet received.");
-                return;
-            }
+                //IPEndPoint clientEndPoint = new IPEndPoint(IPAddress.Any, MyPort);
+                byte[] data = udpClient.Receive(ref _roomMulticastEndPoint);
 
-            using (Packet packet = new Packet(data))
-            {
-                Guid clientId = packet.ReadGuid();
-
-                if (clientId == null)
-                    return;
-
-                if (peers[clientId].udp.endPoint == null)
+                if (data.Length < 4)
                 {
-                    peers[clientId].udp.Connect(clientEndPoint);
+                    Debug.Log("Connection packet received.");
                     return;
                 }
 
-                //Debug.Log($"client Endpoint:{clientEndPoint}, udpEndPoint:{peers[1].udp.endPoint}");
-                //verifiy if the endpoint corresponds to the endpoint that sent the data
-                //this is for security reasons otherwise hackers could inpersonate other clients by send a clientId that does not corresponds to them
-                //without the string conversion even if the endpoint matched it returned false
-                if (peers[clientId].udp.endPoint.Equals(clientEndPoint))
+                using (Packet packet = new Packet(data))
                 {
-                    //Debug.Log($"Handle data, peerID:{clientId}");
-
-                    //peers[clientId].udp.HandleData(data);
-                    peers[clientId].udp.HandleData(packet);
+                    //Handle data
+                    HandleData(packet);
                 }
             }
+            catch (Exception ex)
+            {
+                Debug.Log($"Error receiving UDP data: {ex}");
+            }
         }
-        catch (Exception ex)
+    }
+
+    public static void HandleData(Packet data)
+    {
+        int packetLength = data.ReadInt();
+        byte[] packetBytes = data.ReadBytes(packetLength);
+
+        ThreadManager.ExecuteOnMainThread(() =>
         {
-            Debug.Log($"Error receiving UDP data: {ex}");
-        }
+            using (Packet packet = new Packet(packetBytes))
+            {
+                int packetId = packet.ReadInt();
+                Guid id = packet.ReadGuid();
+                packetHandlers[packetId](id, packet);
+            }
+        });
     }
 
     #endregion
@@ -164,12 +161,9 @@ public class Client : MonoBehaviour
     {
         try
         {
-            //Send my id so who receives it knows who sent it
-            //packet.InsertGuid(instance.myId);
-
             if (peerEndPoint != null)
             {
-                udpClient.BeginSend(packet.ToArray(), packet.Length(), peerEndPoint, null, null);
+                udpClient.Send(packet.ToArray(), packet.Length(), peerEndPoint);
             }
         }
         catch (Exception ex)
@@ -202,13 +196,40 @@ public class Client : MonoBehaviour
     public static void ListenToRoom(string roomAddress, int roomPort)
     {
         _roomMulticastIPaddress = IPAddress.Parse(roomAddress);
+        // Create endpoint
+        _roomMulticastEndPoint = new IPEndPoint(IPAddress.Any, roomPort);
 
-        // Create endpoints
-        _roomMulticastEndPoint = new IPEndPoint(_roomMulticastIPaddress, roomPort);
+        udpClient = new UdpClient();
+        udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+        udpClient.Client.Bind(_roomMulticastEndPoint);
+        udpClient.JoinMulticastGroup(_roomMulticastIPaddress);
 
-        udpClient.JoinMulticastGroup(_roomMulticastIPaddress, _localIPaddress);
-        udpClient.MulticastLoopback = true;
-        udpClient.Client.MulticastLoopback = true;
+        // Start listening for incoming data
+        _thread = new Thread(new ThreadStart(UDPReceive));
+        _thread.Start();
+    }
+    
+    public static void StopListeningToRoom()
+    {
+        udpClient.Close();
+
+        _thread.Abort();
+        _thread.Join(500);
+        _thread = null;
+    }
+
+    public static string GetLocalIPAddress()
+    {
+        var host = Dns.GetHostEntry(Dns.GetHostName());
+        foreach (var ip in host.AddressList)
+        {
+            if (ip.AddressFamily == AddressFamily.InterNetwork)
+            {
+                Debug.Log($"Local ip:{ip}");
+                return ip.ToString();
+            }
+        }
+        throw new Exception("Local IP Address Not Found!");
     }
 
     public class TCP
@@ -340,8 +361,10 @@ public class Client : MonoBehaviour
         packetHandlers = new Dictionary<int, PacketHandler>()
         {
             { (int) ServerPackets.welcome, ClientHandle.WelcomeServer },
-            { (int) ServerPackets.peer, ClientHandle.PeerList },
+            //{ (int) ServerPackets.peer, ClientHandle.PeerList },
             { (int) ServerPackets.joinedRoom, ClientHandle.JoinedRoom },
+            { (int) ServerPackets.playerJoined, ClientHandle.PlayerJoined },
+            { (int) ServerPackets.playerLeft, ClientHandle.PlayerLeft },
             { (int) ClientPackets.welcome, ClientHandle.WelcomePeer },
             { (int) ClientPackets.playerMovement, ClientHandle.PlayerMovement },
             { (int) ClientPackets.playerAnim, ClientHandle.PlayerAnim },
@@ -365,7 +388,7 @@ public class Client : MonoBehaviour
             server.socket.Close();
             //Stop listening to incoming messages
             tcpListener.Stop();
-            udpClient.Close();
+            StopListeningToRoom();
             //Clear peer/connections dictionary
             peers = new Dictionary<Guid, Peer>();
             newConnections = new Dictionary<Guid, NewConnection>();

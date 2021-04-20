@@ -226,7 +226,7 @@ public class Peer
         }
     }
 
-    private void Disconnect()
+    public void Disconnect()
     {
         Debug.Log($"Player {Id} has disconnected.");
         GameManager.instance.Disconnect(Id);

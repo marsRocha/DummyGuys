@@ -41,6 +41,8 @@ namespace Multiplayer
 
             using (Packet packet = new Packet((int)ServerPackets.playerJoined))
             {
+                packet.Write(id);
+                packet.Write(username);
                 packet.Write(peerIP);
                 packet.Write(peerPort);
 
@@ -66,7 +68,7 @@ namespace Multiplayer
         private void MulticastUDPData(Packet packet)
         {
             packet.WriteLength();
-            RoomUDP.BeginSend(packet.ToArray(), packet.Length(), EndPoint, null, null);
+            RoomUDP.Send(packet.ToArray(), packet.Length(), EndPoint);
 
             Console.WriteLine($"Multicast sent");
         }

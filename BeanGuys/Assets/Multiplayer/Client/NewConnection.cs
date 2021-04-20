@@ -105,16 +105,8 @@ public class NewConnection
                             Client.peers.Add(peerID, new Peer(peerID, username));
                             Client.peers[peerID].tcp.Connect(Client.newConnections[id].tcp.socket);
 
-                            //Initiate udp connection
-                            //TODO: fix this
-                            //Client.peers[peerID].udp.Connect((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint);
-                            if (Client.instance.clientExeID == 1)
-                                Client.peers[peerID].udp.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5002)); //((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint).Port));
-                            else
-                                Client.peers[peerID].udp.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5001)); //((IPEndPoint)Client.peers[peerID].tcp.socket.Client.RemoteEndPoint).Port));
-
                             GameManager.instance.UpdatePlayerCount();
-                            Debug.Log($"Peer[{peerID}] introduction finished, UDP connected! {username} has joined the game!");
+                            Debug.Log($"Peer[{peerID}] introduction finished! {username} has joined the game!");
                         }
                         else
                         {

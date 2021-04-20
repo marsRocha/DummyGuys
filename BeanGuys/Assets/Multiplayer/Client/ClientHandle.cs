@@ -17,21 +17,6 @@ public class ClientHandle : MonoBehaviour
         ClientSend.WelcomeReceived();
     }
 
-    //Receives list of peers to connect to
-    public static void PeerList(Guid not_needed, Packet packet)
-    {
-        Guid id = packet.ReadGuid();
-        string username = packet.ReadString();
-        string ip = packet.ReadString();
-        string port = packet.ReadString();
-
-        Debug.Log($"received Ip:{ip} Port:{port}");
-        if(Client.instance.clientExeID == 1)
-            Client.instance.ConnectToPeer(id, username, "127.0.0.1", 5002);
-        else
-            Client.instance.ConnectToPeer(id, username, "127.0.0.1", 5001);
-    }
-
     //Receives the information needed to start listening to room multicast messages
     public static void JoinedRoom(Guid not_needed, Packet packet)
     {
@@ -43,20 +28,33 @@ public class ClientHandle : MonoBehaviour
 
         Debug.Log($"Joined room, multicast info Ip:{ip} Port:{port}");
     }
+    
+    public static void PlayerJoined(Guid id, Packet packet)
+    {
+        string username = packet.ReadString();
+        string ip = packet.ReadString();
+        string port = packet.ReadString();
+
+        Debug.Log($"received Ip:{ip} Port:{port}");
+        if (Client.instance.clientExeID == 1)
+            Client.instance.ConnectToPeer(id, username, "127.0.0.1", 5002);
+        else
+            Client.instance.ConnectToPeer(id, username, "127.0.0.1", 5001);
+    }
+    
+    public static void PlayerLeft(Guid id, Packet packet)
+    {
+        Client.peers[id].Disconnect();
+    }
+
+
     #endregion
 
     #region Peer Packets
     //Received an welcome from the peer i tried to connect to
     public static void WelcomePeer(Guid id, Packet packet)
     {
-        //Connect udp
-        if (Client.instance.clientExeID == 1)
-            Client.peers[id].udp.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5002)); //((IPEndPoint)Client.peers[id].tcp.socket.Client.RemoteEndPoint).Port));
-        else
-            Client.peers[id].udp.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5001)); //((IPEndPoint)Client.peers[id].tcp.socket.Client.RemoteEndPoint).Port));
-
         GameManager.instance.UpdatePlayerCount();
-
         Debug.Log($"{"legend27"}(player {id}) has joined the game!");
     }
 
