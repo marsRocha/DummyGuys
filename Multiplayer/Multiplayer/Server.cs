@@ -12,12 +12,11 @@ namespace Multiplayer
         public const int MaxPlayersPerLobby = 4;
         public static int Port { get; private set; }
         public static Dictionary<Guid, Client> Clients;
-        public delegate void PacketHandler(Guid idFromClient, Packet packet);
+        public delegate void PacketHandler(Guid ClientId, Packet packet);
         public static Dictionary<int, PacketHandler> packetHandlers;
         public static Dictionary<Guid, Room> Rooms;
 
         private static TcpListener tcpListener;
-        private static UdpClient udpListener;
 
         //Multicast
         private static List<IPAddress> multicastAddressesInUse;
@@ -30,27 +29,15 @@ namespace Multiplayer
             Console.WriteLine($"Server started on {Port}.");
             
             InitializeData();
-
-            currentInUse = new int[4];
-            currentInUse[0] = 233;
-            currentInUse[1] = 0;
-            currentInUse[2] = 0;
-            currentInUse[3] = 0;
             GetMulticastAdresses();
 
             tcpListener = new TcpListener(IPAddress.Any, Port);
             tcpListener.Start();
             tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
-
-            udpListener = new UdpClient(Port);
-            udpListener.BeginReceive(UDPReceiveCallback, null);
-
         }
 
-        #region Callbacks
-
         /// <summary>
-        /// Listens for connections and stores the connected clients
+        /// Listens for new connections
         /// </summary>
         private static void TCPConnectCallback(IAsyncResult result)
         {
@@ -63,65 +50,6 @@ namespace Multiplayer
             Guid pId = Guid.NewGuid();
             Clients.Add(pId, new Client(pId));
             Clients[pId].tcp.Connect(client);
-
-            //Console.WriteLine($"{client.Client.RemoteEndPoint} failed to connect: Server full.");
-        }
-
-        private static void UDPReceiveCallback(IAsyncResult result)
-        {
-            try
-            {
-                IPEndPoint clientEndPoint = new IPEndPoint(IPAddress.Any, Port);
-                byte[] data = udpListener.EndReceive(result, ref clientEndPoint);
-                udpListener.BeginReceive(UDPReceiveCallback, null);
-
-                if (data.Length < 4)
-                {
-                    return;
-                }
-
-                using (Packet packet = new Packet(data))
-                {
-                    Guid clientId = packet.ReadGuid();
-
-                    if (clientId == null)
-                        return;
-
-                    if (Clients[clientId].udp.endPoint == null)
-                    {
-                        Clients[clientId].udp.Connect(clientEndPoint);
-                        return;
-                    }
-
-                    //verifiy if the endpoint corresponds to the endpoint that sent the data
-                    //this is for security reasons otherwise hackers could inpersonate other clients by send a clientId that does not corresponds to them
-                    //without the string conversion even if the endpoint matched it returned false
-                    if (Clients[clientId].udp.endPoint.Equals(clientEndPoint))
-                    {
-                        Clients[clientId].udp.HandleData(packet);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error receiving UDP data: {ex}");
-            }
-        }
-        #endregion
-
-        public static void SendUDPData(IPEndPoint clientEndPoint, Packet packet)
-        {
-            try
-            {
-                if (clientEndPoint != null)
-                {
-                    udpListener.BeginSend(packet.ToArray(), packet.Length(), clientEndPoint, null, null);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error sending UDP data: {ex}");
-            }
         }
 
         private static void InitializeData()
@@ -132,12 +60,18 @@ namespace Multiplayer
             packetHandlers = new Dictionary<int, PacketHandler>()
             {
                 { (int)ClientPackets.welcomeReceived, ServerHandle.WelcomeReceived },
+                { (int)ClientPackets.playerMovement, ServerHandle.PlayerMovement },
             };
             Console.WriteLine("Packets initialized.");
         }
 
         private static void GetMulticastAdresses()
         {
+            currentInUse = new int[4];
+            currentInUse[0] = 233;
+            currentInUse[1] = 0;
+            currentInUse[2] = 0;
+            currentInUse[3] = 0;
             multicastAddressesInUse = new List<IPAddress>();
             Console.WriteLine("Multicast addresses in use:");
             foreach (NetworkInterface adapter in NetworkInterface.GetAllNetworkInterfaces())

@@ -78,21 +78,18 @@ public class ClientHandle : MonoBehaviour
     public static void PlayerAnim(Guid id, Packet packet)
     {
         int animNum = packet.ReadInt();
-
         GameManager.instance.PlayerAnim(id, animNum);
     }
 
     public static void PlayerRespawn(Guid id, Packet packet)
     {
         int checkPointNum = packet.ReadInt();
-
         GameManager.instance.PlayerRespawn(id, checkPointNum);
     }
 
     public static void PlayerFinish(Guid id, Packet packet)
     {
         float time = packet.ReadFloat();
-
         GameManager.instance.PlayerFinish(id, time);
     }
     #endregion

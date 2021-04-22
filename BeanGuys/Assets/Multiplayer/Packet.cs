@@ -7,11 +7,13 @@ using UnityEngine;
 public enum ServerPackets
 {
     welcome = 1,
-    peer,
+    joinedRoom,
     playerJoined,
     playerLeft,
-    joinedRoom,
-    playerRotation
+    playerFinish,
+    playerCorrection,
+    startGame,
+    endGame
 }
 
 /// <summary>Sent from client to server.</summary>
@@ -162,7 +164,8 @@ public class Packet : IDisposable
     /// <param name="_value">The Guid to add.</param>
     public void Write(Guid _value)
     {
-        buffer.AddRange(_value.ToByteArray());
+        Write(_value.ToString().Length); // Add the length of the guid string to the packet
+        buffer.AddRange(Encoding.ASCII.GetBytes(_value.ToString())); // Add the guid string itself
     }
     /// <summary>Adds a float to the packet.</summary>
     /// <param name="_value">The float to add.</param>
@@ -335,14 +338,8 @@ public class Packet : IDisposable
     {
         if (buffer.Count > readPos)
         {
-            // If there are unread bytes
-            string strHex = BitConverter.ToString(readableBuffer, readPos, 16);
-            Guid _value = new Guid(strHex.Replace("-", ""));
-            if (_moveReadPos)
-            {
-                // If _moveReadPos is true
-                readPos += 16; // Increase readPos by 16
-            }
+            string strHex = ReadString(_moveReadPos); // Convert the bytes to a string
+            Guid _value = new Guid(strHex); // Convert the string to a guid
             return _value; // Return the long
         }
         else

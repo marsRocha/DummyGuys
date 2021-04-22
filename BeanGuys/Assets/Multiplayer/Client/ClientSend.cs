@@ -55,6 +55,7 @@ public class ClientSend : MonoBehaviour
         {
             packet.Write(Client.instance.myId);
             packet.Write(Client.instance.username);
+            //packet.Write(Client.MyPort);
 
             SendTCPDataToServer(packet);
         }
@@ -96,7 +97,7 @@ public class ClientSend : MonoBehaviour
 
     public static void PlayerMovement(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
     {
-        /*using (Packet packet = new Packet((int)ClientPackets.playerMovement))
+        using (Packet packet = new Packet((int)ClientPackets.playerMovement))
         {
             packet.Write(Client.instance.myId);
 
@@ -106,8 +107,8 @@ public class ClientSend : MonoBehaviour
             packet.Write(angular_velocity);
             packet.Write(tick_number);
 
-            SendUDPDataToAll(packet);
-        }*/
+            MulticastUDPData(packet);
+        }
     }
 
     public static void PlayerAnim(int anim)
@@ -123,13 +124,13 @@ public class ClientSend : MonoBehaviour
 
     public static void PlayerRespawn(int checkpointNum)
     {
-        /*using (Packet packet = new Packet((int)ClientPackets.playerRespawn))
+        using (Packet packet = new Packet((int)ClientPackets.playerRespawn))
         {
             packet.Write(Client.instance.myId);
             packet.Write(checkpointNum);
 
             MulticastUDPData(packet);
-        }*/
+        }
     }
 
     public static void PlayerFinish(float time)

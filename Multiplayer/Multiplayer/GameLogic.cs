@@ -8,10 +8,18 @@ namespace Multiplayer
     {
         public static void Update()
         {
-            /*foreach(Client client in Server.Clients.Values)
+            /*foreach (Room room in Server.Rooms.Values)
             {
-                /*if (client.player != null)
-                    client.player.Update();
+                if (room.RoomState == RoomState.playing)
+                {
+                    //Update room logic
+
+                    //Clients
+                    foreach (Player player in room.Players.Values)
+                    {
+                        player.Update();
+                    }
+                }
             }*/
 
             ThreadManager.UpdateMain();

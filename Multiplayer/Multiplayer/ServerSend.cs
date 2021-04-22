@@ -60,20 +60,6 @@ namespace Multiplayer
             }
         }
 
-
-        public static void Peer(Guid toClient, Guid peerId, string username, string peerIP, string peerPort)
-        {
-            using (Packet packet = new Packet((int)ServerPackets.peer))
-            {
-                packet.Write(peerId);
-                packet.Write(username);
-                packet.Write(peerIP);
-                packet.Write(peerPort);
-
-                SendTCPData(toClient, packet);
-            }
-        }
-
         public static void JoinedRoom(Guid toClient, string lobbyIP, int lobbyPort)
         {
             using (Packet packet = new Packet((int)ServerPackets.joinedRoom))

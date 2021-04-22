@@ -11,6 +11,8 @@ namespace Multiplayer
     {
         public Guid Id { get; set; }
         public string Username { get; set; }
+
+        public Player player { get; private set; }
         public Guid RoomID { get; set; }
 
         public static int dataBufferSize = 4036;
@@ -158,7 +160,7 @@ namespace Multiplayer
 
             public void SendData(Packet packet)
             {
-                Server.SendUDPData(endPoint, packet);
+                //Server.SendUDPData(endPoint, packet);
             }
 
             public void HandleData(Packet data)
@@ -212,6 +214,11 @@ namespace Multiplayer
             tcp.Disconnect();
             udp.Disconnect();
             Server.Clients.Remove(Id);
+        }
+
+        public void SetPlayer(Player _player)
+        {
+            player = _player;
         }
     }
 }

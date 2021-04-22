@@ -8,30 +8,17 @@ namespace Multiplayer
 {
     class ServerHandle
     {
-        public static void WelcomeReceived(Guid idFromClient, Packet packet)
+        public static void WelcomeReceived(Guid clientId, Packet packet)
         {
             Guid id = packet.ReadGuid();
             string username = packet.ReadString();
-            Server.Clients[idFromClient].Username = username;
+            Server.Clients[clientId].Username = username;
             //TODO: Set skin aswell
 
-            Console.WriteLine($"{Server.Clients[idFromClient].tcp.socket.Client.RemoteEndPoint} ({username}) connected successfully and is now player {idFromClient}.");
+            Console.WriteLine($"{Server.Clients[clientId].tcp.socket.Client.RemoteEndPoint} ({username}) connected successfully and is now player {clientId}.");
 
             //Look for a room for player
-            SearchForRoom(Server.Clients[idFromClient]);
-
-            //////////
-            /*if (Server.Clients.Count > 1)
-            {
-                string peerPort = ((IPEndPoint)Server.Clients[idFromClient].tcp.socket.Client.RemoteEndPoint).Port.ToString();
-                string peerIP = ((IPEndPoint)Server.Clients[idFromClient].tcp.socket.Client.RemoteEndPoint).Address.ToString();
-                foreach(Client client in Server.Clients.Values)
-                {
-                    ServerSend.Peer(client.Id, Server.Clients[idFromClient].Id, Server.Clients[idFromClient].Username, peerIP, peerPort);
-                    break;
-                }
-                Console.WriteLine("Sent peer");
-            }*/
+            SearchForRoom(Server.Clients[clientId]);
         }
 
         public static void SearchForRoom(Client client)
@@ -48,7 +35,7 @@ namespace Multiplayer
 
                         client.RoomID = room.Id;
                         //Let the client know the rooms multicast info
-                        ServerSend.JoinedRoom(client.Id, room.MulticastIP, room.MulticastPort);
+                        ServerSend.JoinedRoom(client.Id, room.MulticastIP.ToString(), room.MulticastPort);
                     }
                 }
             }
@@ -65,8 +52,33 @@ namespace Multiplayer
 
                 client.RoomID = newRoom.Id;
                 //Let the client know the rooms multicast info
-                ServerSend.JoinedRoom(client.Id, newRoom.MulticastIP, newRoom.MulticastPort);
+                ServerSend.JoinedRoom(client.Id, newRoom.MulticastIP.ToString(), newRoom.MulticastPort);
             }
+        }
+
+        public static void PlayerMovement(Guid clientId, Packet packet)
+        {
+            Vector3 position = packet.ReadVector3();
+            Quaternion rotation = packet.ReadQuaternion();
+            Vector3 velocity = packet.ReadVector3();
+            Vector3 angular_velocity = packet.ReadVector3();
+            int tick_number = packet.ReadInt();
+        
+            //Update player
+        }
+
+        public static void PlayerRespawn(Guid id, Packet packet)
+        {
+            Console.WriteLine("Got anim");
+
+            int checkPointNum = packet.ReadInt();
+            //GameManager.instance.PlayerRespawn(id, checkPointNum);
+        }
+
+        public static void PlayerFinish(Guid id, Packet packet)
+        {
+            float time = packet.ReadFloat();
+            //GameManager.instance.PlayerFinish(id, time);
         }
     }
 }
