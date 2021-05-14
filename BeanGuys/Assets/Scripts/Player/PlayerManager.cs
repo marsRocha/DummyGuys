@@ -16,10 +16,11 @@ public class PlayerManager : MonoBehaviour
     private ClientState[] client_state_buffer;
     private Inputs[] client_input_buffer;
     private int buffer_slot;
-    private int lastCorrectedFrame = 0;
+    private int currentTick = 0;
+
     private Inputs currentInput;
     private Inputs lastInput;
-    private animNum lastAnim;
+    private animNum lastAnimSent;
 
     [Header("Correction")]
     public bool client_correction_smoothing;
@@ -34,6 +35,7 @@ public class PlayerManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        currentTick = 0;
         rb = GetComponent<Rigidbody>();
         pController = GetComponent<PlayerController>();
 
@@ -59,7 +61,6 @@ public class PlayerManager : MonoBehaviour
         if (isRunning)
         {
             lastInput = currentInput;
-            lastAnim = pController.currentAnim;
             currentInput = pController.pInput.GetInputs();
 
             //Update player's movement
@@ -68,8 +69,11 @@ public class PlayerManager : MonoBehaviour
             if (isOnline)
             {
                 ClientSend.PlayerMovement(rb.position, rb.rotation, rb.velocity, rb.angularVelocity, MapController.instance.Game_Clock);
-                if (lastAnim != pController.currentAnim)
+                if (lastAnimSent != pController.currentAnim)
+                {
                     ClientSend.PlayerAnim((int)pController.currentAnim);
+                    lastAnimSent = pController.currentAnim;
+                }
             }
         }
     }

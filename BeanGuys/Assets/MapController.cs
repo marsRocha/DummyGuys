@@ -16,6 +16,7 @@ public class MapController : MonoBehaviour
 
     //Controls game
     public float Game_Clock;
+    public const int TICK_PER_MS = 30;
     public bool isRunning { get; private set; } = false;
 
 

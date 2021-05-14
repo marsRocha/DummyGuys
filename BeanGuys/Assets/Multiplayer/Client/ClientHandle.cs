@@ -70,7 +70,7 @@ public class ClientHandle : MonoBehaviour
         Quaternion rotation = packet.ReadQuaternion();
         Vector3 velocity = packet.ReadVector3();
         Vector3 angular_velocity = packet.ReadVector3();
-        int tick_number = packet.ReadInt();
+        float tick_number = packet.ReadFloat();
 
         GameManager.instance.PlayerMovement(id, position, rotation, velocity, angular_velocity, tick_number);
     }

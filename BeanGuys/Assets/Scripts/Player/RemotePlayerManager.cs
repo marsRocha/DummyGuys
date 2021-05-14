@@ -14,8 +14,11 @@ public class RemotePlayerManager : MonoBehaviour
     public string username;
 
     private const int CACHE_SIZE = 1024;
-    private Queue<RemoteState> player_state_msgs;
+    private List<RemoteState> player_state_msgs;
     private int last_corrected_tick = -1;
+    private long render_timestamp;
+
+    private RemoteState from, to;
 
     [Header("States")]
     public bool isRunning;
@@ -26,10 +29,10 @@ public class RemotePlayerManager : MonoBehaviour
     {
         pController = GetComponent<PlayerController>();
         rb = GetComponent<Rigidbody>();
-        anim = GetComponent<Animator>();
+        //anim = GetComponent<Animator>();
 
         //For this entity's interpolation
-        player_state_msgs = new Queue<RemoteState>();
+        player_state_msgs = new List<RemoteState>();
 
         //Only for now, change later to false
         isRunning = true;
@@ -42,25 +45,31 @@ public class RemotePlayerManager : MonoBehaviour
     {
         if (isRunning)
         {
-            if (player_state_msgs.Count > 0)
+            if (player_state_msgs.Count == 0)
+                return;
+
+            // Compute render timestamp.
+            render_timestamp = (long)(MapController.instance.Game_Clock - (0 / 30));
+
+            // Find the two positions surrounding the rendering timestamp.
+            // Drop older updates
+            while (player_state_msgs.Count >= 2 && player_state_msgs[1].tick_number <= render_timestamp)
             {
-                RemoteState movement_msg = player_state_msgs.Dequeue();
-                // Compute render timestamp.
-                double render_timestamp = MapController.instance.Game_Clock - (1000.0 / 30);
+                player_state_msgs.RemoveAt(0);
+            }
 
-                // Find the two positions surrounding the rendering timestamp.
-                // Drop older updates
-                while (player_state_msgs.Count >= 2 && movement_msg.tick_number <= MapController.instance.Game_Clock)
-                    movement_msg = player_state_msgs.Dequeue();
+            // Interpolate between the two surrounding authoritative positions.
+            if (player_state_msgs.Count >= 2 && player_state_msgs[0].tick_number <= render_timestamp && render_timestamp <= player_state_msgs[1].tick_number) // :: Addition (instead of nested array, use struct to access named fields)
+            {
+                RemoteState from = player_state_msgs[0];
+                RemoteState to = player_state_msgs[1];
 
-                if (player_state_msgs.Count >= 1 && movement_msg.tick_number <= MapController.instance.Game_Clock)
-                {
-                    RemoteState movement_msg1 = player_state_msgs.Dequeue();
 
-                    //Position
-                    rb.position = movement_msg.position + (movement_msg1.position - movement_msg.position)
-                        * (MapController.instance.Game_Clock - movement_msg.tick_number) / (movement_msg1.tick_number - movement_msg.tick_number);
-                }
+                //rb.position = (x0 + (x1 - x0) * (render_timestamp - t0) / (t1 - t0));
+                rb.position = Vector3.Lerp(from.position, to.position, .5f ); //Mathf.Abs((.1f - t0) / (t1 - t0))
+                rb.rotation = Quaternion.Lerp(from.rotation, to.rotation, .5f ); //Mathf.Abs((.1f - t0) / (t1 - t0))
+                rb.velocity = Vector3.Lerp(from.velocity, to.velocity, .5f ); //Mathf.Abs((.1f - t0) / (t1 - t0))
+                rb.angularVelocity = Vector3.Lerp(from.angular_velocity, to.angular_velocity, .5f ); //Mathf.Abs((.1f - t0) / (t1 - t0))
             }
         }
     }
@@ -73,12 +82,9 @@ public class RemotePlayerManager : MonoBehaviour
 
     public void UpdateMovement(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
     {
-        player_state_msgs.Enqueue(new RemoteState(position, rotation, tick_number));
+        player_state_msgs.Add(new RemoteState(position, rotation, velocity, angular_velocity, tick_number));
 
-        /*rb.position = position;
-        rb.rotation = rotation;
-        rb.velocity = velocity;
-        rb.angularVelocity = angular_velocity;*/
+        Debug.Log($"packet timestamp:{tick_number}, local timestamp:{MapController.instance.Game_Clock}");
     }
 
     public void UpdateAnimaiton(int animNum)
@@ -124,16 +130,16 @@ public class RemoteState
 {
     public Vector3 position;
     public Quaternion rotation;
+    public Vector3 velocity;
+    public Vector3 angular_velocity;
     public float tick_number;
 
-    public RemoteState()
-    {
-    }
-
-    public RemoteState(Vector3 position, Quaternion rotation, float tick_number)
+    public RemoteState(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
     {
         this.position = position;
         this.rotation = rotation;
+        this.velocity = velocity;
+        this.angular_velocity = angular_velocity;
         this.tick_number = tick_number;
     }
 }
