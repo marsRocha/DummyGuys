@@ -12,6 +12,7 @@ public enum ServerPackets
     playerLeft,
     playerFinish,
     playerCorrection,
+    map,
     startGame,
     endGame
 }
@@ -19,9 +20,10 @@ public enum ServerPackets
 /// <summary>Sent from client to server.</summary>
 public enum ClientPackets
 {
-    welcomeReceived = 7,
+    welcomeReceived = 10,
     welcome,
     introduction,
+    playerInput,
     playerMovement,
     playerAnim,
     playerRespawn,

@@ -32,12 +32,11 @@ public class ClientSend : MonoBehaviour
         Client.SendUDPData(Client.peers[toClient].udp.endPoint, packet);
     }
 
-    private static void SendUDPDataToAll(Packet packet)
+    private static void SendUDPData(Packet packet)
     {
         packet.WriteLength();
-
-        foreach (Peer p in Client.peers.Values)
-            p.udp.SendData(packet);
+        Debug.Log("sent normal udp");
+        Client.SendUDPData(packet);
     }
 
     private static void MulticastUDPData(Packet packet)
@@ -91,11 +90,34 @@ public class ClientSend : MonoBehaviour
     {
         using (Packet packet = new Packet((int)ClientPackets.startGame))
         {
-            SendTCPDataToAll(packet);
+            SendUDPData(packet); // send to server
+            MulticastUDPData(packet); // send to peers
         }
     }
 
-    public static void PlayerMovement(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
+    public static void PlayerMovement(int x, int y, bool jump, bool dive, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
+    {
+        using (Packet packet = new Packet((int)ClientPackets.playerMovement))
+        {
+            packet.Write(Client.instance.myId);
+
+            packet.Write(tick_number);
+
+            packet.Write(x);
+            packet.Write(y);
+            packet.Write(jump);
+            packet.Write(dive);
+
+            packet.Write(position);
+            packet.Write(rotation);
+            packet.Write(velocity);
+            packet.Write(angular_velocity);
+
+            MulticastUDPData(packet);
+        }
+    }
+
+    /*public static void PlayerMovement(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
     {
         using (Packet packet = new Packet((int)ClientPackets.playerMovement))
         {
@@ -109,7 +131,7 @@ public class ClientSend : MonoBehaviour
 
             MulticastUDPData(packet);
         }
-    }
+    }*/
 
     public static void PlayerAnim(int anim)
     {

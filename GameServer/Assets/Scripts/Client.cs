@@ -13,6 +13,7 @@ public class Client
     public Player player { get; private set; }
     public Guid RoomID { get; set; }
 
+
     public static int dataBufferSize = 4036;
 
     public TCP tcp;

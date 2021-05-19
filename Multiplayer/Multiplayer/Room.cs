@@ -25,7 +25,7 @@ namespace Multiplayer
         {
             Id = id;
             MulticastIP = IPAddress.Parse(multicastIP);
-            MulticastPort = multicastPort;
+            MulticastPort = multicastPort + 1;
 
             RoomState = RoomState.looking;
             Players = new Dictionary<Guid, Player>();
@@ -43,7 +43,7 @@ namespace Multiplayer
             RoomUdp.ExclusiveAddressUse = false;
             // Bind, Join
             RoomUdp.Client.Bind(_localEndPoint);
-            RoomUdp.JoinMulticastGroup(MulticastIP);
+            //RoomUdp.JoinMulticastGroup(MulticastIP);
 
             // Start listening for incoming data
             RoomUdp.BeginReceive(new AsyncCallback(ReceivedCallback), null);
@@ -56,6 +56,8 @@ namespace Multiplayer
             // Get received data
             IPEndPoint clientEndPoint = new IPEndPoint(0, MulticastPort);
             byte[] data = RoomUdp.EndReceive(result, ref clientEndPoint);
+            // Restart listening for udp data packages
+            RoomUdp.BeginReceive(new AsyncCallback(ReceivedCallback), null);
 
             if (data.Length < 4)
                 return;
@@ -63,16 +65,22 @@ namespace Multiplayer
             //Handle Data
             using (Packet packet = new Packet(data))
             {
-                /*Guid clientId = packet.ReadGuid();
+                Guid clientId = Guid.Empty;
+                try
+                {
+                    clientId = packet.ReadGuid();
+                }
+                catch { };
 
-                if (clientId == null)
-                    return;*/
+                if (clientId == Guid.Empty)
+                    return;
                 //Console.WriteLine("Got Message");
                 //verifiy if the endpoint corresponds to the endpoint that sent the data
                 //this is for security reasons otherwise hackers could inpersonate other clients by send a clientId that does not corresponds to them
                 //without the string conversion even if the endpoint matched it returned false
-                /*if (Server.Clients[clientId].udp.endPoint.Equals(clientEndPoint) && Server.Clients[clientId].RoomID == Id) //TODO: Do I really need to check for this?
+                if (Server.Clients[clientId].udp.endPoint.Equals(clientEndPoint) && Server.Clients[clientId].RoomID == Id) //TODO: Do I really need to check for this?
                 {
+                    Console.Write("He got message");
                     //Handle Data
                     int packetLength = packet.ReadInt();
                     byte[] packetBytes = packet.ReadBytes(packetLength);
@@ -85,11 +93,8 @@ namespace Multiplayer
                             Server.packetHandlers[packetId](clientId, message);
                         }
                     });
-                }*/
+                }
             }
-
-            // Restart listening for udp data packages
-            RoomUdp.BeginReceive(new AsyncCallback(ReceivedCallback), null);
         }
 
         private void MulticastUDPData(Packet packet)

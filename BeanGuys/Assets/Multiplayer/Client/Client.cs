@@ -113,9 +113,15 @@ public class Client : MonoBehaviour
             using (Packet packet = new Packet(packetBytes))
             {
                 int packetId = packet.ReadInt();
-                Guid id = packet.ReadGuid();
 
-                if (Client.instance.myId == id)
+                Guid id = Guid.Empty;
+                try
+                {
+                    id = packet.ReadGuid();
+                }
+                catch { };
+
+                if (id == Guid.Empty || Client.instance.myId == id)
                     return;
 
                 packetHandlers[packetId](id, packet);
@@ -133,6 +139,18 @@ public class Client : MonoBehaviour
             {
                 _udpClient.Send(packet.ToArray(), packet.Length(), peerEndPoint);
             }
+        }
+        catch (Exception ex)
+        {
+            Debug.Log($"Error sending UDP data: {ex}");
+        }
+    }
+
+    public static void SendUDPData(Packet packet)
+    {
+        try
+        {
+            _udpClient.Send(packet.ToArray(), packet.Length(), new IPEndPoint(IPAddress.Loopback, _roomPort)); //TODO: CHANGE LOOPBACK TO SERVER IP
         }
         catch (Exception ex)
         {
@@ -347,18 +365,20 @@ public class Client : MonoBehaviour
     private void InitializeData()
     {
         packetHandlers = new Dictionary<int, PacketHandler>()
-        {
+        {   
+            //SERVER SENT
             { (int) ServerPackets.welcome, ClientHandle.WelcomeServer },
-            //{ (int) ServerPackets.peer, ClientHandle.PeerList },
             { (int) ServerPackets.joinedRoom, ClientHandle.JoinedRoom },
             { (int) ServerPackets.playerJoined, ClientHandle.PlayerJoined },
             { (int) ServerPackets.playerLeft, ClientHandle.PlayerLeft },
+            { (int) ServerPackets.map, ClientHandle.Map },
+            { (int) ServerPackets.startGame, ClientHandle.StartGame },
+            //CLIENT SENT
             { (int) ClientPackets.welcome, ClientHandle.WelcomePeer },
             { (int) ClientPackets.playerMovement, ClientHandle.PlayerMovement },
             { (int) ClientPackets.playerAnim, ClientHandle.PlayerAnim },
             { (int) ClientPackets.playerRespawn, ClientHandle.PlayerRespawn },
             { (int) ClientPackets.playerFinish, ClientHandle.PlayerFinish },
-            { (int) ClientPackets.startGame, ClientHandle.StartGame }, //TODO: REMOVE
         };
     }
 

@@ -46,8 +46,16 @@ public class ClientHandle : MonoBehaviour
     {
         Client.peers[id].Disconnect();
     }
+    
+    public static void Map(Guid id, Packet packet)
+    {
+        //TODO: Load Map
+    }
 
-
+    public static void StartGame(Guid id, Packet packet)
+    {
+        GameManager.instance.StartGameDebug();
+    }
     #endregion
 
     #region Peer Packets
@@ -59,11 +67,6 @@ public class ClientHandle : MonoBehaviour
     }
 
     #region Game packages
-    public static void StartGame(Guid id, Packet packet)
-    {
-        GameManager.instance.StartGameDebug();
-    }
-
     public static void PlayerMovement(Guid id, Packet packet)
     {
         Vector3 position = packet.ReadVector3();

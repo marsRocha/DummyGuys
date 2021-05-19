@@ -62,9 +62,14 @@ namespace Multiplayer
             Quaternion rotation = packet.ReadQuaternion();
             Vector3 velocity = packet.ReadVector3();
             Vector3 angular_velocity = packet.ReadVector3();
-            int tick_number = packet.ReadInt();
+            float tick_number = packet.ReadFloat();
         
             //Update player
+        }        
+        
+        public static void StarGame(Guid clientId, Packet packet)
+        {
+            Console.WriteLine("Start game");
         }
 
         public static void PlayerRespawn(Guid id, Packet packet)

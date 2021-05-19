@@ -46,25 +46,25 @@ public class ServerSend
     #endregion
 
     #region Packets
-    public static void Welcome(Guid toClient)
+    public static void Welcome(Guid _toClient)
     {
         using (Packet packet = new Packet((int)ServerPackets.welcome))
         {
-            Debug.Log(toClient);
-            packet.Write(toClient);
+            Debug.Log(_toClient);
+            packet.Write(_toClient);
 
-            SendTCPData(toClient, packet);
+            SendTCPData(_toClient, packet);
         }
     }
 
-    public static void JoinedRoom(Guid toClient, string lobbyIP, int lobbyPort)
+    public static void JoinedRoom(Guid _toClient, string _lobbyIP, int lobbyPort)
     {
         using (Packet packet = new Packet((int)ServerPackets.joinedRoom))
         {
-            packet.Write(lobbyIP);
+            packet.Write(_lobbyIP);
             packet.Write(lobbyPort);
 
-            SendTCPData(toClient, packet);
+            SendTCPData(_toClient, packet);
         }
     }
     #endregion

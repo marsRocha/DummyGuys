@@ -9,7 +9,7 @@ public partial class Room
 {
     public Guid Id { get; set; }
     public RoomState RoomState { get; set; }
-    public Dictionary<Guid, Player> Players { get; set; }
+    public Dictionary<Guid, PlayerInfo> PlayersInfo { get; set; }
     public IPAddress MulticastIP { get; set; }
     public int MulticastPort { get; set; }
     private IPAddress _localIPaddress { get; set; }
@@ -18,7 +18,6 @@ public partial class Room
     private IPEndPoint _remoteEndPoint { get; set; }
     private IPEndPoint _localEndPoint { get; set; }
 
-
     public Room(Guid id, string multicastIP, int multicastPort)
     {
         Id = id;
@@ -26,7 +25,7 @@ public partial class Room
         MulticastPort = multicastPort;
 
         RoomState = RoomState.looking;
-        Players = new Dictionary<Guid, Player>();
+        PlayersInfo = new Dictionary<Guid, PlayerInfo>();
 
         _localIPaddress = IPAddress.Any;
 
@@ -61,15 +60,15 @@ public partial class Room
         //Handle Data
         using (Packet packet = new Packet(data))
         {
-            /*Guid clientId = packet.ReadGuid();
-
+            Guid clientId = packet.ReadGuid();
+            Debug.Log($"No client id.....");
             if (clientId == null)
-                return;*/
-            //Debug.Log("Got Message");
+                return;
+            Debug.Log($"Guid:{clientId}");
             //verifiy if the endpoint corresponds to the endpoint that sent the data
             //this is for security reasons otherwise hackers could inpersonate other clients by send a clientId that does not corresponds to them
             //without the string conversion even if the endpoint matched it returned false
-            /*if (Server.Clients[clientId].udp.endPoint.Equals(clientEndPoint) && Server.Clients[clientId].RoomID == Id) //TODO: Do I really need to check for this?
+            if (Server.Clients[clientId].udp.endPoint.Equals(clientEndPoint) && Server.Clients[clientId].RoomID == Id) //TODO: Do I really need to check for this?
             {
                 //Handle Data
                 int packetLength = packet.ReadInt();
@@ -83,14 +82,14 @@ public partial class Room
                         Server.packetHandlers[packetId](clientId, message);
                     }
                 });
-            }*/
+            }
         }
 
         // Restart listening for udp data packages
         RoomUdp.BeginReceive(new AsyncCallback(ReceivedCallback), null);
     }
 
-    private void MulticastUDPData(Packet packet)
+    public void MulticastUDPData(Packet packet)
     {
         packet.WriteLength();
         RoomUdp.Send(packet.ToArray(), packet.Length(), _remoteEndPoint);
@@ -107,4 +106,4 @@ public partial class Room
     }
 }
 
-public enum RoomState { looking, full, playing }
+public enum RoomState { looking, full, playing, closing }

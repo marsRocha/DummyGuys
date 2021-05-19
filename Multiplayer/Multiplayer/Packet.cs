@@ -14,6 +14,7 @@ namespace Multiplayer
         playerLeft,
         playerFinish,
         playerCorrection,
+        map,
         startGame,
         endGame
     }
@@ -21,9 +22,10 @@ namespace Multiplayer
     /// <summary>Sent from client to server.</summary>
     public enum ClientPackets
     {
-        welcomeReceived = 7,
+        welcomeReceived = 10,
         welcome,
         introduction,
+        playerInput,
         playerMovement,
         playerAnim,
         playerRespawn,

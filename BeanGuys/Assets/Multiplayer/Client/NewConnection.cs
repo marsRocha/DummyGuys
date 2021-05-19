@@ -78,8 +78,8 @@ public class NewConnection
                 {
                     int packetId = packet.ReadInt();
 
-                    //Check if it is an introduction packet = id 9
-                    if (packetId == 9)
+                    //Check if it is an introduction packet = id 12
+                    if (packetId == 12)
                     {
                         Guid peerID = packet.ReadGuid();
                         string username = packet.ReadString();

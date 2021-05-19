@@ -1,52 +1,89 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Player : MonoBehaviour
 {
     public Guid id;
-    public string username;
 
-    public Player(Guid _id, string _username)
+    //Player components
+    public Rigidbody rb;
+    
+    //Prediction
+    private float lastFrame;
+    private Queue<ClientInputState> clientInputs = new Queue<ClientInputState>();
+
+    private void Awake()
     {
-        id = _id;
-        username = _username;
-        /*rotation = Quaternion.Identity;
-
-        inputs = new bool[4];*/
+        rb.freezeRotation = true;
+        rb.isKinematic = true;
+        lastFrame = 0;
     }
 
-    /*public void Update()
+    public void Initialize(Guid _id)
     {
-        Vector2 inputDirection = Vector2.Zero;
-        if (inputs[0])
-            inputDirection.Y += 1;
-        if (inputs[1])
-            inputDirection.Y -= 1;
-        if (inputs[2])
-            inputDirection.X += 1;
-        if (inputs[3])
-            inputDirection.X -= 1;
-
-        Move(inputDirection);
+        this.id = _id;
     }
 
-    //Calculate movement
-    private void Move(Vector2 inputDirection)
+    public void FixedTime()
     {
-        Vector3 forward = Vector3.Transform(new Vector3(0, 0, 1), rotation);
-        Vector3 right = Vector3.Normalize(Vector3.Cross(forward, new Vector3(0, 1, 0)));
-
-        Vector3 moveDirection = right * inputDirection.X + forward * inputDirection.Y;
-        position += moveDirection * moveSpeed;
-
-        ServerSend.PlayerPosition(this);
-        ServerSend.PlayerRotation(this);
-        //server rotation does not happen here for that i have to look for client prediction and reconciliation to avoid jitering of player's screen
+        ProcessInputs();
     }
 
-    public void SetInput(bool[] _inputs, Quaternion _rotation)
+    public void ProcessInputs()
     {
-        inputs = _inputs;
-        rotation = _rotation; 
-    }*/
+        // Declare the ClientInputState that we're going to be using.
+        ClientInputState inputState = null;
+
+        // Obtain CharacterInputState's from the queue. 
+        while (clientInputs.Count > 0 && (inputState = clientInputs.Dequeue()) != null)
+        {
+            // If frames are in the past ignore them
+            if (inputState.simulationFrame <= lastFrame)
+                continue;
+
+            lastFrame = inputState.simulationFrame;
+
+            // Process the input.
+            ProcessInput(inputState);
+
+            // Obtain the current SimulationState of the player's object.
+            //PlayerSimulationState state = PlayerSimulationState.CurrentSimulationState(inputState, this);
+        }
+    }
+
+    private void ProcessInput(ClientInputState inputs)
+    {
+        /*RotationCheck(inputs);
+
+        if ((inputs.buttons & Button.Fire1) == Button.Fire1)
+        {
+            LagCompensation.Backtrack(id, inputs.tick, inputs.lerpAmount);
+        }
+
+        rb.isKinematic = false;
+        rb.velocity = velocity;
+
+        CalculateVelocity(inputs);
+        Physics.Simulate(logicTimer.FixedDelta);
+
+        velocity = rb.velocity;
+        rb.isKinematic = true;*/
+
+        Debug.Log("moving");
+    }
+
+    public void AddInput(ClientInputState _inputState)
+    {
+        clientInputs.Enqueue(_inputState);
+    }
+
+    public void CorrectState(ClientInputState _inputState)
+    {
+        //Check if state is correct
+
+
+        //If not, send correction
+        //Server.Rooms[_roomId].MulticastUDPData(_packet);
+    }
 }

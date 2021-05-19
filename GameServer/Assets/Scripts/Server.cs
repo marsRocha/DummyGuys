@@ -58,7 +58,13 @@ public class Server
 
         packetHandlers = new Dictionary<int, PacketHandler>()
             {
+                { (int)ServerPackets.map, ServerHandle.Nothing },
+                { (int)ServerPackets.playerJoined, ServerHandle.Nothing },
+                { (int)ServerPackets.playerLeft, ServerHandle.Nothing },
+                { (int)ServerPackets.startGame, ServerHandle.Nothing },
+                //TO DELETE ^^^^^^
                 { (int)ClientPackets.welcomeReceived, ServerHandle.WelcomeReceived },
+                //{ (int)ClientPackets.playerInput, ServerHandle.PlayerInput },
                 { (int)ClientPackets.playerMovement, ServerHandle.PlayerMovement },
             };
         Debug.Log("Packets initialized.");
