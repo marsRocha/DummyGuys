@@ -25,6 +25,8 @@ public class ClientHandle : MonoBehaviour
 
         //Start listening to room
         Client.ListenToRoom(ip, port);
+        //Add themselves to the playerCount
+        GameManager.instance.totalPlayers++;
 
         Debug.Log($"Joined room, multicast info Ip:{ip} Port:{port}");
     }
@@ -49,12 +51,19 @@ public class ClientHandle : MonoBehaviour
     
     public static void Map(Guid id, Packet packet)
     {
-        //TODO: Load Map
+        Debug.Log("Got map");
+        int levelId = packet.ReadInt();
+        
+        //LoadScene
+        GameManager.instance.LoadGameScene(levelId);
     }
 
     public static void StartGame(Guid id, Packet packet)
     {
-        GameManager.instance.StartGameDebug();
+        if (GameManager.instance.debug)
+            GameManager.instance.StartGameDebug();
+        else
+            GameManager.instance.StartGame();
     }
     #endregion
 

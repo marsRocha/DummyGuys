@@ -17,7 +17,31 @@ public class NetworkManager : MonoBehaviour
     void Start()
     {
         isOnline = false;
+        if (GameManager.instance.debug)
+            GoOnline();
+    }
+
+    public void SetServer(string ip)
+    {
+        Debug.Log("Server ip changed!");
+        connectTo = ip;
+    }
+
+    public void SetClientName(string name)
+    {
+        Debug.Log("Username changed!");
+        Client.instance.username = name;
+    }
+
+    public void GoOnline()
+    {
         Client.instance.GoOnline(connectTo, 26950);
         isOnline = true;
+    }
+    
+    public void GoOffline()
+    {
+        Client.instance.Disconnect();
+        isOnline = false;
     }
 }

@@ -7,10 +7,13 @@ public class MapController : MonoBehaviour
 {
     public static MapController instance;
 
-    public Dictionary<Guid, RemotePlayerManager> players;
-    public PlayerManager localPlayer; // { get; private set;} = null;
+    public UIManager uiManager;
+    public CountDown countDown;
 
-    //TODO: TO MODIFY
+    public Dictionary<Guid, RemotePlayerManager> players { get; private set; }
+    public PlayerManager localPlayer { get; private set; }
+
+    [Header("Components")]
     public Transform[] spawns;
     public Transform[] checkPoints;
 
@@ -21,12 +24,13 @@ public class MapController : MonoBehaviour
 
 
     [Header("Components")]
-    public Transform camera;
+    public PlayerCamera camera;
     public ParticleSystem confetti;
 
     public int playerCheckPoint { get; private set; } = 0;
     private int qualifiedPlayers;
     private int totalPlayers;
+    private bool qualified;
 
 
     #region Singleton
@@ -45,28 +49,40 @@ public class MapController : MonoBehaviour
     }
     #endregion
 
-    // Start is called before the first frame update
-    private void Start()
+    public void Initialize()
     {
         players = new Dictionary<Guid, RemotePlayerManager>();
 
         Game_Clock = 0;
-        isRunning = false;
+        isRunning = true;
+        qualified = false;
 
         qualifiedPlayers = 0;
         totalPlayers = 0;
+        SpawnPlayers();
     }
 
-    public void Initialize()
+    public void StartGameDebug()
     {
-        SpawnPlayers();
         isRunning = true;
+        SpawnPlayers();
+    }
+
+    public void StartCountDown()
+    {
+        countDown.startCountdown = true;
     }
 
 
     // Update is called once per frame
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            camera.StopFollowMouse();
+            uiManager.ExitMenu.SetActive(true);
+        }
+
         if (isRunning)
         {
             Game_Clock += Time.deltaTime;
@@ -83,11 +99,6 @@ public class MapController : MonoBehaviour
         }
     }
 
-    private void FixedUpdate()
-    {
-
-    }
-
     public void StartRace()
     {
         isRunning = true;
@@ -97,7 +108,6 @@ public class MapController : MonoBehaviour
     public void SpawnPlayers()
     {
         SpawnLocalPlayer();
-
         //Spawn peers
         GameManager.instance.SpawnRemotePlayers();
     }
@@ -105,13 +115,13 @@ public class MapController : MonoBehaviour
     public void SpawnLocalPlayer()
     {
         GameObject p = Instantiate(GameManager.instance.LocalPlayerObj, spawns[Client.instance.clientExeID - 1].position, Quaternion.identity); //sceneManager.spawnPoints[myId]
-        p.GetComponent<PlayerController>().camera = camera;
+        p.GetComponent<PlayerController>().camera = camera.transform;
 
         localPlayer = p.GetComponent<PlayerManager>();
 
-        camera.GetComponent<PlayerCamera>().enabled = true;
-        camera.GetComponent<PlayerCamera>().player = p.transform;
-        camera.GetComponent<PlayerCamera>().ragdoll = p.GetComponent<PlayerController>().pelvis;
+        camera.enabled = true;
+        camera.player = p.transform;
+        camera.ragdoll = p.GetComponent<PlayerController>().pelvis;
     }
 
     public void SpawnRemotePlayer(Guid id, string username)
@@ -153,10 +163,12 @@ public class MapController : MonoBehaviour
 
     public void FinishRaceForLocalPlayer()
     {
+        qualified = true;
         confetti.Play();
         ClientSend.PlayerFinish(Game_Clock);
         localPlayer.gameObject.SetActive(false);
         UpdateQualified();
+        uiManager.Qualified();
     }
 
 
@@ -178,6 +190,11 @@ public class MapController : MonoBehaviour
     public void FinishRace()
     {
         Debug.Log("Race finished. Go to main menu.");
+        camera.StopFollowMouse();
+        if (!qualified)
+        {
+            uiManager.UnQualified();
+        }
         //GameManager.instance.LoadMainMenu();
     }
 

@@ -19,7 +19,6 @@ public class CSceneManager : MonoBehaviour
 
     [Header("Movable Objects")]
     public Moving[] moveObjs;
-    public MoveWait[] moveWaitObjs;
     public Swing[] swingObjs;
     public RotatingCylinder blades;
     public Spinning[] spinObjs;

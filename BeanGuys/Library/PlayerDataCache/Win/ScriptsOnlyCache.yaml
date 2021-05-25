@@ -157,13 +157,13 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 12218}
     - Class: 114
-      Script: {instanceID: 12394}
+      Script: {instanceID: 12396}
     - Class: 114
-      Script: {instanceID: 12442}
+      Script: {instanceID: 12444}
     - Class: 114
-      Script: {instanceID: 12632}
+      Script: {instanceID: 12634}
     - Class: 114
-      Script: {instanceID: 12700}
+      Script: {instanceID: 12702}
     - Class: 114
       Script: {instanceID: 12958}
     - Class: 114
@@ -229,41 +229,41 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 14688}
     - Class: 114
-      Script: {instanceID: 14900}
+      Script: {instanceID: 14902}
     - Class: 114
-      Script: {instanceID: 15014}
+      Script: {instanceID: 15016}
     - Class: 114
-      Script: {instanceID: 15062}
+      Script: {instanceID: 15064}
     - Class: 114
-      Script: {instanceID: 15088}
+      Script: {instanceID: 15090}
     - Class: 114
-      Script: {instanceID: 15338}
-    - Class: 114
-      Script: {instanceID: 15390}
+      Script: {instanceID: 15340}
     - Class: 114
       Script: {instanceID: 15392}
     - Class: 114
-      Script: {instanceID: 15532}
+      Script: {instanceID: 15394}
     - Class: 114
-      Script: {instanceID: 15566}
+      Script: {instanceID: 15534}
     - Class: 114
-      Script: {instanceID: 15582}
+      Script: {instanceID: 15568}
     - Class: 114
-      Script: {instanceID: 15672}
+      Script: {instanceID: 15584}
     - Class: 114
-      Script: {instanceID: 15788}
+      Script: {instanceID: 15674}
     - Class: 114
       Script: {instanceID: 15790}
     - Class: 114
       Script: {instanceID: 15792}
     - Class: 114
-      Script: {instanceID: 15822}
+      Script: {instanceID: 15794}
     - Class: 114
-      Script: {instanceID: 15850}
+      Script: {instanceID: 15824}
     - Class: 114
-      Script: {instanceID: 15986}
+      Script: {instanceID: 15852}
     - Class: 114
-      Script: {instanceID: 15994}
+      Script: {instanceID: 15988}
+    - Class: 114
+      Script: {instanceID: 15996}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -371,7 +371,7 @@ ScriptsOnlyBuild:
     className: TMP_SelectionCaret
   - hash:
       serializedVersion: 2
-      Hash: 66e11d8d291808d56da88ba4660534b2
+      Hash: ad58b1475170ceb3713c7e1fbe599682
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: Moving
@@ -455,6 +455,12 @@ ScriptsOnlyBuild:
     className: Bloom
   - hash:
       serializedVersion: 2
+      Hash: e8f7c52f9ef97892c7b78e58fcf5d686
+    assemblyName: Assembly-CSharp.dll
+    namespaceName: 
+    className: UIManager
+  - hash:
+      serializedVersion: 2
       Hash: a5781dc71a671b1ad2b38de19f24b71f
     assemblyName: Unity.Timeline.dll
     namespaceName: UnityEngine.Timeline
@@ -491,7 +497,7 @@ ScriptsOnlyBuild:
     className: Image
   - hash:
       serializedVersion: 2
-      Hash: e32214257a0cf6ea49b952fbcae6d349
+      Hash: 40610774890dc89ccceba33d4611254f
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: CSceneManager
@@ -635,12 +641,6 @@ ScriptsOnlyBuild:
     className: AnimationPlayableAsset
   - hash:
       serializedVersion: 2
-      Hash: e67ade45a87c98b569f3fc2e3005c091
-    assemblyName: Assembly-CSharp.dll
-    namespaceName: 
-    className: MoveWait
-  - hash:
-      serializedVersion: 2
       Hash: eb229c6d50b852c329bee0df4153ef20
     assemblyName: Unity.RenderPipelines.Universal.Runtime.dll
     namespaceName: UnityEngine.Rendering.Universal
@@ -713,7 +713,7 @@ ScriptsOnlyBuild:
     className: ControlTrack
   - hash:
       serializedVersion: 2
-      Hash: 8b9dd292cd0ac70f6d15206a1bdd78da
+      Hash: d42c1b5d4576f07b99ef5a2891f0b862
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: GameManager
@@ -773,7 +773,7 @@ ScriptsOnlyBuild:
     className: DebugUIHandlerIndirectToggle
   - hash:
       serializedVersion: 2
-      Hash: ca8085da884c98e03d655d0a529d0ec8
+      Hash: f43a5f7c5d34d8b1db01f2cc83fcf4c9
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: MapController
@@ -1053,6 +1053,12 @@ ScriptsOnlyBuild:
     assemblyName: Unity.RenderPipelines.Universal.Runtime.dll
     namespaceName: UnityEngine.Experimental.Rendering.Universal
     className: RenderObjects
+  - hash:
+      serializedVersion: 2
+      Hash: 912b3408ec420afe7ea15e269bb0a341
+    assemblyName: Assembly-CSharp.dll
+    namespaceName: 
+    className: MenuSceneManager
   - hash:
       serializedVersion: 2
       Hash: 760787567e1b60d64a3e421ab83ee14a
@@ -1368,4 +1374,4 @@ ScriptsOnlyBuild:
   platform: 5
   scenePathNames:
   - Assets/Scenes/Multiplayer_Start.unity
-  playerPath: D:/Unity/Projects/BeanGuys/BuildMultiplayer/BeanGuys.exe
+  playerPath: D:/Unity/Projects/BeanGuys/BuildGame_Multiplayer/BeanGuys.exe

@@ -1230,41 +1230,9 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1602879210333378738, guid: 598eb5d36b9e1f44999c2063a9d734f6, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5046903259106833527, guid: 598eb5d36b9e1f44999c2063a9d734f6, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0.12
-      objectReference: {fileID: 0}
-    - target: {fileID: 5046903259106833527, guid: 598eb5d36b9e1f44999c2063a9d734f6, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -9.04
-      objectReference: {fileID: 0}
-    - target: {fileID: 5446542642283428419, guid: 598eb5d36b9e1f44999c2063a9d734f6, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5446542642283428419, guid: 598eb5d36b9e1f44999c2063a9d734f6, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 6570611957526348879, guid: 598eb5d36b9e1f44999c2063a9d734f6, type: 3}
       propertyPath: m_Name
       value: Blades
-      objectReference: {fileID: 0}
-    - target: {fileID: 7580698045155746787, guid: 598eb5d36b9e1f44999c2063a9d734f6, type: 3}
-      propertyPath: rotationSpeed
-      value: 100
-      objectReference: {fileID: 0}
-    - target: {fileID: 7580698045155746787, guid: 598eb5d36b9e1f44999c2063a9d734f6, type: 3}
-      propertyPath: axis.z
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7580698045155746787, guid: 598eb5d36b9e1f44999c2063a9d734f6, type: 3}
-      propertyPath: axis.x
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8576325524453500650, guid: 598eb5d36b9e1f44999c2063a9d734f6, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2121,25 +2089,9 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 9189042286659822146, guid: ef54b6b664e337a45b4c60133cd066fa, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 9189042286659822146, guid: ef54b6b664e337a45b4c60133cd066fa, type: 3}
-      propertyPath: speed
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 9189042286659822146, guid: ef54b6b664e337a45b4c60133cd066fa, type: 3}
-      propertyPath: somthing
-      value: 0.3
-      objectReference: {fileID: 0}
     - target: {fileID: 9189042286659822147, guid: ef54b6b664e337a45b4c60133cd066fa, type: 3}
       propertyPath: m_Name
       value: donut_pole
-      objectReference: {fileID: 0}
-    - target: {fileID: 9189042286659822148, guid: ef54b6b664e337a45b4c60133cd066fa, type: 3}
-      propertyPath: m_Constraints
-      value: 116
       objectReference: {fileID: 0}
     - target: {fileID: 9189042286659822153, guid: ef54b6b664e337a45b4c60133cd066fa, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3765,13 +3717,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb949845ac5e86045a91bb917850c080, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sceneManager: {fileID: 0}
   mapController: {fileID: 2095060470}
-  playersCount: {fileID: 1089220023}
   totalPlayers: 0
   RemotePlayerObj: {fileID: 459462952003508773, guid: b198930bd21cbf94b973efb2c762b4d6, type: 3}
   LocalPlayerObj: {fileID: 8803182987063549214, guid: 385e1dbb387444f43a80988338af31c7, type: 3}
   isRunning: 0
+  debug: 1
 --- !u!4 &2071899179
 Transform:
   m_ObjectHideFlags: 0
@@ -3830,7 +3781,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f20bd2565162e534782275e5d8a26acf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  localPlayer: {fileID: 0}
+  uiManager: {fileID: 0}
+  countDown: {fileID: 0}
   spawns:
   - {fileID: 1744293854}
   - {fileID: 13630094}
@@ -3838,7 +3790,7 @@ MonoBehaviour:
   - {fileID: 1976821193}
   - {fileID: 2100737939}
   Game_Clock: 0
-  camera: {fileID: 963194228}
+  camera: {fileID: 963194229}
   confetti: {fileID: 460209103}
 --- !u!4 &2095060471
 Transform:

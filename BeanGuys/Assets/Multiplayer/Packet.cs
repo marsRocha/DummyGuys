@@ -28,6 +28,7 @@ public enum ClientPackets
     playerAnim,
     playerRespawn,
     playerFinish,
+    map,
     startGame
 }
 

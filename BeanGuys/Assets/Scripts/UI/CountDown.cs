@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 
 public class CountDown : MonoBehaviour
@@ -8,7 +6,6 @@ public class CountDown : MonoBehaviour
     private float startTime;
     private float currentTime;
     private TextMeshProUGUI countdownText;
-    //[HideInInspector]
     public bool startCountdown = false;
 
     // Start is called before the first frame update
@@ -41,8 +38,7 @@ public class CountDown : MonoBehaviour
 
             if (currentTime <= 0)
             {
-                //quando tiver multiplayer é melhor mandar mensagem para o servidor e depois se estiver correto entao começar o jogo
-                GameManager.instance.StartGame();
+                MapController.instance.StartRace();
                 this.gameObject.SetActive(false);
             }
         }

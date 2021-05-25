@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using TMPro;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -10,13 +6,8 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance = null;
     [SerializeField]
-    private CSceneManager sceneManager;
-    [SerializeField]
     private MapController mapController;
 
-
-    //TODO: FOR NOW STAYS HERE
-    public TMP_Text playersCount;
     public int totalPlayers = 0;
 
     //REMOVE THIS FROM HERE LATER ON
@@ -24,6 +15,7 @@ public class GameManager : MonoBehaviour
 
     [Header("States")]
     public bool isRunning;
+    public bool debug;
 
     #region Singleton
     private void Awake()
@@ -49,29 +41,33 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        //detetar pausar ou sair do jogo
-        /*if (Input.GetKeyDown(KeyCode.Escape))
+        //TODO: FOR P2P PURPOSE, REMOVE AFTERWARDS
+        if (Input.GetKeyDown(KeyCode.I))
         {
-            sceneManager.ActivateExitMenu();
-        }*/
-
-        //FOR DEBUG PURPOSES
+            ClientSend.Map();
+            LoadGameScene(1);
+        }
         if (Input.GetKeyDown(KeyCode.O))
         {
             ClientSend.StartGame();
-            StartGameDebug();
+            if (!debug)
+            {
+                Debug.Log("not debuggin");
+                StartGame();
+            }
+            else
+            {
+                Debug.Log("debuggin");
+                StartGameDebug();
+            }
         }
     }
 
-    public void ApplicationQuit()
-    {
-        Debug.Log("exit");
-        Application.Quit();
-    }
+    #region Scene Loading related
 
-    public void LoadGameScene()
+    public void LoadGameScene(int levelId)
     {
-        SceneManager.LoadScene("Map1");
+        SceneManager.LoadScene(levelId);
     }
 
     public void LoadMainMenu()
@@ -79,19 +75,42 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(0);
     }
 
-    private void OnLevelWasLoaded(int level)
+    void OnEnable()
     {
-        sceneManager = GameObject.Find("SceneManager").GetComponent<CSceneManager>();
-        if (level != 0) // not mainmenu
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    /// <summary>
+    /// When secene is loaded initialize variables needed for the GameTypeEvent
+    /// Afterwards send confirmation to the Server that it's ready to start race
+    /// </summary>
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (SceneManager.GetActiveScene().name == "MainMenu")
         {
-            sceneManager.StartCountDown();
+            
+        }
+        else //Game world
+        {
+            if (!debug)
+            {
+                Debug.Log("GameWorld Loaded");
+                mapController = GameObject.Find("MapController").GetComponent<MapController>();
+                mapController.Initialize();
+            }
         }
     }
+    #endregion
 
     public void UpdatePlayerCount()
     {
         totalPlayers++;
-        playersCount.text = $"{totalPlayers}/60 Players";
+        GameObject.Find("SceneManager").GetComponent<MenuSceneManager>().UpdatePlayerCountUI(totalPlayers);
     }
 
     public void SpawnRemotePlayers()
@@ -103,38 +122,19 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    //DEBUG, simulate changing scene and spawn all players
+    //TODO: DEBUG, simulate changing scene and spawn all players
     public void StartGameDebug()
     {
         Debug.Log("Start Game");
-        playersCount.transform.root.gameObject.SetActive(false);
-        mapController.Initialize();
+        GameObject.Find("Canvas").SetActive(false);
+        mapController.StartGameDebug();
     }
 
-    //quando tiver multiplayer é melhor mandar mensagem para o servidor e depois se estiver correto entao começar o jogo
+    //TODO: REMOVE AFTERWARDS ONLY FOR P2P FUNCTIONS
     public void StartGame()
     {
-        mapController.StartRace();
-    }
-
-    public void PlayerMovement(Guid peerID, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
-    {
-        mapController.players[peerID].UpdateMovement(position, rotation, velocity, angular_velocity, tick_number);
-    }
-    
-    public void PlayerAnim(Guid peerID, int animNum)
-    {
-        mapController.players[peerID].UpdateAnimaiton(animNum);
-    }
-
-    public void PlayerRespawn(Guid peerID, int checkPointNum)
-    {
-        mapController.PlayerRespawn(peerID, checkPointNum);
-    }
-
-    public void PlayerFinish(Guid peerID, float time)
-    {
-        mapController.FinishRaceForPlayer(peerID, time);
+        Debug.Log("Start Game");
+        mapController.StartCountDown();
     }
 
     public void Disconnect(Guid peerID)
@@ -149,4 +149,26 @@ public class GameManager : MonoBehaviour
             });
         }
     }
+
+    #region Player messages
+    public void PlayerMovement(Guid peerID, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
+    {
+        mapController.players[peerID].UpdateMovement(position, rotation, velocity, angular_velocity, tick_number);
+    }
+
+    public void PlayerAnim(Guid peerID, int animNum)
+    {
+        mapController.players[peerID].UpdateAnimaiton(animNum);
+    }
+
+    public void PlayerRespawn(Guid peerID, int checkPointNum)
+    {
+        mapController.PlayerRespawn(peerID, checkPointNum);
+    }
+
+    public void PlayerFinish(Guid peerID, float time)
+    {
+        mapController.FinishRaceForPlayer(peerID, time);
+    }
+    #endregion
 }

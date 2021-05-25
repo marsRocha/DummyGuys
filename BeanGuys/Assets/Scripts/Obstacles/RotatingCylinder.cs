@@ -9,7 +9,7 @@ public class RotatingCylinder : MonoBehaviour
 
     void Update()
     {
-        rb.rotation = Quaternion.Euler(MapController.instance.Game_Clock * rotationSpeed, 0, -90);
+        rb.rotation = Quaternion.Euler(MapController.instance.Game_Clock * rotationSpeed, -90, -90);
         rb.angularVelocity = Vector3.right * (MapController.instance.Game_Clock > 0 ? 2f : 0f);
     }
 }

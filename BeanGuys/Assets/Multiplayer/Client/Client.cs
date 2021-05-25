@@ -163,6 +163,7 @@ public class Client : MonoBehaviour
         try
         {
             _udpClient.Send(packet.ToArray(), packet.Length(), _roomMulticastEndPoint);
+            Debug.Log("mUlticast sent");
         }
         catch (Exception ex)
         {
@@ -379,7 +380,10 @@ public class Client : MonoBehaviour
             { (int) ClientPackets.playerAnim, ClientHandle.PlayerAnim },
             { (int) ClientPackets.playerRespawn, ClientHandle.PlayerRespawn },
             { (int) ClientPackets.playerFinish, ClientHandle.PlayerFinish },
+            { (int) ClientPackets.map, ClientHandle.Map },
+            { (int) ClientPackets.startGame, ClientHandle.StartGame },
         };
+        //TEMPORARY FOR P2P USE ONLY
     }
 
     private void OnApplicationQuit()

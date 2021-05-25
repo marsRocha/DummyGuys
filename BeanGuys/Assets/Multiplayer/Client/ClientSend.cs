@@ -84,17 +84,28 @@ public class ClientSend : MonoBehaviour
         }
     }
 
-    #region GameInfo
-    //TODO: Remove from here, the Server should be the one to send this message
+    #region TODO: REMOVE / P2P TEMPORARY FUNCTIONS
+    public static void Map()
+    {
+        Debug.Log("Sent Map");
+        using (Packet packet = new Packet((int)ClientPackets.map))
+        {
+            packet.Write(1);
+
+            MulticastUDPData(packet);
+        }
+    }
+
     public static void StartGame()
     {
         using (Packet packet = new Packet((int)ClientPackets.startGame))
         {
-            SendUDPData(packet); // send to server
-            MulticastUDPData(packet); // send to peers
+            MulticastUDPData(packet);
         }
     }
+    #endregion
 
+    #region GameInfo
     public static void PlayerMovement(int x, int y, bool jump, bool dive, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
     {
         using (Packet packet = new Packet((int)ClientPackets.playerMovement))
