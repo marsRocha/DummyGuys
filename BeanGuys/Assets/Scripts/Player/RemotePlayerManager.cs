@@ -29,7 +29,7 @@ public class RemotePlayerManager : MonoBehaviour
     {
         pController = GetComponent<PlayerController>();
         rb = GetComponent<Rigidbody>();
-        //anim = GetComponent<Animator>();
+        anim = GetComponent<Animator>();
 
         //For this entity's interpolation
         player_state_msgs = new List<RemoteState>();
@@ -84,7 +84,12 @@ public class RemotePlayerManager : MonoBehaviour
     {
         player_state_msgs.Add(new RemoteState(position, rotation, velocity, angular_velocity, tick_number));
 
-        Debug.Log($"packet timestamp:{tick_number}, local timestamp:{MapController.instance.Game_Clock}");
+        //Debug.Log($"packet timestamp:{tick_number}, local timestamp:{MapController.instance.Game_Clock}");
+
+        /*rb.position = position;
+        rb.rotation = rotation;
+        rb.velocity = velocity;
+        rb.angularVelocity = angular_velocity;*/
     }
 
     public void UpdateAnimaiton(int animNum)

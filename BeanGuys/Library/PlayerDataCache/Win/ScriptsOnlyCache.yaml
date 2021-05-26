@@ -3,6 +3,8 @@ ScriptsOnlyBuild:
     Assembly-CSharp.dll:
     - CheckPoint
     - Client
+    - ClientInfo
+    - CountDown
     - DeathCollider
     - DebugStuff.ConsoleToGUI
     - GameManager
@@ -65,8 +67,10 @@ ScriptsOnlyBuild:
     UnityEditor.Graphs.dll:
     - UnityEditor.Graphs.AnimationBlendTree.Graph
     - UnityEditor.Graphs.AnimationBlendTree.GraphGUI
+    - UnityEditor.Graphs.AnimationStateMachine.AnyStateNode
     - UnityEditor.Graphs.AnimationStateMachine.Graph
     - UnityEditor.Graphs.AnimationStateMachine.GraphGUI
+    - UnityEditor.Graphs.AnimationStateMachine.StateNode
     - UnityEditor.Graphs.AnimatorControllerTool
     UnityEditor.TestRunner.dll:
     - UnityEditor.TestTools.TestRunner.Api.CallbacksHolder
@@ -159,11 +163,13 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 12396}
     - Class: 114
-      Script: {instanceID: 12444}
+      Script: {instanceID: 12442}
     - Class: 114
-      Script: {instanceID: 12634}
+      Script: {instanceID: 12632}
     - Class: 114
-      Script: {instanceID: 12702}
+      Script: {instanceID: 12700}
+    - Class: 114
+      Script: {instanceID: 12940}
     - Class: 114
       Script: {instanceID: 12958}
     - Class: 114
@@ -238,6 +244,8 @@ ScriptsOnlyBuild:
       Script: {instanceID: 15090}
     - Class: 114
       Script: {instanceID: 15340}
+    - Class: 114
+      Script: {instanceID: 15390}
     - Class: 114
       Script: {instanceID: 15392}
     - Class: 114
@@ -497,12 +505,6 @@ ScriptsOnlyBuild:
     className: Image
   - hash:
       serializedVersion: 2
-      Hash: 40610774890dc89ccceba33d4611254f
-    assemblyName: Assembly-CSharp.dll
-    namespaceName: 
-    className: CSceneManager
-  - hash:
-      serializedVersion: 2
       Hash: 95e6797232b7d5831c9feb55a8582905
     assemblyName: Unity.RenderPipelines.Universal.Runtime.dll
     namespaceName: UnityEngine.Rendering.Universal
@@ -641,6 +643,12 @@ ScriptsOnlyBuild:
     className: AnimationPlayableAsset
   - hash:
       serializedVersion: 2
+      Hash: fc8d731c8cc9a5d2968ebca155fa8282
+    assemblyName: Assembly-CSharp.dll
+    namespaceName: 
+    className: ClientInfo
+  - hash:
+      serializedVersion: 2
       Hash: eb229c6d50b852c329bee0df4153ef20
     assemblyName: Unity.RenderPipelines.Universal.Runtime.dll
     namespaceName: UnityEngine.Rendering.Universal
@@ -773,7 +781,7 @@ ScriptsOnlyBuild:
     className: DebugUIHandlerIndirectToggle
   - hash:
       serializedVersion: 2
-      Hash: f43a5f7c5d34d8b1db01f2cc83fcf4c9
+      Hash: 2e59f5b93bda83c342a3509dc755cb45
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: MapController
@@ -1229,7 +1237,7 @@ ScriptsOnlyBuild:
     className: AmbientOcclusion
   - hash:
       serializedVersion: 2
-      Hash: 4ca35a098c4c8c1df8b2f40c9de1c889
+      Hash: d3225073cf132bfe2114f86dacf9a3b5
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: Client

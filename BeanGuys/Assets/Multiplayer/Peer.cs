@@ -9,15 +9,18 @@ public class Peer
 {
     public Guid Id { get; private set; }
     public string Username { get; private set; }
+    public int SpawnId { get; private set; }
 
     public static int dataBufferSize = 4036;
     public TCP tcp;
     public UDP udp;
 
-    public Peer(Guid clientId, string username)
+    public Peer(Guid _clientId, string _username, int _spawnId)
     {
-        Id = clientId;
-        Username = username;
+        Id = _clientId;
+        Username = _username;
+        SpawnId = _spawnId;
+
         tcp = new TCP(Id);
         udp = new UDP(Id);
     }
@@ -229,7 +232,7 @@ public class Peer
     public void Disconnect()
     {
         Debug.Log($"Player {Id} has disconnected.");
-        GameManager.instance.Disconnect(Id);
+        GameManager.instance.RemovePlayer(Id);
 
         tcp.Disconnect();
         udp.Disconnect();

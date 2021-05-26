@@ -27,15 +27,15 @@ namespace Multiplayer
             {
                 foreach (Room room in Server.Rooms.Values)
                 {
-                    if (room.Players.Count < Server.MaxPlayersPerLobby && room.RoomState == RoomState.looking)
+                    if (room.ClientsInfo.Count < Server.MaxPlayersPerLobby && room.RoomState == RoomState.looking)
                     {
-                        //Add player to it
-                        room.AddPlayer(client.Id, client.Username, ((IPEndPoint)client.tcp.socket.Client.RemoteEndPoint).Address.ToString(),
+                        //Add player to room and return their spawn id
+                        int spawnId = room.AddPlayer(client.Id, client.Username, ((IPEndPoint)client.tcp.socket.Client.RemoteEndPoint).Address.ToString(),
                             ((IPEndPoint)client.tcp.socket.Client.RemoteEndPoint).Port.ToString());
 
                         client.RoomID = room.Id;
                         //Let the client know the rooms multicast info
-                        ServerSend.JoinedRoom(client.Id, room.MulticastIP.ToString(), room.MulticastPort);
+                        ServerSend.JoinedRoom(client.Id, room.MulticastIP.ToString(), room.MulticastPort, spawnId);
                     }
                 }
             }
@@ -47,12 +47,12 @@ namespace Multiplayer
                 Room newRoom = Server.Rooms[newGuid];
 
                 //Add player to it
-                newRoom.AddPlayer(client.Id, client.Username, ((IPEndPoint)client.tcp.socket.Client.RemoteEndPoint).Address.ToString(),
+                int spawnId = newRoom.AddPlayer(client.Id, client.Username, ((IPEndPoint)client.tcp.socket.Client.RemoteEndPoint).Address.ToString(),
                      ((IPEndPoint)client.tcp.socket.Client.RemoteEndPoint).Port.ToString());
 
                 client.RoomID = newRoom.Id;
                 //Let the client know the rooms multicast info
-                ServerSend.JoinedRoom(client.Id, newRoom.MulticastIP.ToString(), newRoom.MulticastPort);
+                ServerSend.JoinedRoom(client.Id, newRoom.MulticastIP.ToString(), newRoom.MulticastPort, spawnId);
             }
         }
 

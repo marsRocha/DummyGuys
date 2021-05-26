@@ -11,7 +11,8 @@ namespace Multiplayer
     {
         public Guid Id { get; set; }
         public RoomState RoomState { get; set; }
-        public Dictionary<Guid, Player> Players { get; set; }
+        public List<int> UsedSpawnIds { get; set; }
+        public Dictionary<Guid, ClientInfo> ClientsInfo { get; set; }
         public IPAddress MulticastIP { get; set; }
         public int MulticastPort { get; set; }
         private IPAddress _localIPaddress { get; set; }
@@ -28,7 +29,8 @@ namespace Multiplayer
             MulticastPort = multicastPort + 1;
 
             RoomState = RoomState.looking;
-            Players = new Dictionary<Guid, Player>();
+            ClientsInfo = new Dictionary<Guid, ClientInfo>();
+            UsedSpawnIds = new List<int>();
 
             _localIPaddress = IPAddress.Any;
 
@@ -107,7 +109,7 @@ namespace Multiplayer
 
         public void CloseRoom()
         {
-            RoomUdp.DropMulticastGroup(MulticastIP); //does not work
+            RoomUdp.DropMulticastGroup(MulticastIP); //TODO: does not work
             RoomUdp.Close();
 
             Console.WriteLine($"Room[{Id}] has been closed.");

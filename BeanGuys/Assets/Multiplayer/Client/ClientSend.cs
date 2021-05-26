@@ -52,8 +52,8 @@ public class ClientSend : MonoBehaviour
     {
         using (Packet packet = new Packet((int)ClientPackets.welcomeReceived))
         {
-            packet.Write(Client.instance.myId);
-            packet.Write(Client.instance.username);
+            packet.Write(Client.instance.clientInfo.id);
+            packet.Write(Client.instance.clientInfo.username);
             //packet.Write(Client.MyPort);
 
             SendTCPDataToServer(packet);
@@ -65,11 +65,11 @@ public class ClientSend : MonoBehaviour
     {
         using (Packet packet = new Packet((int)ClientPackets.introduction))
         {
-            packet.Write(Client.instance.myId);
-            packet.Write(Client.instance.username);
+            packet.Write(Client.instance.clientInfo.id);
+            packet.Write(Client.instance.clientInfo.username);
+            packet.Write(Client.instance.clientInfo.spawnId);
 
-            SendTCPData(toPeer, packet);
-            //MulticastUDPData(packet);
+            SendTCPData(toPeer, packet); //TODO: Change to udp when it's reliable
         }
     }
 
@@ -78,7 +78,7 @@ public class ClientSend : MonoBehaviour
     {
         using (Packet packet = new Packet((int)ClientPackets.welcome))
         {
-            packet.Write(Client.instance.myId);
+            packet.Write(Client.instance.clientInfo.id);
 
             SendTCPData(toClient, packet);
         }
@@ -90,6 +90,8 @@ public class ClientSend : MonoBehaviour
         Debug.Log("Sent Map");
         using (Packet packet = new Packet((int)ClientPackets.map))
         {
+            packet.Write(Client.instance.clientInfo.id);
+
             packet.Write(1);
 
             MulticastUDPData(packet);
@@ -100,17 +102,19 @@ public class ClientSend : MonoBehaviour
     {
         using (Packet packet = new Packet((int)ClientPackets.startGame))
         {
+            packet.Write(Client.instance.clientInfo.id);
+
             MulticastUDPData(packet);
         }
     }
     #endregion
 
     #region GameInfo
-    public static void PlayerMovement(int x, int y, bool jump, bool dive, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
+    /*public static void PlayerMovement(int x, int y, bool jump, bool dive, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
     {
         using (Packet packet = new Packet((int)ClientPackets.playerMovement))
         {
-            packet.Write(Client.instance.myId);
+            packet.Write(Client.instance.clientInfo.id);
 
             packet.Write(tick_number);
 
@@ -126,13 +130,13 @@ public class ClientSend : MonoBehaviour
 
             MulticastUDPData(packet);
         }
-    }
+    }*/
 
-    /*public static void PlayerMovement(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
+    public static void PlayerMovement(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
     {
         using (Packet packet = new Packet((int)ClientPackets.playerMovement))
         {
-            packet.Write(Client.instance.myId);
+            packet.Write(Client.instance.clientInfo.id);
 
             packet.Write(position);
             packet.Write(rotation);
@@ -142,13 +146,13 @@ public class ClientSend : MonoBehaviour
 
             MulticastUDPData(packet);
         }
-    }*/
+    }
 
     public static void PlayerAnim(int anim)
     {
         using (Packet packet = new Packet((int)ClientPackets.playerAnim))
         {
-            packet.Write(Client.instance.myId);
+            packet.Write(Client.instance.clientInfo.id);
             packet.Write(anim);
 
             MulticastUDPData(packet);
@@ -159,7 +163,7 @@ public class ClientSend : MonoBehaviour
     {
         using (Packet packet = new Packet((int)ClientPackets.playerRespawn))
         {
-            packet.Write(Client.instance.myId);
+            packet.Write(Client.instance.clientInfo.id);
             packet.Write(checkpointNum);
 
             MulticastUDPData(packet);
@@ -170,7 +174,7 @@ public class ClientSend : MonoBehaviour
     {
         using (Packet packet = new Packet((int)ClientPackets.playerFinish))
         {
-            packet.Write(Client.instance.myId);
+            packet.Write(Client.instance.clientInfo.id);
             packet.Write(time);
 
             MulticastUDPData(packet);

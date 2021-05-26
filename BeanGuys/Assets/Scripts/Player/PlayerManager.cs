@@ -68,9 +68,8 @@ public class PlayerManager : MonoBehaviour
 
             if (isOnline)
             {
-                //ClientSend.PlayerMovement(rb.position, rb.rotation, rb.velocity, rb.angularVelocity, MapController.instance.Game_Clock);
-                ClientSend.PlayerMovement(currentInput.x, currentInput.y, currentInput.jump, currentInput.dive, rb.position, rb.rotation, rb.velocity, rb.angularVelocity, MapController.instance.Game_Clock);
-                Debug.Log("Sent message");
+                ClientSend.PlayerMovement(rb.position, rb.rotation, rb.velocity, rb.angularVelocity, MapController.instance.Game_Clock);
+                //ClientSend.PlayerMovement(currentInput.x, currentInput.y, currentInput.jump, currentInput.dive, rb.position, rb.rotation, rb.velocity, rb.angularVelocity, MapController.instance.Game_Clock);
                 
                 if (lastAnimSent != pController.currentAnim)
                 {

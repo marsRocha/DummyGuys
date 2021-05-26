@@ -14,7 +14,8 @@ public class MapController : MonoBehaviour
     public PlayerManager localPlayer { get; private set; }
 
     [Header("Components")]
-    public Transform[] spawns;
+    [HideInInspector]
+    public Vector3[] spawns;
     public Transform[] checkPoints;
 
     //Controls game
@@ -51,6 +52,14 @@ public class MapController : MonoBehaviour
 
     public void Initialize()
     {
+        spawns = new Vector3[60];
+        for (int i = 0; i <= 3; i++)
+        {
+            for(int j = 0; j <= 14; j++)
+                spawns[(14 * i) + j] = new Vector3(-18.06f + 2.58f * j, 0,-2.58f * i);
+        }
+
+
         players = new Dictionary<Guid, RemotePlayerManager>();
 
         Game_Clock = 0;
@@ -60,11 +69,27 @@ public class MapController : MonoBehaviour
         qualifiedPlayers = 0;
         totalPlayers = 0;
         SpawnPlayers();
+
+        uiManager.Initialize();
     }
 
-    public void StartGameDebug()
+    public void InitializeDebug()
     {
+        spawns = new Vector3[60];
+        for (int i = 0; i <= 3; i++)
+        {
+            for (int j = 0; j <= 14; j++)
+                spawns[(14 * i) + j] = new Vector3(-18.06f + 2.58f * j, 0, -2.58f * i);
+        }
+
+        players = new Dictionary<Guid, RemotePlayerManager>();
+
+        Game_Clock = 0;
         isRunning = true;
+        qualified = false;
+
+        qualifiedPlayers = 0;
+        totalPlayers = 0;
         SpawnPlayers();
     }
 
@@ -99,9 +124,11 @@ public class MapController : MonoBehaviour
         }
     }
 
+    // Called by countdown clock
     public void StartRace()
     {
         isRunning = true;
+        localPlayer.isRunning = true;
     }
 
     #region Spawn Players
@@ -114,7 +141,7 @@ public class MapController : MonoBehaviour
 
     public void SpawnLocalPlayer()
     {
-        GameObject p = Instantiate(GameManager.instance.LocalPlayerObj, spawns[Client.instance.clientExeID - 1].position, Quaternion.identity); //sceneManager.spawnPoints[myId]
+        GameObject p = Instantiate(GameManager.instance.LocalPlayerObj, spawns[Client.instance.clientInfo.spawnId], Quaternion.identity); //sceneManager.spawnPoints[myId]
         p.GetComponent<PlayerController>().camera = camera.transform;
 
         localPlayer = p.GetComponent<PlayerManager>();
@@ -126,7 +153,7 @@ public class MapController : MonoBehaviour
 
     public void SpawnRemotePlayer(Guid id, string username)
     {
-        GameObject p = Instantiate(GameManager.instance.RemotePlayerObj, spawns[Client.instance.clientExeID - 1].position, Quaternion.identity);
+        GameObject p = Instantiate(GameManager.instance.RemotePlayerObj, spawns[Client.peers[id].SpawnId], Quaternion.identity);
         players.Add(id, p.GetComponent<RemotePlayerManager>());
         players[id].SetIdentification(id, username);
     }
@@ -138,7 +165,7 @@ public class MapController : MonoBehaviour
     {
         Vector3 newPos = GetRespawnPosition(Client.instance.clientExeID, checkPointNum);
 
-        if (id == Client.instance.myId)
+        if (id == Client.instance.clientInfo.id)
             localPlayer.Respawn(newPos, Quaternion.identity);
         else
             players[id].Respawn(newPos, Quaternion.identity);
@@ -155,7 +182,7 @@ public class MapController : MonoBehaviour
     {
         Debug.Log($"numCheck:{checkPointNum}");
         if (checkPointNum == 0)
-            return spawns[id - 1].position;
+            return spawns[id - 1];
         else
             return checkPoints[checkPointNum - 1].position;
     }

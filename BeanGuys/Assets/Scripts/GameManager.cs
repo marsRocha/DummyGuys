@@ -50,16 +50,7 @@ public class GameManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.O))
         {
             ClientSend.StartGame();
-            if (!debug)
-            {
-                Debug.Log("not debuggin");
-                StartGame();
-            }
-            else
-            {
-                Debug.Log("debuggin");
-                StartGameDebug();
-            }
+            StartGame();
         }
     }
 
@@ -110,6 +101,7 @@ public class GameManager : MonoBehaviour
     public void UpdatePlayerCount()
     {
         totalPlayers++;
+        if(!debug)
         GameObject.Find("SceneManager").GetComponent<MenuSceneManager>().UpdatePlayerCountUI(totalPlayers);
     }
 
@@ -122,22 +114,26 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    //TODO: DEBUG, simulate changing scene and spawn all players
-    public void StartGameDebug()
-    {
-        Debug.Log("Start Game");
-        GameObject.Find("Canvas").SetActive(false);
-        mapController.StartGameDebug();
-    }
-
     //TODO: REMOVE AFTERWARDS ONLY FOR P2P FUNCTIONS
     public void StartGame()
     {
         Debug.Log("Start Game");
+        if (debug)
+        {
+            GameObject.Find("Canvas").SetActive(false);
+            mapController.InitializeDebug();
+        }
         mapController.StartCountDown();
     }
 
-    public void Disconnect(Guid peerID)
+    public void LeaveGame()
+    {
+        Debug.Log("Leave Game");
+        Client.instance.Disconnect();
+        LoadMainMenu();
+    }
+
+    public void RemovePlayer(Guid peerID)
     {
         if (mapController != null && mapController.isRunning)
         {

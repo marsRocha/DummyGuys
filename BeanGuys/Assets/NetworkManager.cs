@@ -30,7 +30,7 @@ public class NetworkManager : MonoBehaviour
     public void SetClientName(string name)
     {
         Debug.Log("Username changed!");
-        Client.instance.username = name;
+        Client.instance.clientInfo.username = name;
     }
 
     public void GoOnline()

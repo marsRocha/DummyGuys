@@ -60,12 +60,13 @@ namespace Multiplayer
             }
         }
 
-        public static void JoinedRoom(Guid toClient, string lobbyIP, int lobbyPort)
+        public static void JoinedRoom(Guid toClient, string lobbyIP, int lobbyPort, int spawnPos)
         {
             using (Packet packet = new Packet((int)ServerPackets.joinedRoom))
             {
                 packet.Write(lobbyIP);
                 packet.Write(lobbyPort);
+                packet.Write(spawnPos);
 
                 SendTCPData(toClient, packet);
             }

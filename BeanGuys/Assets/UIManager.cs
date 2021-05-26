@@ -15,12 +15,7 @@ public class UIManager : MonoBehaviour
 
     public TMP_Text qualifedNum;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-    }
-
-    private void Initialize()
+    public void Initialize()
     {
         HUD.SetActive(true);
         ExitMenu.SetActive(false);

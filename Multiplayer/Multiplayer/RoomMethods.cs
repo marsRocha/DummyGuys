@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using System.Text;
 
@@ -21,12 +22,12 @@ namespace Multiplayer
         #endregion
 
         #region Player Related
-        public void AddPlayer(Guid id, string username, string peerIP, string peerPort)
+        public int AddPlayer(Guid id, string username, string peerIP, string peerPort)
         {
             Console.WriteLine($"Player[{id}] has joined the Room[{Id}]");
-            Player p = new Player(id, username);
-            Players.Add(id, p);
-            Server.Clients[id].SetPlayer(p);
+            int spawnId = GetServerPos();
+            ClientsInfo.Add(id, new ClientInfo(id, username, spawnId));
+            UsedSpawnIds.Add(spawnId);
 
             using (Packet packet = new Packet((int)ServerPackets.playerJoined))
             {
@@ -34,18 +35,22 @@ namespace Multiplayer
                 packet.Write(username);
                 packet.Write(peerIP);
                 packet.Write(peerPort);
+                packet.Write(spawnId);
 
                 MulticastUDPData(packet);
             }
 
-            if (Players.Count >= Server.MaxPlayersPerLobby)
+            if (ClientsInfo.Count >= Server.MaxPlayersPerLobby)
                 RoomState = RoomState.full;
+
+            return spawnId;
         }
 
         public void RemovePlayer(Guid id)
         {
             Console.WriteLine($"Player[{id}] has left the Room[{Id}]");
-            Players.Remove(id);
+            UsedSpawnIds.Remove(ClientsInfo[id].spawnId);
+            ClientsInfo.Remove(id);
 
             using (Packet packet = new Packet((int)ServerPackets.playerLeft))
             {
@@ -54,7 +59,7 @@ namespace Multiplayer
                 MulticastUDPData(packet);
             }
 
-            if (Players.Count < Server.MaxPlayersPerLobby && RoomState == RoomState.full)
+            if (ClientsInfo.Count < Server.MaxPlayersPerLobby && RoomState == RoomState.full)
                 RoomState = RoomState.looking;
         }
 
@@ -67,6 +72,30 @@ namespace Multiplayer
                 MulticastUDPData(packet);
             }
         }
+
+        public void PlayerFinish(Guid _id, float _game_clock)
+        {
+            using (Packet packet = new Packet((int)ServerPackets.playerFinish))
+            {
+                packet.Write(_id);
+                packet.Write(_game_clock);
+
+                MulticastUDPData(packet);
+            }
+        }
         #endregion
+
+        private int GetServerPos()
+        {
+            Random r = new Random();
+            int rInt = r.Next(0, 60);
+
+            while (UsedSpawnIds.Contains(rInt))
+            {
+                rInt = r.Next(0, 60);
+            }
+
+            return rInt;
+        }
     }
 }

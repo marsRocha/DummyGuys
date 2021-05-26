@@ -2679,6 +2679,7 @@ GameObject:
   m_Component:
   - component: {fileID: 948936708}
   - component: {fileID: 948936710}
+  - component: {fileID: 948936711}
   - component: {fileID: 948936709}
   m_Layer: 0
   m_Name: ClientManager
@@ -2725,8 +2726,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b9a39aed68b81541b454ea500c308e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  username: Beanguy01
+  clientInfo: {fileID: 948936711}
   clientExeID: 1
+--- !u!114 &948936711
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 948936707}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adf78cd3ac5d49545881c0da38731ca5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  username: Beanguy01
+  spawnId: 0
 --- !u!1 &1007185373
 GameObject:
   m_ObjectHideFlags: 0

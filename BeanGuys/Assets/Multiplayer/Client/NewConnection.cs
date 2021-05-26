@@ -83,9 +83,10 @@ public class NewConnection
                     {
                         Guid peerID = packet.ReadGuid();
                         string username = packet.ReadString();
+                        int spawnId = packet.ReadInt();
 
                         //Add new peer since now we know their information
-                        Client.peers.Add(peerID, new Peer(peerID, username));
+                        Client.peers.Add(peerID, new Peer(peerID, username, spawnId));
                         Client.peers[peerID].tcp.Connect(Client.newConnections[Id].socket);
 
                         GameManager.instance.UpdatePlayerCount();

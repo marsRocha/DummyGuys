@@ -38,8 +38,7 @@ public class Client : MonoBehaviour
     private static IPAddress _localIPaddress;
     private static int _localPort;
 
-    public Guid myId;
-    public string username;
+    public ClientInfo clientInfo;
     private bool isConnected = false;
 
     public int clientExeID;
@@ -121,7 +120,7 @@ public class Client : MonoBehaviour
                 }
                 catch { };
 
-                if (id == Guid.Empty || Client.instance.myId == id)
+                if (id == Guid.Empty || Client.instance.clientInfo.id == id)
                     return;
 
                 packetHandlers[packetId](id, packet);
@@ -163,7 +162,6 @@ public class Client : MonoBehaviour
         try
         {
             _udpClient.Send(packet.ToArray(), packet.Length(), _roomMulticastEndPoint);
-            Debug.Log("mUlticast sent");
         }
         catch (Exception ex)
         {
@@ -171,10 +169,10 @@ public class Client : MonoBehaviour
         }
     }
 
-    public void ConnectToPeer(Guid id, string username, string ip, int port)
+    public void ConnectToPeer(Guid id, string username, int spawnId, string ip, int port)
     {
         //store peer info
-        peers.Add(id, new Peer(id, username));
+        peers.Add(id, new Peer(id, username, spawnId));
         peers[id].tcp.Connect(ip, port);
         Debug.Log($"Tried to connect to peer {id}");
     }

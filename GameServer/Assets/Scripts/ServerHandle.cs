@@ -6,7 +6,7 @@ public class ServerHandle
 {
     public static void Nothing(Guid _clientId, Packet _packet)
     {
-
+        Debug.Log("Nothing");
     }
 
     public static void WelcomeReceived(Guid _clientId, Packet _packet)

@@ -11,7 +11,7 @@ public class ClientHandle : MonoBehaviour
     public static void WelcomeServer(Guid not_needed, Packet packet)
     {
         Guid myId = packet.ReadGuid();
-        Client.instance.myId = myId;
+        Client.instance.clientInfo.id = myId;
         Debug.Log($"[SERVER] Welcome, your Id is {myId}");
 
         ClientSend.WelcomeReceived();
@@ -22,11 +22,14 @@ public class ClientHandle : MonoBehaviour
     {
         string ip = packet.ReadString();
         int port = packet.ReadInt();
+        int spawnId = packet.ReadInt();
 
         //Start listening to room
         Client.ListenToRoom(ip, port);
         //Add themselves to the playerCount
         GameManager.instance.totalPlayers++;
+        //Add my spawnid
+        Client.instance.clientInfo.spawnId = spawnId;
 
         Debug.Log($"Joined room, multicast info Ip:{ip} Port:{port}");
     }
@@ -36,12 +39,13 @@ public class ClientHandle : MonoBehaviour
         string username = packet.ReadString();
         string ip = packet.ReadString();
         string port = packet.ReadString();
+        int spawnId = packet.ReadInt();
 
         Debug.Log($"received Ip:{ip} Port:{port}");
         if (Client.instance.clientExeID == 1)
-            Client.instance.ConnectToPeer(id, username, "127.0.0.1", 5002);
+            Client.instance.ConnectToPeer(id, username, spawnId, "127.0.0.1", 5002);
         else
-            Client.instance.ConnectToPeer(id, username, "127.0.0.1", 5001);
+            Client.instance.ConnectToPeer(id, username, spawnId, "127.0.0.1", 5001);
     }
     
     public static void PlayerLeft(Guid id, Packet packet)
@@ -60,10 +64,7 @@ public class ClientHandle : MonoBehaviour
 
     public static void StartGame(Guid id, Packet packet)
     {
-        if (GameManager.instance.debug)
-            GameManager.instance.StartGameDebug();
-        else
-            GameManager.instance.StartGame();
+        GameManager.instance.StartGame();
     }
     #endregion
 

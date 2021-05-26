@@ -12,18 +12,18 @@ EditorBuildSettings:
     path: Assets/Scenes/No Network/Map1.unity
     guid: 56ff4d1990d43a443bdd6bb547a247cc
   - enabled: 0
-    path: Assets/Scenes/No Network/Map2.unity
+    path: Assets/Scenes/Map2.unity
     guid: 6b9d0c494f6fed94ab0f0de06f2e1fa6
   - enabled: 0
     path: Assets/Scenes/TestMap.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Multiplayer_Start.unity
     guid: 59e837638717e304cb82504d65b3c4b0
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/MainMenu.unity
     guid: 5057cd9881d3ddb43ad1b606bb49abbc
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Map1.unity
     guid: db603eca6f0c5ae4fbcb7ceaab1f9b25
   m_configObjects: {}
