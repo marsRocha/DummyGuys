@@ -8,10 +8,6 @@ public partial class Room
 
     public RoomObjects roomObjects;
 
-    //TODO: TO MODIFY
-    public Transform[] spawns;
-    public Transform[] checkPoints;
-
     //Controls game
     public float Game_Clock;
     public bool isRunning { get; private set; } = false;
@@ -22,21 +18,18 @@ public partial class Room
     private int qualifiedPlayers;
     private int totalPlayers;
 
-    private void InitilazerGameLogic()
+    public void Initialize()
     {
         players = new Dictionary<Guid, Player>();
         Game_Clock = 0;
         isRunning = false;
 
         qualifiedPlayers = 0;
-        totalPlayers = 0;
-    }
+        totalPlayers = ClientsInfo.Count;
 
-    public void Initialize()
-    {
+        roomObjects.Initialize(totalPlayers);
         SpawnPlayers();
     }
-
 
     // Update is called once per frame
     void Update()
@@ -54,12 +47,14 @@ public partial class Room
 
     public void SpawnPlayers()
     {
-        foreach(PlayerInfo playerInfo in PlayersInfo.Values)
+        foreach(ClientInfo clientInfo in ClientsInfo.Values)
         {
-            Player p = roomObjects.GetPlayerObject(playerInfo.Id, playerInfo.SpawnPos);
-            Server.Clients[playerInfo.Id].SetPlayer(p);
-            players.Add(playerInfo.Id, p);
+            Player p = roomObjects.SpawnPlayer(clientInfo.id, clientInfo.spawnId);
+            Server.Clients[clientInfo.id].SetPlayer(p);
+            players.Add(clientInfo.id, p);
         }
+
+        Debug.Log("Players spawned");
     }
 
     #region Respawn Player
@@ -75,9 +70,9 @@ public partial class Room
     {
         Debug.Log($"numCheck:{checkPointNum}");
         if (checkPointNum == 0)
-            return spawns[id - 1].position;
+            return roomObjects.spawns[id];
         else
-            return checkPoints[checkPointNum - 1].position;
+            return roomObjects.checkPoints[checkPointNum - 1].position;
     }
     #endregion
 

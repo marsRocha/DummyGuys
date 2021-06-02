@@ -30,31 +30,33 @@ public class PhysicsSceneManager : MonoBehaviour
         }
     }*/
 
-    public RoomObjects AddSimulation(Guid _roomId, string _physicsSceneName)
+    public void AddSimulation(Guid _roomId, string _physicsSceneName)
     {
-        //TODO: ONLY FOR NOW
-        physicsScenes.Add(_roomId, SceneManager.GetActiveScene().GetPhysicsScene());
-        Debug.Log(SceneManager.GetActiveScene().GetRootGameObjects().Length);
-        return GameObject.Find("RoomObjects").GetComponent<RoomObjects>();
-
-        /*//Load the scene to place in a local physics scene
+        //Load the scene to place in a local physics scene
         LoadSceneParameters param = new LoadSceneParameters(LoadSceneMode.Additive, LocalPhysicsMode.Physics3D);
-        Scene scene = SceneManager.LoadScene("1", param);
-        scene.isSubScene = false;
+        Scene scene = SceneManager.LoadScene("Level1", param);
+
         //Get the scene's physics scene
         physicsScenes.Add(_roomId, scene.GetPhysicsScene());
-        Debug.Log(scene.GetRootGameObjects().Length);
-        Debug.Log(scene.GetRootGameObjects().Length);
 
-        return scene.GetRootGameObjects()[0].GetComponent<RoomObjects>();*/
+        StartCoroutine(WaitFrame(scene, _roomId));
     }
 
-public void RemoveSimulation(Guid _roomId)
+    public void RemoveSimulation(Guid _roomId)
     {
         /*//Unload the scene
         LoadSceneParameters param = new LoadSceneParameters(LoadSceneMode.Additive, LocalPhysicsMode.Physics3D);
         Scene scene = SceneManager.UnloadScene(physicsScenes[_roomId].);
         //Remove the scene's physics scene
         physicsScenes.Remove(_roomId);*/
+    }
+
+    IEnumerator WaitFrame(Scene scene, Guid _roomId)
+    {
+        //returning 0 will make it wait 1 frame
+        yield return 0;
+
+        Server.Rooms[_roomId].roomObjects = scene.GetRootGameObjects()[0].GetComponent<RoomObjects>();
+        Server.Rooms[_roomId].Initialize();
     }
 }

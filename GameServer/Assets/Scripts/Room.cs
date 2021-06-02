@@ -9,7 +9,8 @@ public partial class Room
 {
     public Guid Id { get; set; }
     public RoomState RoomState { get; set; }
-    public Dictionary<Guid, PlayerInfo> PlayersInfo { get; set; }
+    public List<int> UsedSpawnIds { get; set; }
+    public Dictionary<Guid, ClientInfo> ClientsInfo { get; set; }
     public IPAddress MulticastIP { get; set; }
     public int MulticastPort { get; set; }
     private IPAddress _localIPaddress { get; set; }
@@ -18,14 +19,16 @@ public partial class Room
     private IPEndPoint _remoteEndPoint { get; set; }
     private IPEndPoint _localEndPoint { get; set; }
 
+
     public Room(Guid id, string multicastIP, int multicastPort)
     {
         Id = id;
         MulticastIP = IPAddress.Parse(multicastIP);
-        MulticastPort = multicastPort;
+        MulticastPort = multicastPort + 1;
 
         RoomState = RoomState.looking;
-        PlayersInfo = new Dictionary<Guid, PlayerInfo>();
+        ClientsInfo = new Dictionary<Guid, ClientInfo>();
+        UsedSpawnIds = new List<int>();
 
         _localIPaddress = IPAddress.Any;
 
@@ -40,12 +43,12 @@ public partial class Room
         RoomUdp.ExclusiveAddressUse = false;
         // Bind, Join
         RoomUdp.Client.Bind(_localEndPoint);
-        RoomUdp.JoinMulticastGroup(MulticastIP);
+        //RoomUdp.JoinMulticastGroup(MulticastIP);
 
         // Start listening for incoming data
         RoomUdp.BeginReceive(new AsyncCallback(ReceivedCallback), null);
 
-        Debug.Log($"New lobby created [{Id}]: listenning in {multicastIP}:{multicastPort}");
+        Console.WriteLine($"New lobby created [{Id}]: listenning in {multicastIP}:{multicastPort}");
     }
 
     private void ReceivedCallback(IAsyncResult result)
@@ -53,56 +56,62 @@ public partial class Room
         // Get received data
         IPEndPoint clientEndPoint = new IPEndPoint(0, MulticastPort);
         byte[] data = RoomUdp.EndReceive(result, ref clientEndPoint);
+        // Restart listening for udp data packages
+        RoomUdp.BeginReceive(new AsyncCallback(ReceivedCallback), null);
 
         if (data.Length < 4)
             return;
 
+        Console.WriteLine($"Got message");
+
         //Handle Data
         using (Packet packet = new Packet(data))
         {
-            Guid clientId = packet.ReadGuid();
-            Debug.Log($"No client id.....");
-            if (clientId == null)
-                return;
-            Debug.Log($"Guid:{clientId}");
-            //verifiy if the endpoint corresponds to the endpoint that sent the data
-            //this is for security reasons otherwise hackers could inpersonate other clients by send a clientId that does not corresponds to them
-            //without the string conversion even if the endpoint matched it returned false
-            if (Server.Clients[clientId].udp.endPoint.Equals(clientEndPoint) && Server.Clients[clientId].RoomID == Id) //TODO: Do I really need to check for this?
-            {
-                //Handle Data
-                int packetLength = packet.ReadInt();
-                byte[] packetBytes = packet.ReadBytes(packetLength);
+            int packetLength = packet.ReadInt();
+            byte[] packetBytes = packet.ReadBytes(packetLength);
 
-                ThreadManager.ExecuteOnMainThread(() =>
+            ThreadManager.ExecuteOnMainThread(() =>
+            {
+                using (Packet message = new Packet(packetBytes))
                 {
-                    using (Packet message = new Packet(packetBytes))
+                    int packetId = message.ReadInt();
+
+                    Guid clientId = Guid.Empty;
+                    try
                     {
-                        int packetId = message.ReadInt();
+                        clientId = message.ReadGuid();
+                    }
+                    catch { };
+
+                    if (clientId == Guid.Empty)
+                        return;
+                    //Console.WriteLine("Got Message");
+                    //verify if the endpoint corresponds to the endpoint that sent the data
+                    //this is for security reasons otherwise hackers could inpersonate other clients by send a clientId that does not corresponds to them
+                    //without the string conversion even if the endpoint matched it returned false
+                    if (Server.Clients[clientId].RoomID == Id) //TODO: Do I really need to check for this?
+                    {
                         Server.packetHandlers[packetId](clientId, message);
                     }
-                });
-            }
+                }
+            });
         }
-
-        // Restart listening for udp data packages
-        RoomUdp.BeginReceive(new AsyncCallback(ReceivedCallback), null);
     }
 
-    public void MulticastUDPData(Packet packet)
+    private void MulticastUDPData(Packet packet)
     {
         packet.WriteLength();
         RoomUdp.Send(packet.ToArray(), packet.Length(), _remoteEndPoint);
 
-        Debug.Log($"Multicast sent");
+        Console.WriteLine($"Multicast sent");
     }
 
     public void CloseRoom()
     {
-        RoomUdp.DropMulticastGroup(MulticastIP); //does not work
+        RoomUdp.DropMulticastGroup(MulticastIP); //TODO: does not work
         RoomUdp.Close();
 
-        Debug.Log($"Room[{Id}] has been closed.");
+        Console.WriteLine($"Room[{Id}] has been closed.");
     }
 }
 

@@ -30,7 +30,9 @@ namespace Multiplayer
         playerAnim,
         playerRespawn,
         playerFinish,
-        startGame
+        map,
+        startGame,
+        test
     }
 
     public class Packet : IDisposable

@@ -113,11 +113,7 @@ public class MapController : MonoBehaviour
             Game_Clock += Time.deltaTime;
         }
 
-        //DEBUG PURPOSES
-        if (Input.GetKeyDown(KeyCode.P))
-        {
-            localPlayer.isRunning = true;
-        }
+        //TODO: DEBUG PURPOSES
         if (Input.GetKeyDown(KeyCode.R))
         {
             LocalPlayerRespawn();

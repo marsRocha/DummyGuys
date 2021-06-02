@@ -64,38 +64,39 @@ namespace Multiplayer
             if (data.Length < 4)
                 return;
 
+            Console.WriteLine($"Got message");
+
             //Handle Data
             using (Packet packet = new Packet(data))
             {
-                Guid clientId = Guid.Empty;
-                try
-                {
-                    clientId = packet.ReadGuid();
-                }
-                catch { };
+                int packetLength = packet.ReadInt();
+                byte[] packetBytes = packet.ReadBytes(packetLength);
 
-                if (clientId == Guid.Empty)
-                    return;
-                //Console.WriteLine("Got Message");
-                //verifiy if the endpoint corresponds to the endpoint that sent the data
-                //this is for security reasons otherwise hackers could inpersonate other clients by send a clientId that does not corresponds to them
-                //without the string conversion even if the endpoint matched it returned false
-                if (Server.Clients[clientId].udp.endPoint.Equals(clientEndPoint) && Server.Clients[clientId].RoomID == Id) //TODO: Do I really need to check for this?
+                ThreadManager.ExecuteOnMainThread(() =>
                 {
-                    Console.Write("He got message");
-                    //Handle Data
-                    int packetLength = packet.ReadInt();
-                    byte[] packetBytes = packet.ReadBytes(packetLength);
-
-                    ThreadManager.ExecuteOnMainThread(() =>
+                    using (Packet message = new Packet(packetBytes))
                     {
-                        using (Packet message = new Packet(packetBytes))
+                        int packetId = message.ReadInt();
+
+                        Guid clientId = Guid.Empty;
+                        try
                         {
-                            int packetId = message.ReadInt();
+                            clientId = message.ReadGuid();
+                        }
+                        catch { };
+
+                        if (clientId == Guid.Empty)
+                            return;
+                        //Console.WriteLine("Got Message");
+                        //verify if the endpoint corresponds to the endpoint that sent the data
+                        //this is for security reasons otherwise hackers could inpersonate other clients by send a clientId that does not corresponds to them
+                        //without the string conversion even if the endpoint matched it returned false
+                        if (Server.Clients[clientId].RoomID == Id) //TODO: Do I really need to check for this?
+                        {
                             Server.packetHandlers[packetId](clientId, message);
                         }
-                    });
-                }
+                    }
+                });
             }
         }
 

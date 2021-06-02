@@ -29,7 +29,8 @@ public enum ClientPackets
     playerRespawn,
     playerFinish,
     map,
-    startGame
+    startGame,
+    test
 }
 
 public class Packet : IDisposable

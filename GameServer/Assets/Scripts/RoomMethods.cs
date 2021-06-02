@@ -15,6 +15,7 @@ public partial class Room
         RoomState = RoomState.playing;
 
         Debug.Log($"Game has started on Room[{Id}]");
+        StartRace();
     }
 
     public void EndGame()
@@ -44,10 +45,12 @@ public partial class Room
     #endregion
 
     #region Player Related
-    public void AddPlayer(Guid id, string username, string peerIP, string peerPort)
+    public int AddPlayer(Guid id, string username, string peerIP, string peerPort)
     {
-        Debug.Log($"Player[{id}] has joined the Room[{Id}]");
-        PlayersInfo.Add(id, new PlayerInfo(id, username, 0));
+        Console.WriteLine($"Player[{id}] has joined the Room[{Id}]");
+        int spawnId = GetServerPos();
+        ClientsInfo.Add(id, new ClientInfo(id, username, spawnId));
+        UsedSpawnIds.Add(spawnId);
 
         using (Packet packet = new Packet((int)ServerPackets.playerJoined))
         {
@@ -55,18 +58,22 @@ public partial class Room
             packet.Write(username);
             packet.Write(peerIP);
             packet.Write(peerPort);
+            packet.Write(spawnId);
 
             MulticastUDPData(packet);
         }
 
-        if (PlayersInfo.Count >= Server.MaxPlayersPerLobby)
+        if (ClientsInfo.Count >= Server.MaxPlayersPerLobby)
             RoomState = RoomState.full;
+
+        return spawnId;
     }
 
     public void RemovePlayer(Guid id)
     {
-        Debug.Log($"Player[{id}] has left the Room[{Id}]");
-        PlayersInfo.Remove(id);
+        Console.WriteLine($"Player[{id}] has left the Room[{Id}]");
+        UsedSpawnIds.Remove(ClientsInfo[id].spawnId);
+        ClientsInfo.Remove(id);
 
         using (Packet packet = new Packet((int)ServerPackets.playerLeft))
         {
@@ -75,7 +82,7 @@ public partial class Room
             MulticastUDPData(packet);
         }
 
-        if (PlayersInfo.Count < Server.MaxPlayersPerLobby && RoomState == RoomState.full)
+        if (ClientsInfo.Count < Server.MaxPlayersPerLobby && RoomState == RoomState.full)
             RoomState = RoomState.looking;
     }
 
@@ -100,4 +107,17 @@ public partial class Room
         }
     }
     #endregion
+
+    private int GetServerPos()
+    {
+        System.Random r = new System.Random();
+        int rInt = r.Next(0, 60);
+
+        while (UsedSpawnIds.Contains(rInt))
+        {
+            rInt = r.Next(0, 60);
+        }
+
+        return rInt;
+    }
 }

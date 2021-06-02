@@ -62,6 +62,7 @@ namespace Multiplayer
                 { (int)ClientPackets.welcomeReceived, ServerHandle.WelcomeReceived },
                 { (int)ClientPackets.startGame, ServerHandle.StarGame },
                 { (int)ClientPackets.playerMovement, ServerHandle.PlayerMovement },
+                { (int)ClientPackets.test, ServerHandle.Test },
             };
             Console.WriteLine("Packets initialized.");
         }

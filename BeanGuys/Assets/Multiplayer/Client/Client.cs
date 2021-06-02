@@ -12,7 +12,6 @@ public class Client : MonoBehaviour
 {
     public static Client instance;
     public static int dataBufferSize = 4096;
-    public static int MaxPlayers { get; private set; } = 10;
 
     public delegate void PacketHandler(Guid id, Packet packet);
     public static Dictionary<int, PacketHandler> packetHandlers;
@@ -25,6 +24,7 @@ public class Client : MonoBehaviour
     //Server Info
     private static IPAddress _serverIPaddress;
     private static int _serverPort = 26950;
+    public static Guid RoomId;
     public TCP server { get; private set; }
 
     //Room Info
@@ -372,6 +372,7 @@ public class Client : MonoBehaviour
             { (int) ServerPackets.playerLeft, ClientHandle.PlayerLeft },
             { (int) ServerPackets.map, ClientHandle.Map },
             { (int) ServerPackets.startGame, ClientHandle.StartGame },
+            { (int) ServerPackets.endGame, ClientHandle.EndGame },
             //CLIENT SENT
             { (int) ClientPackets.welcome, ClientHandle.WelcomePeer },
             { (int) ClientPackets.playerMovement, ClientHandle.PlayerMovement },

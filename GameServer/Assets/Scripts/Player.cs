@@ -75,7 +75,10 @@ public class Player : MonoBehaviour
 
     public void AddInput(ClientInputState _inputState)
     {
-        clientInputs.Enqueue(_inputState);
+        Debug.Log("oiO");
+        //clientInputs.Enqueue(_inputState);
+        transform.position = _inputState.position;
+        Debug.Log(transform.position);
     }
 
     public void CorrectState(ClientInputState _inputState)

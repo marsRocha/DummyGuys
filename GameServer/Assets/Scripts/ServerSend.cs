@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
+// Server only uses this class to clients that are not in a room
 public class ServerSend
 {
     #region methods of sending info
@@ -10,38 +11,10 @@ public class ServerSend
         Server.Clients[toClient].tcp.SendData(packet);
     }
 
-    private static void SendTCPDataToAll(Packet packet)
-    {
-        packet.WriteLength();
-        foreach (Client client in Server.Clients.Values)
-        {
-            client.tcp.SendData(packet);
-        }
-    }
-
     private static void SendUDPData(Guid toClient, Packet packet)
     {
         packet.WriteLength();
         Server.Clients[toClient].udp.SendData(packet);
-    }
-
-    private static void SendUDPDataToAll(Packet packet)
-    {
-        packet.WriteLength();
-        foreach (Client client in Server.Clients.Values)
-        {
-            client.udp.SendData(packet);
-        }
-    }
-
-    private static void SendUDPDataToAll(Guid exceptionClient, Packet packet)
-    {
-        packet.WriteLength();
-        foreach (Client client in Server.Clients.Values)
-        {
-            if (client.Id != exceptionClient)
-                client.udp.SendData(packet);
-        }
     }
     #endregion
 
@@ -57,12 +30,14 @@ public class ServerSend
         }
     }
 
-    public static void JoinedRoom(Guid _toClient, string _lobbyIP, int lobbyPort)
+    public static void JoinedRoom(Guid _toClient, Guid _roomId, string _lobbyIP, int _lobbyPort, int _spawnPos)
     {
         using (Packet packet = new Packet((int)ServerPackets.joinedRoom))
         {
+            packet.Write(_roomId);
             packet.Write(_lobbyIP);
-            packet.Write(lobbyPort);
+            packet.Write(_lobbyPort);
+            packet.Write(_spawnPos);
 
             SendTCPData(_toClient, packet);
         }

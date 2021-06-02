@@ -15,6 +15,9 @@ namespace Multiplayer
             Server.Clients[clientId].Username = username;
             //TODO: Set skin aswell
 
+            //Connect UDP
+            //Server.Clients[clientId].udp.Connect((IPEndPoint)Server.Clients[clientId].tcp.socket.Client.RemoteEndPoint);
+
             Console.WriteLine($"{Server.Clients[clientId].tcp.socket.Client.RemoteEndPoint} ({username}) connected successfully and is now player {clientId}.");
 
             //Look for a room for player
@@ -84,6 +87,11 @@ namespace Multiplayer
         {
             float time = packet.ReadFloat();
             //GameManager.instance.PlayerFinish(id, time);
+        }
+
+        public static void Test(Guid id, Packet packet)
+        {
+            Console.WriteLine($"Got message from {id}");
         }
     }
 }

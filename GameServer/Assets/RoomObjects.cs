@@ -4,9 +4,10 @@ using UnityEngine;
 
 public class RoomObjects : MonoBehaviour
 {
-    public Player[] players;
+    public GameObject playerObject;
 
-    public Transform[] spawns;
+    [HideInInspector]
+    public Vector3[] spawns;
     public Transform[] checkPoints;
 
     //Controls game
@@ -16,19 +17,19 @@ public class RoomObjects : MonoBehaviour
     //TO MODIFY: Should store every player's info on checkpoint ( or store it inside player class)
     public int playerCheckPoint { get; private set; } = 0;
 
-    // Update is called once per frame
-    void Update()
+    public void Initialize(int totalPlayers)
     {
-        if (isRunning)
+        spawns = new Vector3[60];
+        for (int i = 0; i <= 3; i++)
         {
-            Game_Clock += Time.deltaTime;
+            for (int j = 0; j <= 14; j++)
+                spawns[(14 * i) + j] = new Vector3(-18.06f + 2.58f * j, 0, -2.58f * i);
         }
     }
 
-
-    public Player GetPlayerObject(Guid _playerId, int _spawnPos)
+    public Player SpawnPlayer(Guid _playerId, int _spawnId)
     {
-        Player p = players[_spawnPos];
+        Player p = Instantiate(playerObject, spawns[_spawnId], Quaternion.identity).GetComponent<Player>();
         p.Initialize(_playerId);
 
         return p;

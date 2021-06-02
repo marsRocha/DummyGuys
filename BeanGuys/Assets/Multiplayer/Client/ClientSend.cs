@@ -18,25 +18,17 @@ public class ClientSend : MonoBehaviour
         Client.peers[toClient].tcp.SendData(packet);
     }
 
-    private static void SendTCPDataToAll(Packet packet)
-    {
-        packet.WriteLength();
-
-        foreach (Peer p in Client.peers.Values)
-            p.tcp.SendData(packet);
-    }
-
-    private static void SendUDPData(Guid toClient, Packet packet)
+    /*private static void SendUDPData(Guid toClient, Packet packet)
     {
         packet.WriteLength();
         Client.SendUDPData(Client.peers[toClient].udp.endPoint, packet);
-    }
+    }*/
 
     private static void SendUDPData(Packet packet)
     {
         packet.WriteLength();
-        Debug.Log("sent normal udp");
         Client.SendUDPData(packet);
+        Client.MulticastUDPData(packet);
     }
 
     private static void MulticastUDPData(Packet packet)
@@ -47,6 +39,17 @@ public class ClientSend : MonoBehaviour
     #endregion
 
     #region Packets
+
+    public static void Test()
+    {
+        using (Packet packet = new Packet((int)ClientPackets.test))
+        {
+            packet.Write(Client.instance.clientInfo.id);
+
+            SendUDPData(packet);
+        }
+    }
+
     //Send to server when it receives a welcome message
     public static void WelcomeReceived()
     {
@@ -90,7 +93,7 @@ public class ClientSend : MonoBehaviour
         Debug.Log("Sent Map");
         using (Packet packet = new Packet((int)ClientPackets.map))
         {
-            packet.Write(Client.instance.clientInfo.id);
+            packet.Write(Client.RoomId);
 
             packet.Write(1);
 
@@ -102,7 +105,7 @@ public class ClientSend : MonoBehaviour
     {
         using (Packet packet = new Packet((int)ClientPackets.startGame))
         {
-            packet.Write(Client.instance.clientInfo.id);
+            packet.Write(Client.RoomId);
 
             MulticastUDPData(packet);
         }
@@ -110,7 +113,8 @@ public class ClientSend : MonoBehaviour
     #endregion
 
     #region GameInfo
-    /*public static void PlayerMovement(int x, int y, bool jump, bool dive, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
+    //To server
+    public static void PlayerMovement(int x, int y, bool jump, bool dive, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
     {
         using (Packet packet = new Packet((int)ClientPackets.playerMovement))
         {
@@ -128,10 +132,11 @@ public class ClientSend : MonoBehaviour
             packet.Write(velocity);
             packet.Write(angular_velocity);
 
-            MulticastUDPData(packet);
+            SendUDPData(packet);
         }
-    }*/
+    }
 
+    //To peers
     public static void PlayerMovement(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
     {
         using (Packet packet = new Packet((int)ClientPackets.playerMovement))

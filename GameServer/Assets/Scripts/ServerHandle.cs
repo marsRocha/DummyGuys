@@ -4,11 +4,6 @@ using UnityEngine;
 
 public class ServerHandle
 {
-    public static void Nothing(Guid _clientId, Packet _packet)
-    {
-        Debug.Log("Nothing");
-    }
-
     public static void WelcomeReceived(Guid _clientId, Packet _packet)
     {
         Guid id = _packet.ReadGuid();
@@ -16,27 +11,30 @@ public class ServerHandle
         Server.Clients[_clientId].Username = username;
         //TODO: Set skin aswell
 
+        //Connect UDP
+        //Server.Clients[clientId].udp.Connect((IPEndPoint)Server.Clients[clientId].tcp.socket.Client.RemoteEndPoint);
+
         Debug.Log($"{Server.Clients[_clientId].tcp.socket.Client.RemoteEndPoint} ({username}) connected successfully and is now player {_clientId}.");
 
         //Look for a room for player
         SearchForRoom(Server.Clients[_clientId]);
     }
 
-    public static void SearchForRoom(Client client)
+    public static void SearchForRoom(Client _clientId)
     {
         if (Server.Rooms.Count > 0)
         {
             foreach (Room room in Server.Rooms.Values)
             {
-                if (room.PlayersInfo.Count < Server.MaxPlayersPerLobby && room.RoomState == RoomState.looking)
+                if (room.ClientsInfo.Count < Server.MaxPlayersPerLobby && room.RoomState == RoomState.looking)
                 {
-                    //Add player to it
-                    room.AddPlayer(client.Id, client.Username, ((IPEndPoint)client.tcp.socket.Client.RemoteEndPoint).Address.ToString(),
-                        ((IPEndPoint)client.tcp.socket.Client.RemoteEndPoint).Port.ToString());
+                    //Add player to room and return their spawn id
+                    int spawnId = room.AddPlayer(_clientId.Id, _clientId.Username, ((IPEndPoint)_clientId.tcp.socket.Client.RemoteEndPoint).Address.ToString(),
+                        ((IPEndPoint)_clientId.tcp.socket.Client.RemoteEndPoint).Port.ToString());
 
-                    client.RoomID = room.Id;
+                    _clientId.RoomID = room.Id;
                     //Let the client know the rooms multicast info
-                    ServerSend.JoinedRoom(client.Id, room.MulticastIP.ToString(), room.MulticastPort);
+                    ServerSend.JoinedRoom(_clientId.Id, _clientId.RoomID, room.MulticastIP.ToString(), room.MulticastPort, spawnId);
                 }
             }
         }
@@ -48,12 +46,12 @@ public class ServerHandle
             Room newRoom = Server.Rooms[newGuid];
 
             //Add player to it
-            newRoom.AddPlayer(client.Id, client.Username, ((IPEndPoint)client.tcp.socket.Client.RemoteEndPoint).Address.ToString(),
-                 ((IPEndPoint)client.tcp.socket.Client.RemoteEndPoint).Port.ToString());
+            int spawnId = newRoom.AddPlayer(_clientId.Id, _clientId.Username, ((IPEndPoint)_clientId.tcp.socket.Client.RemoteEndPoint).Address.ToString(),
+                 ((IPEndPoint)_clientId.tcp.socket.Client.RemoteEndPoint).Port.ToString());
 
-            client.RoomID = newRoom.Id;
+            _clientId.RoomID = newRoom.Id;
             //Let the client know the rooms multicast info
-            ServerSend.JoinedRoom(client.Id, newRoom.MulticastIP.ToString(), newRoom.MulticastPort);
+            ServerSend.JoinedRoom(_clientId.Id, _clientId.RoomID, newRoom.MulticastIP.ToString(), newRoom.MulticastPort, spawnId);
         }
     }
 
@@ -78,11 +76,13 @@ public class ServerHandle
         if (!Server.Clients[_clientId].player)
             return;
 
+        Debug.Log("got here");
         //Add new input state received
         Server.Clients[_clientId].player.AddInput(state);
+        Debug.Log("got here 22222");
     }
 
-    public static void PlayerRespawn(Guid id, Packet _packet)
+    public static void PlayerRespawn(Guid _clientId, Packet _packet)
     {
         Debug.Log("Got anim");
 
@@ -90,9 +90,14 @@ public class ServerHandle
         //GameManager.instance.PlayerRespawn(id, checkPointNum);
     }
 
-    public static void PlayerFinish(Guid id, Packet _packet)
+    public static void PlayerFinish(Guid _clientId, Packet _packet)
     {
         float time = _packet.ReadFloat();
         //GameManager.instance.PlayerFinish(id, time);
+    }
+
+    public static void Test(Guid _clientId, Packet packet)
+    {
+        Console.WriteLine($"Got message from {_clientId}");
     }
 }

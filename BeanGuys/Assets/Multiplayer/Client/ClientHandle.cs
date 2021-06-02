@@ -20,10 +20,12 @@ public class ClientHandle : MonoBehaviour
     //Receives the information needed to start listening to room multicast messages
     public static void JoinedRoom(Guid not_needed, Packet packet)
     {
+        Guid roomId = packet.ReadGuid();
         string ip = packet.ReadString();
         int port = packet.ReadInt();
         int spawnId = packet.ReadInt();
 
+        Client.RoomId = roomId;
         //Start listening to room
         Client.ListenToRoom(ip, port);
         //Add themselves to the playerCount
@@ -53,18 +55,49 @@ public class ClientHandle : MonoBehaviour
         Client.peers[id].Disconnect();
     }
     
-    public static void Map(Guid id, Packet packet)
+    public static void Map(Guid _roomId, Packet _packet)
     {
-        Debug.Log("Got map");
-        int levelId = packet.ReadInt();
-        
-        //LoadScene
-        GameManager.instance.LoadGameScene(levelId);
+        _roomId = Client.RoomId; //TODO: TEMPORARY SINCE WE FOR NOW USE TCP _ROOMID IS NOT SENT THUS NOT RECEIVED
+
+        if (Client.RoomId == _roomId)
+        {
+            Debug.Log("Got map");
+            string level = _packet.ReadString();
+            //LoadScene
+            GameManager.instance.LoadGameScene(level);
+        }
+        else
+        {
+            Debug.LogWarning("Received 'Map' message from wrong room;");
+        }
     }
 
-    public static void StartGame(Guid id, Packet packet)
+    public static void StartGame(Guid _roomId, Packet _packet)
     {
-        GameManager.instance.StartGame();
+        _roomId = Client.RoomId; //TODO: TEMPORARY SINCE WE FOR NOW USE TCP _ROOMID IS NOT SENT THUS NOT RECEIVED
+
+        if (Client.RoomId == _roomId)
+        {
+            GameManager.instance.StartGame();
+        }
+        else
+        {
+            Debug.LogWarning("Received 'StartGame' message from wrong room;");
+        }
+    }
+
+    public static void EndGame(Guid _roomId, Packet _packet)
+    {
+        _roomId = Client.RoomId; //TODO: TEMPORARY SINCE WE FOR NOW USE TCP _ROOMID IS NOT SENT THUS NOT RECEIVED
+
+        if (Client.RoomId == _roomId)
+        {
+            GameManager.instance.EndGame();
+        }
+        else
+        {
+            Debug.LogWarning("Received 'EndGame' message from wrong room;");
+        }
     }
     #endregion
 
@@ -76,7 +109,7 @@ public class ClientHandle : MonoBehaviour
         Debug.Log($"{"legend27"}(player {id}) has joined the game!");
     }
 
-    #region Game packages
+    #region Player packages
     public static void PlayerMovement(Guid id, Packet packet)
     {
         Vector3 position = packet.ReadVector3();
@@ -106,5 +139,7 @@ public class ClientHandle : MonoBehaviour
         GameManager.instance.PlayerFinish(id, time);
     }
     #endregion
+
+
     #endregion
 }

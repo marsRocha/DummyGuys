@@ -18,9 +18,10 @@ public class MessageCaster : MonoBehaviour
                 break;
             }
 
+            //Add new room scene
             simulationsManager.AddSimulation(roomId, "Level1");
 
-            Server.Rooms[roomId].Map("Level1");
+            Server.Rooms[roomId].Map("Level1"); //TODO: DEBUG INPUT
         }
 
         if (Input.GetKeyDown(KeyCode.P))

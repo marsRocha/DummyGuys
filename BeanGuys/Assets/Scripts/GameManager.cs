@@ -41,11 +41,17 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            ClientSend.Test();
+            Debug.Log("sent test");
+        }
+
         //TODO: FOR P2P PURPOSE, REMOVE AFTERWARDS
         if (Input.GetKeyDown(KeyCode.I))
         {
             ClientSend.Map();
-            LoadGameScene(1);
+            LoadGameScene("Level1");
         }
         if (Input.GetKeyDown(KeyCode.O))
         {
@@ -56,9 +62,16 @@ public class GameManager : MonoBehaviour
 
     #region Scene Loading related
 
-    public void LoadGameScene(int levelId)
+    public void LoadGameScene(string levelId)
     {
-        SceneManager.LoadScene(levelId);
+        if(!debug)
+            SceneManager.LoadScene(levelId);
+        else
+        {
+            Debug.Log("DEBUG: GameWorld Loaded");
+            GameObject.Find("Canvas").SetActive(false);
+            mapController.InitializeDebug();
+        }
     }
 
     public void LoadMainMenu()
@@ -120,15 +133,14 @@ public class GameManager : MonoBehaviour
         Debug.Log("Start Game");
         if (debug)
         {
-            GameObject.Find("Canvas").SetActive(false);
-            mapController.InitializeDebug();
+            mapController.StartRace();
         }
-        mapController.StartCountDown();
+        else mapController.StartCountDown();
     }
 
-    public void LeaveGame()
+    public void EndGame()
     {
-        Debug.Log("Leave Game");
+        Debug.Log("Game has ended");
         Client.instance.Disconnect();
         LoadMainMenu();
     }
