@@ -6,29 +6,18 @@ using UnityEngine;
 public class ClientSend : MonoBehaviour
 {
     #region methods of sending info
+
+    //TODO: SUBSTITUTE THIS METHOD AND SENDUDPDATA FOR RELIABLE UDP COMMUNICATION
     private static void SendTCPDataToServer(Packet packet)
     {
         packet.WriteLength();
         Client.instance.server.SendData(packet);
     }
 
-    private static void SendTCPData(Guid toClient, Packet packet)
-    {
-        packet.WriteLength();
-        Client.peers[toClient].tcp.SendData(packet);
-    }
-
-    /*private static void SendUDPData(Guid toClient, Packet packet)
-    {
-        packet.WriteLength();
-        Client.SendUDPData(Client.peers[toClient].udp.endPoint, packet);
-    }*/
-
     private static void SendUDPData(Packet packet)
     {
         packet.WriteLength();
         Client.SendUDPData(packet);
-        Client.MulticastUDPData(packet);
     }
 
     private static void MulticastUDPData(Packet packet)
@@ -37,8 +26,6 @@ public class ClientSend : MonoBehaviour
         Client.MulticastUDPData(packet);
     }
     #endregion
-
-    #region Packets
 
     public static void Test()
     {
@@ -63,74 +50,25 @@ public class ClientSend : MonoBehaviour
         }
     }
 
-    //Send identification to peer that we want to connect to 
-    public static void Introduction(Guid toPeer)
-    {
-        using (Packet packet = new Packet((int)ClientPackets.introduction))
-        {
-            packet.Write(Client.instance.clientInfo.id);
-            packet.Write(Client.instance.clientInfo.username);
-            packet.Write(Client.instance.clientInfo.spawnId);
-
-            SendTCPData(toPeer, packet); //TODO: Change to udp when it's reliable
-        }
-    }
-
-    //Send acknoledgement of connection
-    public static void WelcomePeer(Guid toClient)
-    {
-        using (Packet packet = new Packet((int)ClientPackets.welcome))
-        {
-            packet.Write(Client.instance.clientInfo.id);
-
-            SendTCPData(toClient, packet);
-        }
-    }
-
-    #region TODO: REMOVE / P2P TEMPORARY FUNCTIONS
-    public static void Map()
-    {
-        Debug.Log("Sent Map");
-        using (Packet packet = new Packet((int)ClientPackets.map))
-        {
-            packet.Write(Client.RoomId);
-
-            packet.Write(1);
-
-            MulticastUDPData(packet);
-        }
-    }
-
-    public static void StartGame()
-    {
-        using (Packet packet = new Packet((int)ClientPackets.startGame))
-        {
-            packet.Write(Client.RoomId);
-
-            MulticastUDPData(packet);
-        }
-    }
-    #endregion
-
     #region GameInfo
     //To server
-    public static void PlayerMovement(int x, int y, bool jump, bool dive, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
+    public static void PlayerMovement(ClientInputState clientInputState, Vector3 position, Quaternion rotation)
     {
         using (Packet packet = new Packet((int)ClientPackets.playerMovement))
         {
             packet.Write(Client.instance.clientInfo.id);
 
-            packet.Write(tick_number);
+            packet.Write(clientInputState.Tick); //Global clock
+            packet.Write(clientInputState.SimulationFrame); //PlayerObj tick
 
-            packet.Write(x);
-            packet.Write(y);
-            packet.Write(jump);
-            packet.Write(dive);
+            packet.Write(clientInputState.HorizontalAxis);
+            packet.Write(clientInputState.VerticalAxis);
+            packet.Write(clientInputState.Jump);
+            packet.Write(clientInputState.Dive);
 
+            packet.Write(clientInputState.LookingRotation);
             packet.Write(position);
             packet.Write(rotation);
-            packet.Write(velocity);
-            packet.Write(angular_velocity);
 
             SendUDPData(packet);
         }
@@ -185,7 +123,5 @@ public class ClientSend : MonoBehaviour
             MulticastUDPData(packet);
         }
     }
-    #endregion
-
     #endregion
 }

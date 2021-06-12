@@ -20,7 +20,7 @@ public class PhysicsSceneManager : MonoBehaviour
 
     }
 
-    /*private void FixedUpdate()
+    private void FixedUpdate()
     {
         //Simulate the scene on FixedUpdate
         if (physicsScenes.Count > 0)
@@ -28,7 +28,7 @@ public class PhysicsSceneManager : MonoBehaviour
             foreach (PhysicsScene physicsScene in physicsScenes.Values)
                 physicsScene.Simulate(Time.fixedDeltaTime);
         }
-    }*/
+    }
 
     public void AddSimulation(Guid _roomId, string _physicsSceneName)
     {
@@ -56,7 +56,7 @@ public class PhysicsSceneManager : MonoBehaviour
         //returning 0 will make it wait 1 frame
         yield return 0;
 
-        Server.Rooms[_roomId].roomObjects = scene.GetRootGameObjects()[0].GetComponent<RoomObjects>();
-        Server.Rooms[_roomId].Initialize();
+        Server.Rooms[_roomId].RoomScene = scene.GetRootGameObjects()[0].GetComponent<RoomScene>();
+        Server.Rooms[_roomId].RoomScene.Initialize(_roomId, scene);
     }
 }

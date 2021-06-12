@@ -1,13 +1,12 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class PlayerManager : MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
+    [Header("Components")]
+    public Transform pelvis;
     private CapsuleCollider cp;
     private Rigidbody rb;
-
-    private ClientInputState currentState;
+    private PhysicsScene physicsScene;
 
     [Header("Movement Variables")]
     public float gravityForce;
@@ -15,7 +14,8 @@ public class PlayerManager : MonoBehaviour
     public float jumpForce, jumpCooldown;
     public float diveForwardForce, diveUpForce, diveCooldown;
     public float dashforce, dashTime;
-    private Vector3 move;
+    public Vector3 move;
+    private ClientState inputs;
 
     [Header("Collision Variables")]
     public float checkDistance;
@@ -24,42 +24,26 @@ public class PlayerManager : MonoBehaviour
     public LayerMask collisionMask;
     private Vector3 colDir;
     private Vector3 groundNormal;
-    private float onAirTime;
 
     [Header("States")]
     public bool grounded;
     public bool ragdolled, getUp;
-    //[HideInInspector]
-    public bool isRunning = false;
-    //[HideInInspector]
     public bool jumping = false, diving = false, dashing = false;
     private bool readyToJump = true, readyToDive = true;
     private bool dashTriggered;
 
-    [Header("DEBUG")]
-    public bool debug;
-
     // Start is called before the first frame update
-    public void StartController(bool controlable)
+    public void StartController()
     {
         move = new Vector3();
         cp = GetComponent<CapsuleCollider>();
         rb = GetComponent<Rigidbody>();
+        physicsScene = gameObject.scene.GetPhysicsScene();
     }
 
-    // Update is called once per frame
-    public void UpdateController()
+    public void FixedUpdateController(ClientState _inputs)
     {
-        if (!ragdolled && !getUp && isRunning)
-        {
-            if (!grounded)
-                onAirTime += Time.deltaTime;
-        }
-    }
-
-    public void ProcessInputs(ClientInputState _currentState)
-    {
-        currentState = _currentState;
+        inputs = _inputs;
 
         GroundChecking();
 
@@ -73,6 +57,22 @@ public class PlayerManager : MonoBehaviour
     }
 
     #region Movement
+    private Vector3 ToCameraSpace(Vector3 moveVector)
+    {
+        Vector3 camFoward = (inputs.LookingRotation * Vector3.forward);
+        Vector3 camRight = (inputs.LookingRotation * Vector3.right);
+
+        camFoward.y = 0;
+        camRight.y = 0;
+
+        camFoward.Normalize();
+        camRight.Normalize();
+
+        Vector3 moveDirection = (camFoward * moveVector.z + camRight * moveVector.x);
+
+        return moveDirection;
+    }
+
     private void Movement()
     {
         Dash();
@@ -107,12 +107,12 @@ public class PlayerManager : MonoBehaviour
     {
         if (!diving && !dashing)
         {
-            move = new Vector3(currentState.HorizontalAxis, 0f, currentState.VerticalAxis);
+            move = new Vector3(inputs.HorizontalAxis, 0f, inputs.VerticalAxis);
 
             if (move.sqrMagnitude > 0.1f)
             {
                 //Camera direction
-                //move = ToCameraSpace(move);----------------------------------------------------------------------------
+                move = ToCameraSpace(move);
                 Debug.DrawLine(this.transform.position, this.transform.position + move, Color.red, 1f);
 
                 //For better movement on slopes/ramps
@@ -120,7 +120,6 @@ public class PlayerManager : MonoBehaviour
 
                 move.Normalize();
                 move *= moveSpeed * Time.deltaTime;
-                Debug.DrawLine(this.transform.position, this.transform.position + move, Color.yellow, 1f);
 
                 rb.AddForce(move, ForceMode.VelocityChange);
             }
@@ -136,14 +135,13 @@ public class PlayerManager : MonoBehaviour
 
     private void Jump()
     {
-        /*if (currentInput.jump && !jumping && grounded && !dashing && readyToJump)
+        if (inputs.Jump && !jumping && grounded && !dashing && readyToJump)
         {
-            //Debug.Log("Jump");
             readyToJump = false;
             rb.AddForce(Vector3.up * -rb.velocity.y, ForceMode.VelocityChange);//in case of slopes
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             jumping = true;
-        }*/
+        }
     }
 
     private void ResetJump()
@@ -153,9 +151,10 @@ public class PlayerManager : MonoBehaviour
 
     private void Dive()
     {
-        /*if (currentInput.dive && !diving && (grounded || jumping) && !dashing && readyToDive)
+        if (inputs.Dive && !diving && (grounded || jumping) && !dashing && readyToDive)
         {
             readyToDive = false;
+
             if (jumping)
             {
                 jumping = false;
@@ -174,7 +173,7 @@ public class PlayerManager : MonoBehaviour
 
             rb.AddForce(transform.forward * diveForwardForce, ForceMode.Impulse);
             diving = true;
-        }*/
+        }
     }
 
     private void ResetDive()
@@ -201,29 +200,26 @@ public class PlayerManager : MonoBehaviour
     #endregion
 
     #region GroundChecking / Snapping
+    //TODO: MODIFIED (REMOVED RAGDOLLIN AND ANIMS)
     private void GroundChecking()
     {
-        /*RaycastHit hit;
-        Physics.Raycast(pelvis.position + (diving ? transform.forward * 0.67f : Vector3.zero), Vector3.down, out hit, -0.735f + (diving ? checkDistanceLayed : checkDistance), collisionMask);
+        RaycastHit hit;
+        physicsScene.Raycast(pelvis.position + (diving ? transform.forward * 0.67f : Vector3.zero), Vector3.down, out hit, -0.735f + (diving ? checkDistanceLayed : checkDistance), collisionMask);
         if (hit.collider)
         {
             grounded = true;
             groundNormal = hit.normal;
-
-            if (onAirTime > 3f)
-                ragdollController.RagdollIn();
-            onAirTime = 0.0f;
 
             if (jumping)
             {
                 jumping = false;
                 Invoke(nameof(ResetJump), jumpCooldown);
             }
-
             if (diving)
             {
                 diving = false;
                 CounterMovement();
+
                 cp.direction = 1;
                 getUp = true;
                 Invoke(nameof(GetUp), getUpTime);
@@ -234,48 +230,8 @@ public class PlayerManager : MonoBehaviour
         {
             grounded = false;
             groundNormal = Vector3.zero;
-        }*/
+        }
     }
+
     #endregion
-
-    /*
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.layer == LayerMask.NameToLayer("Bounce") && (!dashing || !dashTriggered))
-        {
-            dashTriggered = true;
-            //Debug.Log("Dashing");
-            colDir = (collision.contacts[0].point - transform.position).normalized * -1;
-        }
-        // nao entrar em ragdoll quando bate num "Bounce" obj e quando salta para cima dum cushion
-        if ((collision.gameObject.layer != LayerMask.NameToLayer("Floor") && collision.gameObject.layer != LayerMask.NameToLayer("Wall")
-            && collision.gameObject.layer != LayerMask.NameToLayer("Bounce")) && ragdollController.state == RagdollState.Animated)
-        {
-            Vector3 collisionDirection = collision.contacts[0].normal;
-
-            //Debug.Log("collision force:" + collision.impulse.magnitude);
-            //Debug.Log("collision relative Velocity:" + collision.relativeVelocity.magnitude);
-            if (collision.impulse.magnitude >= ragdollController.maxForce || (jumping || diving))
-            {
-                ragdollController.RagdollIn();
-                ragdollController.pelvis.AddForceAtPosition(-collisionDirection * ragdollController.impactForce, collision.contacts[0].point, ForceMode.Impulse);
-            }
-        }
-    }
-
-    private void OnCollisionStay(Collision collision)
-    {
-        if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle") && ragdollController.state == RagdollState.Animated)
-        {
-
-            if (collision.impulse.magnitude >= ragdollController.maxForce || (jumping || diving))
-            {
-                Vector3 collisionDirection = collision.contacts[0].normal;
-
-                ragdollController.RagdollIn();
-                ragdollController.pelvis.AddForceAtPosition(-collisionDirection * ragdollController.impactForce, collision.contacts[0].point, ForceMode.Impulse);
-            }
-        }
-    }
-    */
 }

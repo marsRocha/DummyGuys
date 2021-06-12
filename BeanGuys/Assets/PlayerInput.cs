@@ -10,29 +10,38 @@ public class PlayerInput : MonoBehaviour
     public KeyCode jumpKey;
     public KeyCode diveKey;
 
-    public int x { get; private set; } = 0;
-    public int y { get; private set; } = 0;
+    public float x { get; private set; } = 0;
+    public float y { get; private set; } = 0;
     public bool jump { get; private set; } = false;
     public bool dive { get; private set; } = false;
 
-    //For now, so i can test the inputs received over the network
-    public bool controllable;
-
+    private Inputs inputState;
     public void MovementInput()
     {
-        if (controllable)
+        //Walk
+        x = Input.GetAxis(forward);
+        y = Input.GetAxis(sideways);
+        //Behaviours
+        jump = Input.GetKey(jumpKey);
+        dive = Input.GetKey(diveKey);
+
+        // Set input
+        inputState = new Inputs
         {
-            //Walk
-            x = (int)Input.GetAxis(forward);
-            y = (int)Input.GetAxis(sideways);
-            //Behaviours
-            jump = Input.GetKey(jumpKey);
-            dive = Input.GetKey(diveKey);
-        }
+            HorizontalAxis = x,
+            VerticalAxis = y,
+            Jump = jump,
+            Dive = dive
+        };
     }
 
     public Inputs GetInputs()
     {
-        return new Inputs(x, y, jump, dive);
+        return inputState;
     }
+}
+
+public class Inputs{
+    public float HorizontalAxis, VerticalAxis;
+    public bool Jump, Dive;
 }

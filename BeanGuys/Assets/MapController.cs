@@ -25,7 +25,7 @@ public class MapController : MonoBehaviour
 
 
     [Header("Components")]
-    public PlayerCamera camera;
+    public new PlayerCamera camera;
     public ParticleSystem confetti;
 
     public int playerCheckPoint { get; private set; } = 0;
@@ -137,8 +137,7 @@ public class MapController : MonoBehaviour
 
     public void SpawnLocalPlayer()
     {
-        GameObject p = Instantiate(GameManager.instance.LocalPlayerObj, spawns[Client.instance.clientInfo.spawnId], Quaternion.identity); //sceneManager.spawnPoints[myId]
-        p.GetComponent<PlayerController>().camera = camera.transform;
+        GameObject p = Instantiate(GameManager.instance.LocalPlayerObj, spawns[Client.instance.clientInfo.spawnId], Quaternion.identity);
 
         localPlayer = p.GetComponent<PlayerManager>();
 
@@ -159,7 +158,7 @@ public class MapController : MonoBehaviour
     //Sent from other players to respawn
     public void PlayerRespawn(Guid id, int checkPointNum)
     {
-        Vector3 newPos = GetRespawnPosition(Client.instance.clientExeID, checkPointNum);
+        Vector3 newPos = GetRespawnPosition(Client.peers[id].SpawnId, checkPointNum);
 
         if (id == Client.instance.clientInfo.id)
             localPlayer.Respawn(newPos, Quaternion.identity);
@@ -169,7 +168,7 @@ public class MapController : MonoBehaviour
 
     public void LocalPlayerRespawn()
     {
-        Vector3 newPos = GetRespawnPosition(Client.instance.clientExeID, playerCheckPoint);
+        Vector3 newPos = GetRespawnPosition(Client.instance.clientInfo.spawnId, playerCheckPoint);
         localPlayer.Respawn(newPos, Quaternion.identity);
         ClientSend.PlayerRespawn(playerCheckPoint);
     }
@@ -178,7 +177,7 @@ public class MapController : MonoBehaviour
     {
         Debug.Log($"numCheck:{checkPointNum}");
         if (checkPointNum == 0)
-            return spawns[id - 1];
+            return spawns[id];
         else
             return checkPoints[checkPointNum - 1].position;
     }

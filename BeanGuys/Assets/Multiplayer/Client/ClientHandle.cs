@@ -29,30 +29,51 @@ public class ClientHandle : MonoBehaviour
         //Start listening to room
         Client.ListenToRoom(ip, port);
         //Add themselves to the playerCount
-        GameManager.instance.totalPlayers++;
+        GameManager.instance.UpdatePlayerCount();
         //Add my spawnid
         Client.instance.clientInfo.spawnId = spawnId;
 
         Debug.Log($"Joined room, multicast info Ip:{ip} Port:{port}");
     }
-    
-    public static void PlayerJoined(Guid id, Packet packet)
-    {
-        string username = packet.ReadString();
-        string ip = packet.ReadString();
-        string port = packet.ReadString();
-        int spawnId = packet.ReadInt();
 
-        Debug.Log($"received Ip:{ip} Port:{port}");
-        if (Client.instance.clientExeID == 1)
-            Client.instance.ConnectToPeer(id, username, spawnId, "127.0.0.1", 5002);
+    public static void PlayerJoined(Guid _roomId, Packet _packet)
+    {
+        //TODO: MESSAGE CAN BE SENT BY THE SERVER(TCP) OR THE ROOM(UDP MULTICAST) FOR NOW BECAUSE TCP DDOES NOT READ ROOMID 
+        if (_roomId == null || _roomId == Guid.Empty)
+            _roomId = _packet.ReadGuid();
+
+        if (Client.RoomId == _roomId)
+        {
+            Guid id = _packet.ReadGuid();
+            //If not me
+            if (Client.instance.clientInfo.id != id)
+            {
+                string username = _packet.ReadString();
+                int spawnId = _packet.ReadInt();
+
+                Client.peers.Add(id, new Peer(id, username, spawnId));
+                GameManager.instance.UpdatePlayerCount();
+                Debug.Log($"{username} has joined the game!");
+            }
+        }
         else
-            Client.instance.ConnectToPeer(id, username, spawnId, "127.0.0.1", 5001);
+        {
+            Debug.LogWarning("Received 'PlayerJoined' message from wrong room;");
+        }
     }
     
-    public static void PlayerLeft(Guid id, Packet packet)
+    public static void PlayerLeft(Guid _roomId, Packet _packet)
     {
-        Client.peers[id].Disconnect();
+        if (Client.RoomId == _roomId)
+        {
+            Guid clientId = _packet.ReadGuid();
+            Client.peers[clientId].Disconnect();
+            Client.peers.Remove(clientId);
+        }
+        else
+        {
+            Debug.LogWarning("Received 'PlayerLeft' message from wrong room;");
+        }
     }
     
     public static void Map(Guid _roomId, Packet _packet)
@@ -101,14 +122,6 @@ public class ClientHandle : MonoBehaviour
     }
     #endregion
 
-    #region Peer Packets
-    //Received an welcome from the peer i tried to connect to
-    public static void WelcomePeer(Guid id, Packet packet)
-    {
-        GameManager.instance.UpdatePlayerCount();
-        Debug.Log($"{"legend27"}(player {id}) has joined the game!");
-    }
-
     #region Player packages
     public static void PlayerMovement(Guid id, Packet packet)
     {
@@ -119,6 +132,16 @@ public class ClientHandle : MonoBehaviour
         float tick_number = packet.ReadFloat();
 
         GameManager.instance.PlayerMovement(id, position, rotation, velocity, angular_velocity, tick_number);
+    }
+
+    public static void PlayerCorrection(Guid id, Packet packet)
+    {
+        Vector3 position = packet.ReadVector3();
+        Quaternion rotation = packet.ReadQuaternion();
+        Vector3 velocity = packet.ReadVector3();
+        int simulationFrame = packet.ReadInt();
+
+        GameManager.instance.PlayerCorrection(id, new SimulationState(position, rotation, velocity, simulationFrame));
     }
 
     public static void PlayerAnim(Guid id, Packet packet)
@@ -138,8 +161,5 @@ public class ClientHandle : MonoBehaviour
         float time = packet.ReadFloat();
         GameManager.instance.PlayerFinish(id, time);
     }
-    #endregion
-
-
     #endregion
 }

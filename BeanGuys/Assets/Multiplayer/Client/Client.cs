@@ -15,10 +15,8 @@ public class Client : MonoBehaviour
 
     public delegate void PacketHandler(Guid id, Packet packet);
     public static Dictionary<int, PacketHandler> packetHandlers;
-    public static Dictionary<Guid, NewConnection> newConnections = new Dictionary<Guid, NewConnection>();
     public static Dictionary<Guid, Peer> peers = new Dictionary<Guid, Peer>();
 
-    private static TcpListener tcpListener;
     private static UdpClient _udpClient;
 
     //Server Info
@@ -36,12 +34,9 @@ public class Client : MonoBehaviour
 
     //Client Info
     private static IPAddress _localIPaddress;
-    private static int _localPort;
 
     public ClientInfo clientInfo;
     private bool isConnected = false;
-
-    public int clientExeID;
 
     #region Singleton
     private void Awake()
@@ -63,20 +58,9 @@ public class Client : MonoBehaviour
         _serverPort = _port;
 
         _localIPaddress = IPAddress.Any;
-        _localPort = 5000 + clientExeID; // Depending on the id set on inspector, set a different ip and port to listen to peers
 
         InitializeData();
         ConnectToServer();
-
-        //Listen to peers
-        tcpListener = new TcpListener(_localIPaddress, _localPort);
-        tcpListener.Start();
-        tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
-
-        // Create local endpoint
-        _localEndPoint = new IPEndPoint(_localIPaddress, _localPort);
-
-        Debug.Log($"Client started listening[TCP only] on {_localPort}");
     }
 
     private void ConnectToServer()
@@ -87,19 +71,28 @@ public class Client : MonoBehaviour
         server.Connect(_serverIPaddress, _serverPort);
     }
 
-    #region Callbacks
-    //Incoming Peer requests to connect
-    private static void TCPConnectCallback(IAsyncResult result)
+    private static void ReceivedCallback(IAsyncResult result)
     {
-        TcpClient client = tcpListener.EndAcceptTcpClient(result);
-        //Once it connects we want to still keep on listening for more clients so we call it again
-        tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
-        Debug.Log($"Incoming connection from {client.Client.RemoteEndPoint}...");
+        try
+        {
+            IPEndPoint clientEndPoint = new IPEndPoint(0, _roomPort);
+            byte[] data = _udpClient.EndReceive(result, ref clientEndPoint);
+            // Restart listening for udp data packages
+            _udpClient.BeginReceive(new AsyncCallback(ReceivedCallback), null);
 
-        //Add to new connections until it's id is received
-        Guid pId = Guid.NewGuid();
-        newConnections.Add(pId, new NewConnection(pId));
-        newConnections[pId].Connect(client);
+            if (data.Length < 4)
+                return;
+
+            //Handle Data
+            using (Packet packet = new Packet(data))
+            {
+                HandleData(packet);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.Log($"Error receiving UDP Multicast data: {ex}");
+        }
     }
 
     public static void HandleData(Packet data)
@@ -127,8 +120,6 @@ public class Client : MonoBehaviour
             }
         });
     }
-
-    #endregion
 
     public static void SendUDPData(IPEndPoint peerEndPoint, Packet packet)
     {
@@ -169,14 +160,6 @@ public class Client : MonoBehaviour
         }
     }
 
-    public void ConnectToPeer(Guid id, string username, int spawnId, string ip, int port)
-    {
-        //store peer info
-        peers.Add(id, new Peer(id, username, spawnId));
-        peers[id].tcp.Connect(ip, port);
-        Debug.Log($"Tried to connect to peer {id}");
-    }
-
     public static void ListenToRoom(string roomAddress, int roomPort)
     {
         _roomIPaddress = IPAddress.Parse(roomAddress);
@@ -197,30 +180,6 @@ public class Client : MonoBehaviour
 
         // Start listening for incoming data
         _udpClient.BeginReceive(new AsyncCallback(ReceivedCallback), null);
-    }
-
-    private static void ReceivedCallback(IAsyncResult result)
-    {
-        try
-        {
-            IPEndPoint clientEndPoint = new IPEndPoint(0, _roomPort);
-            byte[] data = _udpClient.EndReceive(result, ref clientEndPoint);
-            // Restart listening for udp data packages
-            _udpClient.BeginReceive(new AsyncCallback(ReceivedCallback), null);
-
-            if (data.Length < 4)
-                return;
-
-            //Handle Data
-            using (Packet packet = new Packet(data))
-            {
-                HandleData(packet);
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.Log($"Error receiving UDP Multicast data: {ex}");
-        }
     }
 
     public static string GetLocalIPAddress()
@@ -373,16 +332,14 @@ public class Client : MonoBehaviour
             { (int) ServerPackets.map, ClientHandle.Map },
             { (int) ServerPackets.startGame, ClientHandle.StartGame },
             { (int) ServerPackets.endGame, ClientHandle.EndGame },
+            { (int) ServerPackets.playerCorrection, ClientHandle.PlayerCorrection },
+
             //CLIENT SENT
-            { (int) ClientPackets.welcome, ClientHandle.WelcomePeer },
             { (int) ClientPackets.playerMovement, ClientHandle.PlayerMovement },
             { (int) ClientPackets.playerAnim, ClientHandle.PlayerAnim },
             { (int) ClientPackets.playerRespawn, ClientHandle.PlayerRespawn },
-            { (int) ClientPackets.playerFinish, ClientHandle.PlayerFinish },
-            { (int) ClientPackets.map, ClientHandle.Map },
-            { (int) ClientPackets.startGame, ClientHandle.StartGame },
+            { (int) ClientPackets.playerFinish, ClientHandle.PlayerFinish }
         };
-        //TEMPORARY FOR P2P USE ONLY
     }
 
     private void OnApplicationQuit()
@@ -398,12 +355,10 @@ public class Client : MonoBehaviour
             //Close connection to server
             server.socket.Close();
             //Stop listening to incoming messages
-            tcpListener.Stop();
             _udpClient.DropMulticastGroup(_roomIPaddress);
             _udpClient.Close();
             //Clear peer/connections dictionary
             peers = new Dictionary<Guid, Peer>();
-            newConnections = new Dictionary<Guid, NewConnection>();
             Debug.Log("Disconnected.");
         }
     }

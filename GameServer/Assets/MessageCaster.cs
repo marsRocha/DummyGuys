@@ -9,9 +9,9 @@ public class MessageCaster : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.O))
+        //SEND ROOM'S MAP
+        if (Input.GetKeyDown(KeyCode.O))
         {
-            Debug.Log(Server.Rooms.Count);
             foreach (Room room in Server.Rooms.Values)
             {
                 roomId = room.Id;
@@ -24,6 +24,7 @@ public class MessageCaster : MonoBehaviour
             Server.Rooms[roomId].Map("Level1"); //TODO: DEBUG INPUT
         }
 
+        //SEND ROOM'S STARTGAME
         if (Input.GetKeyDown(KeyCode.P))
         {
             if (roomId == null)

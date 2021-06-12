@@ -10,6 +10,7 @@ public enum ServerPackets
     joinedRoom,
     playerJoined,
     playerLeft,
+    playerRespawn,
     playerFinish,
     playerCorrection,
     map,
@@ -21,9 +22,6 @@ public enum ServerPackets
 public enum ClientPackets
 {
     welcomeReceived = 10,
-    welcome,
-    introduction,
-    playerInput,
     playerMovement,
     playerAnim,
     playerRespawn,

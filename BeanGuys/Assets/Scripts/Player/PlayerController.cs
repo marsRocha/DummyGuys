@@ -6,14 +6,11 @@ using UnityEngine.UIElements;
 public class PlayerController : MonoBehaviour
 {
     [Header("Components")]
-    public Transform camera;
     public Transform pelvis;
     private CapsuleCollider cp;
     private Rigidbody rb;
     private Animator anim;
     private RagdollController ragdollController;
-    [System.NonSerialized]
-    public PlayerInput pInput;
 
     [Header("Movement Variables")]
     public float gravityForce;
@@ -22,7 +19,7 @@ public class PlayerController : MonoBehaviour
     public float diveForwardForce, diveUpForce, diveCooldown;
     public float dashforce, dashTime;
     private Vector3 move;
-    private Inputs currentInput;
+    private ClientInputState currentInputs;
 
     [Header("Collision Variables")]
     public float checkDistance;
@@ -53,37 +50,28 @@ public class PlayerController : MonoBehaviour
     public bool debug;
 
     // Start is called before the first frame update
-    public void StartController(bool controlable)
+    public void StartController()
     {
         move = new Vector3();
         cp = GetComponent<CapsuleCollider>();
         rb = GetComponent<Rigidbody>();
         anim = GetComponent<Animator>();
         ragdollController = GetComponent<RagdollController>();
-        camera = GameObject.Find("Main Camera").transform;
         currentAnim = animNum.idle;
-
-        if (controlable)
-        {
-            pInput = GetComponent<PlayerInput>();
-            pInput.controllable = controlable;
-        }
     }
 
     // Update is called once per frame
     public void UpdateController()
     {
-        if (!ragdolled && !getUp && isRunning)
+        if (!ragdolled && !getUp && !grounded)
         {
-            pInput.MovementInput();
-            if (!grounded)
-                onAirTime += Time.deltaTime;
+            onAirTime += Time.deltaTime;
         }
     }
 
-    public void FixedUpdateController(Inputs currentInput)
+    public void FixedUpdateController(ClientInputState currentInput)
     {
-        this.currentInput = currentInput;
+        this.currentInputs = currentInput;
 
         GroundChecking();
 
@@ -99,11 +87,14 @@ public class PlayerController : MonoBehaviour
     #region Movement
     private Vector3 ToCameraSpace(Vector3 moveVector)
     {
-        Vector3 camFoward = camera.forward.normalized;
-        Vector3 camRight = camera.right.normalized;
+        Vector3 camFoward = (currentInputs.LookingRotation * Vector3.forward);
+        Vector3 camRight = (currentInputs.LookingRotation * Vector3.right);
 
         camFoward.y = 0;
         camRight.y = 0;
+
+        camFoward.Normalize();
+        camRight.Normalize();
 
         Vector3 moveDirection = (camFoward * moveVector.z + camRight * moveVector.x);
 
@@ -157,7 +148,7 @@ public class PlayerController : MonoBehaviour
     {
         if (!diving && !dashing)
         {
-            move = new Vector3(currentInput.x, 0f, currentInput.y);
+            move = new Vector3(currentInputs.HorizontalAxis, 0f, currentInputs.VerticalAxis);
 
             if (move.sqrMagnitude > 0.1f)
             {
@@ -185,7 +176,7 @@ public class PlayerController : MonoBehaviour
                     anim.SetBool("isRunning", true);
                 }
             }
-            else if ((move.x == 0f || move.z == 0f) && (currentInput.x == 0 && currentInput.y == 0))
+            else if ((move.x == 0f || move.z == 0f) && (currentInputs.HorizontalAxis == 0 && currentInputs.VerticalAxis == 0))
             {
                 anim.SetBool("isRunning", false);
             }
@@ -194,7 +185,7 @@ public class PlayerController : MonoBehaviour
 
     private void Jump()
     {
-        if (currentInput.jump && !jumping && grounded && !dashing && readyToJump)
+        if (currentInputs.Jump && !jumping && grounded && !dashing && readyToJump)
         {
             //Debug.Log("Jump");
             readyToJump = false;
@@ -213,7 +204,7 @@ public class PlayerController : MonoBehaviour
 
     private void Dive()
     {
-        if (currentInput.dive && !diving && (grounded || jumping) && !dashing && readyToDive)
+        if (currentInputs.Dive && !diving && (grounded || jumping) && !dashing && readyToDive)
         {
             readyToDive = false;
             //Debug.Log("DIVE");
@@ -276,8 +267,8 @@ public class PlayerController : MonoBehaviour
             grounded = true;
             groundNormal = hit.normal;
 
-            if (onAirTime > 3f)
-                ragdollController.RagdollIn();
+            /*if (onAirTime > 3f)
+                ragdollController.RagdollIn();*/
             onAirTime = 0.0f;
 
             if (jumping)
@@ -316,6 +307,7 @@ public class PlayerController : MonoBehaviour
         respawnPs.Play();
     }
 
+    /*
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.layer == LayerMask.NameToLayer("Bounce") && (!dashing || !dashTriggered))
@@ -362,7 +354,7 @@ public class PlayerController : MonoBehaviour
                 ragdollController.pelvis.AddForceAtPosition(-collisionDirection * ragdollController.impactForce, collision.contacts[0].point, ForceMode.Impulse);
             }
         }
-    }
+    }*/
 }
 
 public enum animNum { idle, run, jump, dive };

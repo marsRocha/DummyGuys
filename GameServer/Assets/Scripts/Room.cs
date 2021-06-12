@@ -19,6 +19,7 @@ public partial class Room
     private IPEndPoint _remoteEndPoint { get; set; }
     private IPEndPoint _localEndPoint { get; set; }
 
+    public RoomScene RoomScene { get; set; }
 
     public Room(Guid id, string multicastIP, int multicastPort)
     {
@@ -61,8 +62,6 @@ public partial class Room
 
         if (data.Length < 4)
             return;
-
-        Console.WriteLine($"Got message");
 
         //Handle Data
         using (Packet packet = new Packet(data))

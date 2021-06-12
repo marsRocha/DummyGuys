@@ -189,7 +189,8 @@ public class RagdollController : MonoBehaviour
         cp.isTrigger = activate;
         this.GetComponent<Rigidbody>().isKinematic = activate;
 
-        playerController.camera.GetComponent<PlayerCamera>().followRagdoll = activate;
+        //TODO: UNCOMMENT THIS
+        //playerController.camera.GetComponent<PlayerCamera>().followRagdoll = activate;
         playerController.enabled = !activate;
 
         if (activate)

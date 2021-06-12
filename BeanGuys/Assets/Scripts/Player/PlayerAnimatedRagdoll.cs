@@ -130,7 +130,8 @@ public class PlayerAnimatedRagdoll : MonoBehaviour
             if (ragdollBlendAmount == 0)
             {
                 state = RagdollState.Animated;
-                playerController.ragdolled = false;
+                //TODO: UNCOMMENT THIS
+                //playerController.ragdolled = false;
             }
         }
     }
@@ -145,29 +146,9 @@ public class PlayerAnimatedRagdoll : MonoBehaviour
         else
             rb.constraints = RigidbodyConstraints.FreezeRotation;
 
-        playerController.camera.GetComponent<PlayerCamera>().followRagdoll = activate;
-        playerController.ragdolled = activate;
+        //TODO: UNCOMMENT both of THese lines
+        //playerController.camera.GetComponent<PlayerCamera>().followRagdoll = activate;
+        //playerController.ragdolled = activate;
         animator.SetBool("isRagdolled", activate);
     }
-
-
-    /*private void OnCollisionEnter(Collision collision)
-    {
-        // nao entrar em ragdoll quando bate num "Bounce" obj e quando salta para cima dum cushion
-        if (collision.gameObject.layer != LayerMask.NameToLayer("Floor") && state == RagdollState.Animated)
-        {
-            //Debug.Log(collision.transform.name);
-            Vector3 collisionDirection = collision.contacts[0].normal;
-            //Debug.DrawRay(collision.contacts[0].point, collisionDirection * 5);
-
-            Debug.Log("collision force:" + collision.impulse.magnitude);
-            Debug.Log("collision relative Velocity:" + collision.relativeVelocity.magnitude);
-            if (collision.impulse.magnitude >= maxForce || (playerController.jumping || playerController.diving))
-            {
-                RagdollIn();
-                //add force
-                rb.AddForceAtPosition(-collisionDirection * impactForce, collision.contacts[0].point, ForceMode.VelocityChange);
-            }
-        }
-    }*/
 }

@@ -9,7 +9,7 @@ ScriptsOnlyBuild:
     - DebugStuff.ConsoleToGUI
     - GameManager
     - MapController
-    - Moving
+    - MoveBehaviour
     - NetworkManager
     - PlayerAnimatedRagdoll
     - PlayerCamera
@@ -19,9 +19,9 @@ ScriptsOnlyBuild:
     - QualifyPlayer
     - RagdollController
     - RemotePlayerManager
-    - RotatingCylinder
-    - Spinning
-    - Swing
+    - RotateBehaviour
+    - SpinBehaviour
+    - SwingBehaviour
     - ThreadManager
     Unity.RenderPipelines.Core.Runtime.dll:
     - UnityEngine.Rendering.UI.DebugUIHandlerBitField
@@ -67,10 +67,8 @@ ScriptsOnlyBuild:
     UnityEditor.Graphs.dll:
     - UnityEditor.Graphs.AnimationBlendTree.Graph
     - UnityEditor.Graphs.AnimationBlendTree.GraphGUI
-    - UnityEditor.Graphs.AnimationStateMachine.AnyStateNode
     - UnityEditor.Graphs.AnimationStateMachine.Graph
     - UnityEditor.Graphs.AnimationStateMachine.GraphGUI
-    - UnityEditor.Graphs.AnimationStateMachine.StateNode
     - UnityEditor.Graphs.AnimatorControllerTool
     UnityEditor.TestRunner.dll:
     - UnityEditor.TestTools.TestRunner.Api.CallbacksHolder
@@ -243,35 +241,35 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 15090}
     - Class: 114
-      Script: {instanceID: 15340}
+      Script: {instanceID: 15338}
+    - Class: 114
+      Script: {instanceID: 15388}
     - Class: 114
       Script: {instanceID: 15390}
     - Class: 114
       Script: {instanceID: 15392}
     - Class: 114
-      Script: {instanceID: 15394}
+      Script: {instanceID: 15532}
     - Class: 114
-      Script: {instanceID: 15534}
+      Script: {instanceID: 15566}
     - Class: 114
-      Script: {instanceID: 15568}
+      Script: {instanceID: 15582}
     - Class: 114
-      Script: {instanceID: 15584}
+      Script: {instanceID: 15672}
     - Class: 114
-      Script: {instanceID: 15674}
+      Script: {instanceID: 15788}
     - Class: 114
       Script: {instanceID: 15790}
     - Class: 114
       Script: {instanceID: 15792}
     - Class: 114
-      Script: {instanceID: 15794}
+      Script: {instanceID: 15822}
     - Class: 114
-      Script: {instanceID: 15824}
+      Script: {instanceID: 15850}
     - Class: 114
-      Script: {instanceID: 15852}
+      Script: {instanceID: 15986}
     - Class: 114
-      Script: {instanceID: 15988}
-    - Class: 114
-      Script: {instanceID: 15996}
+      Script: {instanceID: 15994}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -382,7 +380,7 @@ ScriptsOnlyBuild:
       Hash: ad58b1475170ceb3713c7e1fbe599682
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
-    className: Moving
+    className: MoveBehaviour
   - hash:
       serializedVersion: 2
       Hash: 8c328a0ffa03c1bcb9332bb39f4f8453
@@ -745,7 +743,7 @@ ScriptsOnlyBuild:
     className: FilmGrain
   - hash:
       serializedVersion: 2
-      Hash: 26c34df67f828e4b6521796c49ae9407
+      Hash: abbcbc59037309a19aea24adeec79477
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: PlayerController
@@ -808,7 +806,7 @@ ScriptsOnlyBuild:
       Hash: 054bd73c0ebe2e93257b536a5a3afa74
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
-    className: RotatingCylinder
+    className: SpinBehaviour
   - hash:
       serializedVersion: 2
       Hash: 71bb6a6b6c8f052f948db64c7dd3ca4f
@@ -859,7 +857,7 @@ ScriptsOnlyBuild:
     className: AutoExposure
   - hash:
       serializedVersion: 2
-      Hash: 7f796f7117bbb9cd75036f869d90b017
+      Hash: 3f2ad3dd05022e50c997feabbd1fb9ce
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: PlayerInput
@@ -1156,7 +1154,7 @@ ScriptsOnlyBuild:
       Hash: ff8783d65af28493120857c17e11fb95
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
-    className: Swing
+    className: SwingBehaviour
   - hash:
       serializedVersion: 2
       Hash: d791aa6007fa3640be1164ea75bb087d
@@ -1237,7 +1235,7 @@ ScriptsOnlyBuild:
     className: AmbientOcclusion
   - hash:
       serializedVersion: 2
-      Hash: d3225073cf132bfe2114f86dacf9a3b5
+      Hash: 65ebba17d0a6d217008d36e2ecd08fd4
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: Client
@@ -1300,7 +1298,7 @@ ScriptsOnlyBuild:
       Hash: 054bd73c0ebe2e93257b536a5a3afa74
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
-    className: Spinning
+    className: RotateBehaviour
   - hash:
       serializedVersion: 2
       Hash: 8d35f16c5022311c6f4d9432be73bfcf

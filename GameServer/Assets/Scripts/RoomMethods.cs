@@ -15,7 +15,7 @@ public partial class Room
         RoomState = RoomState.playing;
 
         Debug.Log($"Game has started on Room[{Id}]");
-        StartRace();
+        RoomScene.StartRace();
     }
 
     public void EndGame()
@@ -45,19 +45,18 @@ public partial class Room
     #endregion
 
     #region Player Related
-    public int AddPlayer(Guid id, string username, string peerIP, string peerPort)
+    public int AddPlayer(Guid _clientId, string _username)
     {
-        Console.WriteLine($"Player[{id}] has joined the Room[{Id}]");
+        Console.WriteLine($"Player[{_clientId}] has joined the Room[{Id}]");
         int spawnId = GetServerPos();
-        ClientsInfo.Add(id, new ClientInfo(id, username, spawnId));
+        ClientsInfo.Add(_clientId, new ClientInfo(_clientId, _username, spawnId));
         UsedSpawnIds.Add(spawnId);
 
         using (Packet packet = new Packet((int)ServerPackets.playerJoined))
         {
-            packet.Write(id);
-            packet.Write(username);
-            packet.Write(peerIP);
-            packet.Write(peerPort);
+            packet.Write(Id);
+            packet.Write(_clientId);
+            packet.Write(_username);
             packet.Write(spawnId);
 
             MulticastUDPData(packet);
@@ -86,11 +85,26 @@ public partial class Room
             RoomState = RoomState.looking;
     }
 
-    public void CorrectPlayer(Guid id, Vector3 Position)
+    public void CorrectPlayer(Guid id, SimulationState _simulationState)
     {
-        using (Packet packet = new Packet((int)ServerPackets.playerCorrection))
+        using (Packet _packet = new Packet((int)ServerPackets.playerCorrection))
         {
-            packet.Write(id);
+            _packet.Write(id);
+
+            _packet.Write(_simulationState.position);
+            _packet.Write(_simulationState.velocity);
+            _packet.Write(_simulationState.simulationFrame);
+
+            MulticastUDPData(_packet);
+        }
+    }
+
+    public void PlayerRespawn(Guid _id, float _game_clock)
+    {
+        using (Packet packet = new Packet((int)ServerPackets.playerRespawn))
+        {
+            packet.Write(_id);
+            packet.Write(_game_clock);
 
             MulticastUDPData(packet);
         }

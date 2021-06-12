@@ -42,5 +42,18 @@ public class ServerSend
             SendTCPData(_toClient, packet);
         }
     }
+    
+    public static void PlayerInfo(Guid _toClient, Guid _roomId, ClientInfo _clientInfo)
+    {
+        using (Packet packet = new Packet((int)ServerPackets.playerJoined))
+        {
+            packet.Write(_roomId);
+            packet.Write(_clientInfo.id);
+            packet.Write(_clientInfo.username);
+            packet.Write(_clientInfo.spawnId);
+
+            SendTCPData(_toClient, packet);
+        }
+    }
     #endregion
 }

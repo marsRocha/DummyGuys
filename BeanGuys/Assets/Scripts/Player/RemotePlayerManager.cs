@@ -36,7 +36,7 @@ public class RemotePlayerManager : MonoBehaviour
 
         //Only for now, change later to false
         isRunning = true;
-        pController.StartController(false);
+        pController.StartController();
         Debug.Log("Remote player initiated");
     }
 
@@ -128,6 +128,16 @@ public class RemotePlayerManager : MonoBehaviour
         rb.rotation = rotation;
 
         pController.Respawn();
+    }
+
+    public void ReceivedCorrectionState(SimulationState simulationState)
+    {
+        Debug.LogWarning("Correct remote player position, rot, vel");
+        rb.position = simulationState.position;
+        rb.rotation = simulationState.rotation;
+        rb.velocity = simulationState.velocity;
+
+        //TODO: REMOVE MESSAGES THAT ARE OLDER AND THE SAME AGE AS THIS ONE
     }
 }
 

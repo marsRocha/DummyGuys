@@ -1,4 +1,5 @@
 ﻿using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -45,18 +46,6 @@ public class GameManager : MonoBehaviour
         {
             ClientSend.Test();
             Debug.Log("sent test");
-        }
-
-        //TODO: FOR P2P PURPOSE, REMOVE AFTERWARDS
-        if (Input.GetKeyDown(KeyCode.I))
-        {
-            ClientSend.Map();
-            LoadGameScene("Level1");
-        }
-        if (Input.GetKeyDown(KeyCode.O))
-        {
-            ClientSend.StartGame();
-            StartGame();
         }
     }
 
@@ -114,16 +103,17 @@ public class GameManager : MonoBehaviour
     public void UpdatePlayerCount()
     {
         totalPlayers++;
-        if(!debug)
-        GameObject.Find("SceneManager").GetComponent<MenuSceneManager>().UpdatePlayerCountUI(totalPlayers);
+        if (!debug)
+            GameObject.Find("SceneManager").GetComponent<MenuSceneManager>().UpdatePlayerCountUI(totalPlayers);
+        else
+            GameObject.Find("Canvas").transform.GetChild(1).GetComponent<TMP_Text>().text = $"{totalPlayers}/60 Players";
     }
 
     public void SpawnRemotePlayers()
     {
         foreach(Peer peer in Client.peers.Values)
         {
-            if(peer.tcp.socket != null)
-                mapController.SpawnRemotePlayer(peer.Id, peer.Username);
+            mapController.SpawnRemotePlayer(peer.Id, peer.Username);
         }
     }
 
@@ -159,9 +149,21 @@ public class GameManager : MonoBehaviour
     }
 
     #region Player messages
-    public void PlayerMovement(Guid peerID, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
+    public void PlayerMovement(Guid peerId, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
     {
-        mapController.players[peerID].UpdateMovement(position, rotation, velocity, angular_velocity, tick_number);
+        mapController.players[peerId].UpdateMovement(position, rotation, velocity, angular_velocity, tick_number);
+    }
+
+    public void PlayerCorrection(Guid clientId, SimulationState simulationState)
+    {
+        if(clientId != Client.instance.clientInfo.id)
+        {
+            mapController.players[clientId].ReceivedCorrectionState(simulationState);
+        }
+        else
+        {
+            mapController.localPlayer.ReceivedCorrectionState(simulationState);
+        }
     }
 
     public void PlayerAnim(Guid peerID, int animNum)
