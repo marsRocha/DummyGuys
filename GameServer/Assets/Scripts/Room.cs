@@ -7,7 +7,7 @@ using UnityEngine;
 
 public partial class Room
 {
-    public Guid Id { get; set; }
+    public Guid RoomId { get; set; }
     public RoomState RoomState { get; set; }
     public List<int> UsedSpawnIds { get; set; }
     public Dictionary<Guid, ClientInfo> ClientsInfo { get; set; }
@@ -19,11 +19,12 @@ public partial class Room
     private IPEndPoint _remoteEndPoint { get; set; }
     private IPEndPoint _localEndPoint { get; set; }
 
+    private RoomThread roomThread;
     public RoomScene RoomScene { get; set; }
 
     public Room(Guid id, string multicastIP, int multicastPort)
     {
-        Id = id;
+        RoomId = id;
         MulticastIP = IPAddress.Parse(multicastIP);
         MulticastPort = multicastPort + 1;
 
@@ -49,7 +50,7 @@ public partial class Room
         // Start listening for incoming data
         RoomUdp.BeginReceive(new AsyncCallback(ReceivedCallback), null);
 
-        Console.WriteLine($"New lobby created [{Id}]: listenning in {multicastIP}:{multicastPort}");
+        Console.WriteLine($"New lobby created [{RoomId}]: listenning in {multicastIP}:{multicastPort}");
     }
 
     private void ReceivedCallback(IAsyncResult result)
@@ -88,7 +89,7 @@ public partial class Room
                     //verify if the endpoint corresponds to the endpoint that sent the data
                     //this is for security reasons otherwise hackers could inpersonate other clients by send a clientId that does not corresponds to them
                     //without the string conversion even if the endpoint matched it returned false
-                    if (Server.Clients[clientId].RoomID == Id) //TODO: Do I really need to check for this?
+                    if (Server.Clients[clientId].RoomID == RoomId) //TODO: Do I really need to check for this?
                     {
                         Server.packetHandlers[packetId](clientId, message);
                     }
@@ -110,7 +111,7 @@ public partial class Room
         RoomUdp.DropMulticastGroup(MulticastIP); //TODO: does not work
         RoomUdp.Close();
 
-        Console.WriteLine($"Room[{Id}] has been closed.");
+        Console.WriteLine($"Room[{RoomId}] has been closed.");
     }
 }
 

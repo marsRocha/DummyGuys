@@ -14,7 +14,7 @@ public class MessageCaster : MonoBehaviour
         {
             foreach (Room room in Server.Rooms.Values)
             {
-                roomId = room.Id;
+                roomId = room.RoomId;
                 break;
             }
 

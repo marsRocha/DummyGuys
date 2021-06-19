@@ -8,9 +8,9 @@ public class ClientHandle : MonoBehaviour
 {
     #region Server Packets
     //Receives id set to player by server
-    public static void WelcomeServer(Guid not_needed, Packet packet)
+    public static void WelcomeServer(Guid not_needed, Packet _packet)
     {
-        Guid myId = packet.ReadGuid();
+        Guid myId = _packet.ReadGuid();
         Client.instance.clientInfo.id = myId;
         Debug.Log($"[SERVER] Welcome, your Id is {myId}");
 
@@ -18,12 +18,12 @@ public class ClientHandle : MonoBehaviour
     }
 
     //Receives the information needed to start listening to room multicast messages
-    public static void JoinedRoom(Guid not_needed, Packet packet)
+    public static void JoinedRoom(Guid not_needed, Packet _packet)
     {
-        Guid roomId = packet.ReadGuid();
-        string ip = packet.ReadString();
-        int port = packet.ReadInt();
-        int spawnId = packet.ReadInt();
+        Guid roomId =_packet.ReadGuid();
+        string ip =_packet.ReadString();
+        int port =_packet.ReadInt();
+        int spawnId =_packet.ReadInt();
 
         Client.RoomId = roomId;
         //Start listening to room
@@ -123,43 +123,46 @@ public class ClientHandle : MonoBehaviour
     #endregion
 
     #region Player packages
-    public static void PlayerMovement(Guid id, Packet packet)
+    public static void PlayerMovement(Guid _clientId, Packet _packet)
     {
-        Vector3 position = packet.ReadVector3();
-        Quaternion rotation = packet.ReadQuaternion();
-        Vector3 velocity = packet.ReadVector3();
-        Vector3 angular_velocity = packet.ReadVector3();
-        float tick_number = packet.ReadFloat();
+        Vector3 position = _packet.ReadVector3();
+        Quaternion rotation = _packet.ReadQuaternion();
+        Vector3 velocity = _packet.ReadVector3();
+        Vector3 angular_velocity = _packet.ReadVector3();
+        float tick_number = _packet.ReadFloat();
 
-        GameManager.instance.PlayerMovement(id, position, rotation, velocity, angular_velocity, tick_number);
+        GameManager.instance.PlayerMovement(_clientId, position, rotation, velocity, angular_velocity, tick_number);
     }
 
-    public static void PlayerCorrection(Guid id, Packet packet)
+    public static void PlayerCorrection(Guid _roomId, Packet _packet)
     {
-        Vector3 position = packet.ReadVector3();
-        Quaternion rotation = packet.ReadQuaternion();
-        Vector3 velocity = packet.ReadVector3();
-        int simulationFrame = packet.ReadInt();
+        Guid clientId = _packet.ReadGuid();
+        Vector3 position =_packet.ReadVector3();
+        Quaternion rotation =_packet.ReadQuaternion();
+        Vector3 velocity =_packet.ReadVector3();
+        int simulationFrame =_packet.ReadInt();
 
-        GameManager.instance.PlayerCorrection(id, new SimulationState(position, rotation, velocity, simulationFrame));
+        GameManager.instance.PlayerCorrection(clientId, new SimulationState(position, rotation, velocity, simulationFrame));
     }
 
-    public static void PlayerAnim(Guid id, Packet packet)
+    public static void PlayerAnim(Guid id, Packet _packet)
     {
-        int animNum = packet.ReadInt();
+        int animNum =_packet.ReadInt();
         GameManager.instance.PlayerAnim(id, animNum);
     }
 
-    public static void PlayerRespawn(Guid id, Packet packet)
+    public static void PlayerRespawn(Guid _roomId, Packet _packet)
     {
-        int checkPointNum = packet.ReadInt();
-        GameManager.instance.PlayerRespawn(id, checkPointNum);
+        Guid clientId = _packet.ReadGuid();
+        int checkPointNum =_packet.ReadInt();
+        GameManager.instance.PlayerRespawn(clientId, checkPointNum);
     }
 
-    public static void PlayerFinish(Guid id, Packet packet)
+    public static void PlayerFinish(Guid _roomId, Packet _packet)
     {
-        float time = packet.ReadFloat();
-        GameManager.instance.PlayerFinish(id, time);
+        Guid clientId = _packet.ReadGuid();
+        float time =_packet.ReadFloat();
+        GameManager.instance.PlayerFinish(clientId, time);
     }
     #endregion
 }

@@ -78,6 +78,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c792f5fcf47efa4c9f5203d084d3ebc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  grounded: 0
+  Pelvis: {fileID: 4579211932648808390}
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 256
+  move: {x: 0, y: 0, z: 0}
+  groundNormal: {x: 0, y: 0, z: 0}
 --- !u!114 &4801331609621353086
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -101,7 +108,6 @@ MonoBehaviour:
   diveCooldown: 0.5
   dashforce: 10
   dashTime: 0.5
-  move: {x: 0, y: 0, z: 0}
   checkDistance: 1.52
   checkDistanceLayed: 1.07
   getUpTime: 0.4
@@ -111,9 +117,15 @@ MonoBehaviour:
   grounded: 0
   ragdolled: 0
   getUp: 0
+  isRunning: 0
   jumping: 0
   diving: 0
   dashing: 0
+  currentAnim: 0
+  jumpPs: {fileID: 0}
+  bumpPs: {fileID: 0}
+  respawnPs: {fileID: 0}
+  debug: 0
 --- !u!1 &6648097612396632749
 GameObject:
   m_ObjectHideFlags: 0
@@ -137,13 +149,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6648097612396632749}
-  m_LocalRotation: {x: 0.5, y: -0.5, z: -0.5, w: 0.5}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.6602069, z: -0.00000002351452}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 4571009130711733662}
   m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 0, y: -90, z: -90}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7456993706689590365
 GameObject:
   m_ObjectHideFlags: 0

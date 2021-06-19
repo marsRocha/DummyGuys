@@ -46,7 +46,7 @@ public class ServerHandle
         //Add player to room and return their spawn id
         int spawnId = foundRoom.AddPlayer(_client.Id, _client.Username);
 
-        _client.RoomID = foundRoom.Id;
+        _client.RoomID = foundRoom.RoomId;
         //Let the client know the rooms multicast info
         ServerSend.JoinedRoom(_client.Id, _client.RoomID, foundRoom.MulticastIP.ToString(), foundRoom.MulticastPort, spawnId);
 
@@ -54,7 +54,7 @@ public class ServerHandle
         foreach (ClientInfo p in foundRoom.ClientsInfo.Values)
         {
             if(p.id != _client.Id)
-                ServerSend.PlayerInfo(_client.Id, foundRoom.Id, p);
+                ServerSend.PlayerInfo(_client.Id, foundRoom.RoomId, p);
         }
     }
 

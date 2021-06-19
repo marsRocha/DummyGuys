@@ -1047,12 +1047,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 0.5
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -2562,8 +2562,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -168.7}
-  m_SizeDelta: {x: 274.05, y: 50}
+  m_AnchoredPosition: {x: 0, y: -446}
+  m_SizeDelta: {x: 695.1, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1089220023
 MonoBehaviour:
@@ -2612,8 +2612,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 85.29
+  m_fontSizeBase: 85.29
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -3825,8 +3825,8 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 1c11622aafa0a444b8b73839d41ab2a9, type: 3}
   m_PrefabInstance: {fileID: 1502555866}
   m_PrefabAsset: {fileID: 0}
---- !u!64 &1849659683
-MeshCollider:
+--- !u!65 &1849659683
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -3835,10 +3835,9 @@ MeshCollider:
   m_Material: {fileID: 13400000, guid: 7893f502cfc9b8044b1913b8931d6b72, type: 2}
   m_IsTrigger: 0
   m_Enabled: 1
-  serializedVersion: 4
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4068373912626513877, guid: 1c11622aafa0a444b8b73839d41ab2a9, type: 3}
+  serializedVersion: 2
+  m_Size: {x: 49.066242, y: 0.40375626, z: 61.765182}
+  m_Center: {x: 0, y: -0.24764723, z: 0}
 --- !u!65 &1849659686
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4178,7 +4177,7 @@ MonoBehaviour:
   mapController: {fileID: 2095060470}
   totalPlayers: 0
   RemotePlayerObj: {fileID: 459462952003508773, guid: b198930bd21cbf94b973efb2c762b4d6, type: 3}
-  LocalPlayerObj: {fileID: 8803182987063549214, guid: 385e1dbb387444f43a80988338af31c7, type: 3}
+  LocalPlayerObj: {fileID: 8803182987063549214, guid: ac2625a78b38771429814bdd2d635e0e, type: 3}
   isRunning: 0
   debug: 1
 --- !u!4 &2071899179

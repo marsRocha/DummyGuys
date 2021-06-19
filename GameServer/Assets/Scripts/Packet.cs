@@ -192,14 +192,14 @@ public class Packet : IDisposable
 
     public void Write(Vector3 _value)
     {
-        Write(_value.z);
+        Write(_value.x);
         Write(_value.y);
         Write(_value.z);
     }
 
     public void Write(Quaternion _value)
     {
-        Write(_value.z);
+        Write(_value.x);
         Write(_value.y);
         Write(_value.z);
         Write(_value.w);

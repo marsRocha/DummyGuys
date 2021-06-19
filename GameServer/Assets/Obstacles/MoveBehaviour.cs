@@ -8,14 +8,12 @@ public class MoveBehaviour : MonoBehaviour
     public float speed, offset;
     private Vector3 initialPos;
     public Vector3[] points;
-    private int currentIndex;
 
     // Start is called before the first frame update
     void Start()
     {
         initialPos = transform.position;
         rb = GetComponent<Rigidbody>();
-        currentIndex = 0;
     }
 
     void FixedUpdate()

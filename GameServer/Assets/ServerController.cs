@@ -21,7 +21,7 @@ public class ServerController : MonoBehaviour
     void Start()
     {
         QualitySettings.vSyncCount = 0;
-        Application.targetFrameRate = 30;
+        Application.targetFrameRate = 32;
 
         //#if UNITY_EDITOR
         Debug.Log("Build the project to start the server!");

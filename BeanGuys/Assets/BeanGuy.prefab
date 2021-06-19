@@ -29475,6 +29475,36 @@ Transform:
   m_Father: {fileID: 2249159478379199144}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1903263135786620283
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6868411653412511082}
+  m_Layer: 12
+  m_Name: Pelvis
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6868411653412511082
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1903263135786620283}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.6602069, z: -0.00000002351452}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 8169777000586610596}
+  m_RootOrder: 7
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2093048265549594280
 GameObject:
   m_ObjectHideFlags: 0
@@ -30499,7 +30529,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &9048664612961563282
 Transform:
   m_ObjectHideFlags: 0
@@ -30991,7 +31021,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8803182987063549214}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.49894333, y: 0, z: -1.9670391}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 586382908}
@@ -31001,6 +31031,7 @@ Transform:
   - {fileID: 6529609792796495936}
   - {fileID: 1554893802249603754}
   - {fileID: 8837324619477186358}
+  - {fileID: 6868411653412511082}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -31042,7 +31073,7 @@ Animator:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8803182987063549214}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Avatar: {fileID: 9000000, guid: d00d86bed268ded4d9c2206907721d4a, type: 3}
   m_Controller: {fileID: 9100000, guid: 4906c3687cd1b2a40aa6950c23d0d681, type: 2}
   m_CullingMode: 0
@@ -31065,9 +31096,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31522637a163b4e4691178b251238237, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  client_correction_smoothing: 0
   isOnline: 1
   isRunning: 0
+  grounded: 0
+  Pelvis: {fileID: 6868411653412511082}
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 256
+  move: {x: 0, y: 0, z: 0}
+  groundNormal: {x: 0, y: 0, z: 0}
 --- !u!114 &8803182987063549212
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -31084,7 +31121,6 @@ MonoBehaviour:
   sideways: Vertical
   jumpKey: 32
   diveKey: 101
-  controllable: 1
 --- !u!114 &723904214091168454
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -31097,8 +31133,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 754e10c5dcedcf943b00eb2fe1ded06d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  camera: {fileID: 0}
-  pelvis: {fileID: 7968100367250900722}
+  pelvis: {fileID: 6868411653412511082}
   gravityForce: 15
   moveSpeed: 300
   turnSpeed: 10
@@ -31122,6 +31157,7 @@ MonoBehaviour:
   jumping: 0
   diving: 0
   dashing: 0
+  currentAnim: 0
   jumpPs: {fileID: 520859470950211610}
   bumpPs: {fileID: 520859469601472655}
   respawnPs: {fileID: 586382910}
@@ -31133,7 +31169,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8803182987063549214}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 81338ed7e3b2a594299e942542c10d1f, type: 3}
   m_Name: 

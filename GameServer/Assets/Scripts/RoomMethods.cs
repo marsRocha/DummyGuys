@@ -6,40 +6,41 @@ public partial class Room
     #region Game Related
     public void StartGame()
     {
-        using (Packet packet = new Packet((int)ServerPackets.startGame))
+        using (Packet _packet = new Packet((int)ServerPackets.startGame))
         {
-            packet.Write(Id);
+            _packet.Write(RoomId);
 
-            MulticastUDPData(packet);
+            MulticastUDPData(_packet);
         }
         RoomState = RoomState.playing;
 
-        Debug.Log($"Game has started on Room[{Id}]");
+        Debug.Log($"Game has started on Room[{RoomId}]");
         RoomScene.StartRace();
     }
 
     public void EndGame()
     {
-        using (Packet packet = new Packet((int)ServerPackets.endGame))
+        using (Packet _packet = new Packet((int)ServerPackets.endGame))
         {
-            packet.Write(Id);
+            _packet.Write(RoomId);
 
-            MulticastUDPData(packet);
+            MulticastUDPData(_packet);
         }
         RoomState = RoomState.closing;
 
-        Debug.Log($"Game has finished on Room[{Id}]. Closing room");
+        Debug.Log($"Game has finished on Room[{RoomId}]. Closing room");
         CloseRoom();
     }
 
     public void Map(string _mapName)
     {
-        using (Packet packet = new Packet((int)ServerPackets.map))
+        using (Packet _packet = new Packet((int)ServerPackets.map))
         {
-            packet.Write(Id);
-            packet.Write(_mapName);
+            _packet.Write(RoomId);
 
-            MulticastUDPData(packet);
+            _packet.Write(_mapName);
+
+            MulticastUDPData(_packet);
         }
     }
     #endregion
@@ -47,19 +48,20 @@ public partial class Room
     #region Player Related
     public int AddPlayer(Guid _clientId, string _username)
     {
-        Console.WriteLine($"Player[{_clientId}] has joined the Room[{Id}]");
+        Console.WriteLine($"Player[{_clientId}] has joined the Room[{RoomId}]");
         int spawnId = GetServerPos();
         ClientsInfo.Add(_clientId, new ClientInfo(_clientId, _username, spawnId));
         UsedSpawnIds.Add(spawnId);
 
-        using (Packet packet = new Packet((int)ServerPackets.playerJoined))
+        using (Packet _packet = new Packet((int)ServerPackets.playerJoined))
         {
-            packet.Write(Id);
-            packet.Write(_clientId);
-            packet.Write(_username);
-            packet.Write(spawnId);
+            _packet.Write(RoomId);
 
-            MulticastUDPData(packet);
+            _packet.Write(_clientId);
+            _packet.Write(_username);
+            _packet.Write(spawnId);
+
+            MulticastUDPData(_packet);
         }
 
         if (ClientsInfo.Count >= Server.MaxPlayersPerLobby)
@@ -68,30 +70,34 @@ public partial class Room
         return spawnId;
     }
 
-    public void RemovePlayer(Guid id)
+    public void RemovePlayer(Guid _clientId)
     {
-        Console.WriteLine($"Player[{id}] has left the Room[{Id}]");
-        UsedSpawnIds.Remove(ClientsInfo[id].spawnId);
-        ClientsInfo.Remove(id);
+        Console.WriteLine($"Player[{_clientId}] has left the Room[{RoomId}]");
+        UsedSpawnIds.Remove(ClientsInfo[_clientId].spawnId);
+        ClientsInfo.Remove(_clientId);
 
-        using (Packet packet = new Packet((int)ServerPackets.playerLeft))
+        using (Packet _packet = new Packet((int)ServerPackets.playerLeft))
         {
-            packet.Write(id);
+            _packet.Write(RoomId);
 
-            MulticastUDPData(packet);
+            _packet.Write(_clientId);
+
+            MulticastUDPData(_packet);
         }
 
         if (ClientsInfo.Count < Server.MaxPlayersPerLobby && RoomState == RoomState.full)
             RoomState = RoomState.looking;
     }
 
-    public void CorrectPlayer(Guid id, SimulationState _simulationState)
+    public void CorrectPlayer(Guid _clientId, SimulationState _simulationState)
     {
         using (Packet _packet = new Packet((int)ServerPackets.playerCorrection))
         {
-            _packet.Write(id);
+            _packet.Write(RoomId);
 
+            _packet.Write(_clientId);
             _packet.Write(_simulationState.position);
+            _packet.Write(_simulationState.rotation);
             _packet.Write(_simulationState.velocity);
             _packet.Write(_simulationState.simulationFrame);
 
@@ -99,25 +105,29 @@ public partial class Room
         }
     }
 
-    public void PlayerRespawn(Guid _id, float _game_clock)
+    public void PlayerRespawn(Guid _clientId, int _checkPointNum)
     {
-        using (Packet packet = new Packet((int)ServerPackets.playerRespawn))
+        using (Packet _packet = new Packet((int)ServerPackets.playerRespawn))
         {
-            packet.Write(_id);
-            packet.Write(_game_clock);
+            _packet.Write(RoomId);
 
-            MulticastUDPData(packet);
+            _packet.Write(_clientId);
+            _packet.Write(_checkPointNum);
+
+            MulticastUDPData(_packet);
         }
     }
 
-    public void PlayerFinish(Guid _id, float _game_clock)
+    public void PlayerFinish(Guid _clientId, float _gameClock)
     {
-        using (Packet packet = new Packet((int)ServerPackets.playerFinish))
+        using (Packet _packet = new Packet((int)ServerPackets.playerFinish))
         {
-            packet.Write(_id);
-            packet.Write(_game_clock);
+            _packet.Write(RoomId);
 
-            MulticastUDPData(packet);
+            _packet.Write(_clientId);
+            _packet.Write(_gameClock);
+
+            MulticastUDPData(_packet);
         }
     }
     #endregion

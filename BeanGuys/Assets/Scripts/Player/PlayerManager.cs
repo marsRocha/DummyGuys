@@ -29,6 +29,12 @@ public class PlayerManager : MonoBehaviour
     public bool isOnline;
     public bool isRunning;
 
+    [Header("Movement")]
+    public bool grounded;
+    public Transform Pelvis;
+    public LayerMask collisionMask;
+    public Vector3 move, groundNormal;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -45,7 +51,7 @@ public class PlayerManager : MonoBehaviour
         simStateCache = new SimulationState[CACHE_SIZE];
         inputStateCache = new ClientInputState[CACHE_SIZE];
 
-        playerController.StartController();
+        //playerController.StartController();
     }
 
     // Update is called once per frame
@@ -54,7 +60,7 @@ public class PlayerManager : MonoBehaviour
         if (isRunning)
         {
             playerInput.MovementInput();
-            playerController.UpdateController();
+            //playerController.UpdateController();
         }
     }
 
@@ -65,10 +71,11 @@ public class PlayerManager : MonoBehaviour
             currentInputState = new ClientInputState(MapController.instance.Game_Clock, simulationFrame, playerInput.GetInputs(), playerCamera.transform.rotation);
 
             //Update player's movement
-            playerController.FixedUpdateController(currentInputState);
+            //playerController.FixedUpdateController(currentInputState);
+            ProcessInput(currentInputState);
 
-            ClientSend.PlayerMovement(currentInputState, rb.position, rb.rotation);
-            ClientSend.PlayerMovement(rb.position, rb.rotation, rb.velocity, rb.angularVelocity, currentInputState.Tick);
+            ClientSend.PlayerMovement(currentInputState, transform.position, transform.rotation);
+            ClientSend.PlayerMovement(transform.position, transform.rotation, rb.velocity, rb.angularVelocity, currentInputState.Tick);
 
             /*if (lastAnimSent != pController.currentAnim)
             {
@@ -80,7 +87,7 @@ public class PlayerManager : MonoBehaviour
             if (serverSimulationState != null) Reconciliate();
 
             // Determine current simulationState
-            SimulationState simulationState = new SimulationState(rb.position, rb.rotation, rb.velocity, currentInputState.SimulationFrame);
+            SimulationState simulationState = new SimulationState(transform.position, transform.rotation, rb.velocity, currentInputState.SimulationFrame);
 
             int cacheSlot = simulationFrame % CACHE_SIZE;
 
@@ -98,12 +105,86 @@ public class PlayerManager : MonoBehaviour
         }
     }
 
+    #region Movement
+    private void ProcessInput(ClientInputState currentInputs)
+    {
+        GroundCheck();
+        Movement(currentInputs);
+        CounterMovement();
+    }
+
+    void GroundCheck()
+    {
+        RaycastHit hit;
+        Physics.Raycast(Pelvis.position, Vector3.down, out hit, -0.735f + 1.52f, collisionMask);
+        if (hit.collider)
+        {
+            grounded = true;
+            groundNormal = hit.normal;
+        }
+        else
+        {
+            grounded = false;
+            groundNormal = Vector3.zero;
+        }
+    }
+    private void Movement(ClientInputState currentInputs)
+    {
+        if (grounded)
+        {
+            move = new Vector3(currentInputs.HorizontalAxis, 0f, currentInputs.VerticalAxis);
+
+            if (move.sqrMagnitude > 0.1f)
+            {
+                //Camera direction
+                move = ToCameraSpace(currentInputs, move);
+
+                //For better movement on slopes/ramps
+                move = Vector3.ProjectOnPlane(move, groundNormal);
+
+                move.Normalize();
+                move *= 300 * Time.fixedDeltaTime;
+                Debug.DrawLine(this.transform.position, this.transform.position + move, Color.yellow, 1f);
+
+                rb.AddForce(move, ForceMode.VelocityChange);
+            }
+
+            //Player rotation
+            if (move.x != 0f || move.z != 0f)
+            {
+                //Character rotation
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(transform.forward + new Vector3(move.x, 0f, move.z)), 10 * Time.fixedDeltaTime);
+            }
+        }
+    }
+    private Vector3 ToCameraSpace(ClientInputState currentInputs, Vector3 moveVector)
+    {
+        Vector3 camFoward = (currentInputs.LookingRotation * Vector3.forward);
+        Vector3 camRight = (currentInputs.LookingRotation * Vector3.right);
+
+        camFoward.y = 0;
+        camRight.y = 0;
+
+        camFoward.Normalize();
+        camRight.Normalize();
+
+        Vector3 moveDirection = (camFoward * moveVector.z + camRight * moveVector.x);
+
+        return moveDirection;
+    }
+    private void CounterMovement()
+    {
+        rb.AddForce(Vector3.right * -rb.velocity.x, ForceMode.VelocityChange);
+        rb.AddForce(Vector3.forward * -rb.velocity.z, ForceMode.VelocityChange);
+    }
+    #endregion
+
     public void Respawn( Vector3 position, Quaternion rotation)
     {
         rb.velocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
-        rb.position = position;
-        rb.rotation = rotation;
+        transform.position = position;
+        transform.rotation = rotation;
 
         playerController.Respawn();
     }
@@ -117,7 +198,6 @@ public class PlayerManager : MonoBehaviour
     }
 
     #region Client-Server Reconciliation
-
     public void Reconciliate()
     {
         // Don't reconciliate on old states.
@@ -149,113 +229,55 @@ public class PlayerManager : MonoBehaviour
             return;
         }
 
-        //  The amount of distance in units that we will allow the client's prediction to drift from it's position on the server, before a correction is necessary. 
-        float tolerance = 0.0000001f;
+        #region Correction
 
-        #region Check Position
+        // Show warning about misprediction
+        Debug.LogWarning("Client misprediction at frame " + serverSimulationState.simulationFrame + ".");
 
-        // Find the difference between the vector's values. 
-        Vector3 positionOffset = cachedSimulationState.position - serverSimulationState.position;
+        // Set the player's atributes(pos, rot, vel) to match the server's state. 
+        CorrectPlayerSimulationState(serverSimulationState);
 
-        // A correction is necessary.
-        if (positionOffset.sqrMagnitude > tolerance)
+        // Declare the rewindFrame as we're about to resimulate our cached inputs. 
+        int rewindFrame = serverSimulationState.simulationFrame;
+
+        // Loop through and apply cached inputs until we're caught up to our current simulation frame. 
+        while (rewindFrame < simulationFrame)
         {
-            // Show warning about misprediction
-            Debug.LogWarning("Client misprediction of position with a difference of " + positionOffset + " at frame " + serverSimulationState.simulationFrame + ".");
+            // Determine the cache index 
+            int rewindCacheIndex = rewindFrame % CACHE_SIZE;
 
-            // Set the player's atributes(pos, rot, vel) to match the server's state. 
-            CorrectPlayerSimulationState(serverSimulationState);
+            // Obtain the cached input and simulation states.
+            ClientInputState rewindCachedInputState = inputStateCache[rewindCacheIndex];
+            SimulationState rewindCachedSimulationState = simStateCache[rewindCacheIndex];
 
-            // Declare the rewindFrame as we're about to resimulate our cached inputs. 
-            int rewindFrame = serverSimulationState.simulationFrame;
-
-            // Loop through and apply cached inputs until we're caught up to our current simulation frame. 
-            while (rewindFrame < simulationFrame)
+            // If there's no state to simulate, for whatever reason, increment the rewindFrame and continue.
+            if (rewindCachedInputState == null || rewindCachedSimulationState == null)
             {
-                // Determine the cache index 
-                int rewindCacheIndex = rewindFrame % CACHE_SIZE;
-
-                // Obtain the cached input and simulation states.
-                ClientInputState rewindCachedInputState = inputStateCache[rewindCacheIndex];
-                SimulationState rewindCachedSimulationState = simStateCache[rewindCacheIndex];
-
-                // If there's no state to simulate, for whatever reason, increment the rewindFrame and continue.
-                if (rewindCachedInputState == null || rewindCachedSimulationState == null)
-                {
-                    ++rewindFrame;
-                    continue;
-                }
-
-                // Process the cached inputs. 
-                playerController.FixedUpdateController(rewindCachedInputState);
-
-                // Replace the simulationStateCache index with the new value.
-                SimulationState rewoundSimulationState = new SimulationState(rb.position, rb.rotation, rb.velocity, rewindFrame);
-                simStateCache[rewindCacheIndex] = rewoundSimulationState;
-
-                // Increase the amount of frames that we've rewound.
                 ++rewindFrame;
+                continue;
             }
+
+            // Process the cached inputs. --------------------------------------------------- CURRENTLY USING PROCESSINPUT()
+            //playerController.FixedUpdateController(rewindCachedInputState);
+            ProcessInput(rewindCachedInputState);
+
+            // Replace the simulationStateCache index with the new value.
+            SimulationState rewoundSimulationState = new SimulationState(transform.position, transform.rotation, rb.velocity, rewindFrame);
+            simStateCache[rewindCacheIndex] = rewoundSimulationState;
+
+            // Increase the amount of frames that we've rewound.
+            ++rewindFrame;
         }
-        #endregion
-
-        #region Check Rotation
-
-        // Find the difference between the quaternion's values. 
-        float roationOffset = 1 - Quaternion.Dot(cachedSimulationState.rotation, serverSimulationState.rotation);
-
-        // A correction is necessary.
-        if (roationOffset > tolerance)
-        {
-            // Show warning about misprediction
-            Debug.LogWarning("Client misprediction of rotation with a difference of " + positionOffset + " at frame " + serverSimulationState.simulationFrame + ".");
-
-            // Set the player's atributes(pos, rot, vel) to match the server's state. 
-            CorrectPlayerSimulationState(serverSimulationState);
-
-            // Declare the rewindFrame as we're about to resimulate our cached inputs. 
-            int rewindFrame = serverSimulationState.simulationFrame;
-
-            // Loop through and apply cached inputs until we're caught up to our current simulation frame. 
-            while (rewindFrame < simulationFrame)
-            {
-                // Determine the cache index 
-                int rewindCacheIndex = rewindFrame % CACHE_SIZE;
-
-                // Obtain the cached input and simulation states.
-                ClientInputState rewindCachedInputState = inputStateCache[rewindCacheIndex];
-                SimulationState rewindCachedSimulationState = simStateCache[rewindCacheIndex];
-
-                // If there's no state to simulate, for whatever reason, increment the rewindFrame and continue.
-                if (rewindCachedInputState == null || rewindCachedSimulationState == null)
-                {
-                    ++rewindFrame;
-                    continue;
-                }
-
-                // Process the cached inputs. 
-                playerController.FixedUpdateController(rewindCachedInputState);
-
-                // Replace the simulationStateCache index with the new value.
-                SimulationState rewoundSimulationState = new SimulationState(rb.position, rb.rotation, rb.velocity, rewindFrame);
-                simStateCache[rewindCacheIndex] = rewoundSimulationState;
-
-                // Increase the amount of frames that we've rewound.
-                ++rewindFrame;
-            }
-        }
-
         #endregion
 
         // Once we're complete, update the lastCorrectedFrame to match.
-        // NOTE: Set this even if there's no correction to be made. 
         lastCorrectedFrame = serverSimulationState.simulationFrame;
     }
 
     private void CorrectPlayerSimulationState(SimulationState state)
     {
-        rb.position = state.position;
-        rb.rotation = state.rotation;
+        transform.position = state.position;
+        transform.rotation = state.rotation;
         rb.velocity = state.velocity;
     }
     #endregion

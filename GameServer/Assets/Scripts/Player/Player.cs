@@ -18,6 +18,14 @@ public class Player : MonoBehaviour
     //  The amount of distance in units that we will allow the client's prediction to drift from it's position on the server, before a correction is necessary. 
     private float tolerance = 0.0000001f;
 
+
+    [Header("Movement")]
+    public bool grounded;
+    public Transform Pelvis;
+    public LayerMask collisionMask;
+    public Vector3 move, groundNormal;
+    private PhysicsScene physicsScene;
+
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -25,11 +33,12 @@ public class Player : MonoBehaviour
         //rb.isKinematic = true;
 
         playerController = GetComponent<PlayerController>();
-        playerController.StartController();
+        //playerController.StartController();
 
         lastFrame = 0;
         clientInputStates = new Queue<ClientState>();
 
+        physicsScene = gameObject.scene.GetPhysicsScene();
     }
 
     public void Initialize(Guid _id)
@@ -44,6 +53,8 @@ public class Player : MonoBehaviour
 
     public void ProcessInputs()
     {
+        currentInputState = null;
+
         // Obtain CharacterInputState's from the queue. 
         while (clientInputStates.Count > 0 && (currentInputState = clientInputStates.Dequeue()) != null)
         {
@@ -54,16 +65,19 @@ public class Player : MonoBehaviour
             lastFrame = currentInputState.SimulationFrame;
 
             // Process the input.
-            playerController.FixedUpdateController(currentInputState);
+            //playerController.FixedUpdateController(currentInputState);
+            ProcessInput(currentInputState);
+
 
             // Obtain the current SimulationState of the player's object.
-            SimulationState state = new SimulationState(rb.position, rb.rotation, rb.velocity, currentInputState.SimulationFrame);
+            SimulationState state = new SimulationState(transform.position, transform.rotation, rb.velocity, currentInputState.SimulationFrame);
 
             //Check if received state is correct
-            //CheckSimulationState(state);
+            CheckSimulationState(state);
         }
     }
 
+    #region Client-Server Reconciliation
     public void CheckSimulationState(SimulationState serverSimulationState)
     {
         // If there's missing cache data for either input or simulation 
@@ -88,7 +102,7 @@ public class Player : MonoBehaviour
 
         //CHECK ROTATION
         // Find the difference between the quaternion's values. 
-        float roationOffset = 1 - Quaternion.Dot(currentInputState.rotation, serverSimulationState.rotation);
+        /*float roationOffset = 1 - Quaternion.Dot(currentInputState.rotation, serverSimulationState.rotation);
 
         // A correction is necessary.
         if (roationOffset > tolerance)
@@ -96,25 +110,98 @@ public class Player : MonoBehaviour
             Debug.LogWarning("Client misprediction of rotation with a difference of " + positionOffset + " at frame " + serverSimulationState.simulationFrame + ".");
             // Set the player's atributes(pos, rot, vel) to match the server's state. 
             CorrectPlayerSimulationState(serverSimulationState);
-        }
+        }*/
     }
 
     public void CorrectPlayerSimulationState(SimulationState state)
     {
-        //Server.Rooms[Server.Clients[id].RoomID].CorrectPlayer(id, state);
+        Server.Rooms[Server.Clients[id].RoomID].CorrectPlayer(id, state);
     }
+    #endregion
+
     public void ReceivedClientState(ClientState _inputState)
     {
         clientInputStates.Enqueue(_inputState);
-
-        //transform.position = _inputState.position;
-        //Debug.Log(transform.position);
     }
 
     public void Respawn(Vector3 _position, Quaternion _rotation)
     {
 
     }
+
+    #region Movement
+    private void ProcessInput(ClientState currentInputs)
+    {
+        GroundCheck();
+        Movement(currentInputs);
+        CounterMovement();
+    }
+
+    void GroundCheck()
+    {
+        RaycastHit hit;
+        physicsScene.Raycast(Pelvis.position, Vector3.down, out hit, -0.735f + 1.52f, collisionMask);
+        if (hit.collider)
+        {
+            grounded = true;
+            groundNormal = hit.normal;
+        }
+        else
+        {
+            grounded = false;
+            groundNormal = Vector3.zero;
+        }
+    }
+    private void Movement(ClientState currentInputs)
+    {
+        if (grounded)
+        {
+            move = new Vector3(currentInputs.HorizontalAxis, 0f, currentInputs.VerticalAxis);
+
+            if (move.sqrMagnitude > 0.1f)
+            {
+                //Camera direction
+                move = ToCameraSpace(currentInputs, move);
+
+                //For better movement on slopes/ramps
+                move = Vector3.ProjectOnPlane(move, groundNormal);
+
+                move.Normalize();
+                move *= 300 * Time.fixedDeltaTime;
+                Debug.DrawLine(this.transform.position, this.transform.position + move, Color.yellow, 1f);
+
+                rb.AddForce(move, ForceMode.VelocityChange);
+            }
+
+            //Player rotation
+            if (move.x != 0f || move.z != 0f)
+            {
+                //Character rotation
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(transform.forward + new Vector3(move.x, 0f, move.z)), 10 * Time.fixedDeltaTime);
+            }
+        }
+    }
+    private Vector3 ToCameraSpace(ClientState currentInputs, Vector3 moveVector)
+    {
+        Vector3 camFoward = (currentInputs.LookingRotation * Vector3.forward);
+        Vector3 camRight = (currentInputs.LookingRotation * Vector3.right);
+
+        camFoward.y = 0;
+        camRight.y = 0;
+
+        camFoward.Normalize();
+        camRight.Normalize();
+
+        Vector3 moveDirection = (camFoward * moveVector.z + camRight * moveVector.x);
+
+        return moveDirection;
+    }
+    private void CounterMovement()
+    {
+        rb.AddForce(Vector3.right * -rb.velocity.x, ForceMode.VelocityChange);
+        rb.AddForce(Vector3.forward * -rb.velocity.z, ForceMode.VelocityChange);
+    }
+    #endregion
 }
 
 public class SimulationState

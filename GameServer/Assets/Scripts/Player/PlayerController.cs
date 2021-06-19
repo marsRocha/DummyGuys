@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UIElements;
 
 public class PlayerController : MonoBehaviour
 {
@@ -6,7 +9,6 @@ public class PlayerController : MonoBehaviour
     public Transform pelvis;
     private CapsuleCollider cp;
     private Rigidbody rb;
-    private PhysicsScene physicsScene;
 
     [Header("Movement Variables")]
     public float gravityForce;
@@ -14,8 +16,8 @@ public class PlayerController : MonoBehaviour
     public float jumpForce, jumpCooldown;
     public float diveForwardForce, diveUpForce, diveCooldown;
     public float dashforce, dashTime;
-    public Vector3 move;
-    private ClientState inputs;
+    private Vector3 move;
+    private ClientState currentInputs;
 
     [Header("Collision Variables")]
     public float checkDistance;
@@ -24,13 +26,26 @@ public class PlayerController : MonoBehaviour
     public LayerMask collisionMask;
     private Vector3 colDir;
     private Vector3 groundNormal;
+    private float onAirTime;
 
     [Header("States")]
     public bool grounded;
     public bool ragdolled, getUp;
+    //[HideInInspector]
+    public bool isRunning = false;
+    //[HideInInspector]
     public bool jumping = false, diving = false, dashing = false;
     private bool readyToJump = true, readyToDive = true;
     private bool dashTriggered;
+    public animNum currentAnim;
+
+    [Header("Particle Systems")]
+    public ParticleSystem jumpPs;
+    public ParticleSystem bumpPs;
+    public ParticleSystem respawnPs;
+
+    [Header("DEBUG")]
+    public bool debug;
 
     // Start is called before the first frame update
     public void StartController()
@@ -38,12 +53,12 @@ public class PlayerController : MonoBehaviour
         move = new Vector3();
         cp = GetComponent<CapsuleCollider>();
         rb = GetComponent<Rigidbody>();
-        physicsScene = gameObject.scene.GetPhysicsScene();
+        currentAnim = animNum.idle;
     }
 
-    public void FixedUpdateController(ClientState _inputs)
+    public void FixedUpdateController(ClientState currentInput)
     {
-        inputs = _inputs;
+        this.currentInputs = currentInput;
 
         GroundChecking();
 
@@ -59,8 +74,8 @@ public class PlayerController : MonoBehaviour
     #region Movement
     private Vector3 ToCameraSpace(Vector3 moveVector)
     {
-        Vector3 camFoward = (inputs.LookingRotation * Vector3.forward);
-        Vector3 camRight = (inputs.LookingRotation * Vector3.right);
+        Vector3 camFoward = (currentInputs.LookingRotation * Vector3.forward);
+        Vector3 camRight = (currentInputs.LookingRotation * Vector3.right);
 
         camFoward.y = 0;
         camRight.y = 0;
@@ -81,6 +96,19 @@ public class PlayerController : MonoBehaviour
         Walk();
 
         CounterMovement();
+
+        //Check animation
+        if (move.magnitude != 0)
+            currentAnim = animNum.run;
+        else
+            currentAnim = animNum.idle;
+        if (jumping)
+            currentAnim = animNum.jump;
+        if (diving)
+            currentAnim = animNum.dive;
+        //on GroudChecking in diving currentAnim is set to idle, 
+        //this is because invoke makes it so we have to wait that the player is up to know that we are not diving
+        //look for a better solution?
     }
 
     private void CounterMovement()
@@ -107,7 +135,7 @@ public class PlayerController : MonoBehaviour
     {
         if (!diving && !dashing)
         {
-            move = new Vector3(inputs.HorizontalAxis, 0f, inputs.VerticalAxis);
+            move = new Vector3(currentInputs.HorizontalAxis, 0f, currentInputs.VerticalAxis);
 
             if (move.sqrMagnitude > 0.1f)
             {
@@ -120,6 +148,7 @@ public class PlayerController : MonoBehaviour
 
                 move.Normalize();
                 move *= moveSpeed * Time.deltaTime;
+                Debug.DrawLine(this.transform.position, this.transform.position + move, Color.yellow, 1f);
 
                 rb.AddForce(move, ForceMode.VelocityChange);
             }
@@ -135,12 +164,14 @@ public class PlayerController : MonoBehaviour
 
     private void Jump()
     {
-        if (inputs.Jump && !jumping && grounded && !dashing && readyToJump)
+        if (currentInputs.Jump && !jumping && grounded && !dashing && readyToJump)
         {
+            //Debug.Log("Jump");
             readyToJump = false;
             rb.AddForce(Vector3.up * -rb.velocity.y, ForceMode.VelocityChange);//in case of slopes
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             jumping = true;
+            jumpPs.Play();
         }
     }
 
@@ -151,10 +182,9 @@ public class PlayerController : MonoBehaviour
 
     private void Dive()
     {
-        if (inputs.Dive && !diving && (grounded || jumping) && !dashing && readyToDive)
+        if (currentInputs.Dive && !diving && (grounded || jumping) && !dashing && readyToDive)
         {
             readyToDive = false;
-
             if (jumping)
             {
                 jumping = false;
@@ -173,6 +203,7 @@ public class PlayerController : MonoBehaviour
 
             rb.AddForce(transform.forward * diveForwardForce, ForceMode.Impulse);
             diving = true;
+            jumpPs.Play();
         }
     }
 
@@ -195,20 +226,24 @@ public class PlayerController : MonoBehaviour
 
     private void ResetDash()
     {
+        //Debug.Log("Dash has been reseted");
         dashing = false;
     }
     #endregion
 
     #region GroundChecking / Snapping
-    //TODO: MODIFIED (REMOVED RAGDOLLIN AND ANIMS)
     private void GroundChecking()
     {
         RaycastHit hit;
-        physicsScene.Raycast(pelvis.position + (diving ? transform.forward * 0.67f : Vector3.zero), Vector3.down, out hit, -0.735f + (diving ? checkDistanceLayed : checkDistance), collisionMask);
+        Physics.Raycast(pelvis.position + (diving ? transform.forward * 0.67f : Vector3.zero), Vector3.down, out hit, -0.735f + (diving ? checkDistanceLayed : checkDistance), collisionMask);
         if (hit.collider)
         {
             grounded = true;
             groundNormal = hit.normal;
+
+            /*if (onAirTime > 3f)
+                ragdollController.RagdollIn();*/
+            onAirTime = 0.0f;
 
             if (jumping)
             {
@@ -218,6 +253,7 @@ public class PlayerController : MonoBehaviour
             if (diving)
             {
                 diving = false;
+                currentAnim = animNum.idle;
                 CounterMovement();
 
                 cp.direction = 1;
@@ -231,7 +267,66 @@ public class PlayerController : MonoBehaviour
             grounded = false;
             groundNormal = Vector3.zero;
         }
+
+        if (debug)
+            Debug.DrawRay(pelvis.position + (diving ? transform.forward * 0.67f : Vector3.zero), Vector3.down * (-0.735f + (diving ? checkDistanceLayed : checkDistance)), Color.black);
     }
 
     #endregion
+
+    public void Respawn()
+    {
+        respawnPs.Play();
+    }
+
+    /*
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Bounce") && (!dashing || !dashTriggered))
+        {
+            dashTriggered = true;
+            //Debug.Log("Dashing");
+            colDir = (collision.contacts[0].point - transform.position).normalized * -1;
+
+            bumpPs.transform.position = collision.contacts[0].point;
+            bumpPs.Play();
+        }
+        // nao entrar em ragdoll quando bate num "Bounce" obj e quando salta para cima dum cushion
+        if ((collision.gameObject.layer != LayerMask.NameToLayer("Floor") && collision.gameObject.layer != LayerMask.NameToLayer("Wall")
+            && collision.gameObject.layer != LayerMask.NameToLayer("Bounce")) && ragdollController.state == RagdollState.Animated)
+        {
+            Vector3 collisionDirection = collision.contacts[0].normal;
+
+            //Debug.Log("collision force:" + collision.impulse.magnitude);
+            //Debug.Log("collision relative Velocity:" + collision.relativeVelocity.magnitude);
+            if (collision.impulse.magnitude >= ragdollController.maxForce || (jumping || diving))
+            {
+                bumpPs.transform.position = collision.contacts[0].point;
+                bumpPs.Play();
+
+                ragdollController.RagdollIn();
+                ragdollController.pelvis.AddForceAtPosition(-collisionDirection * ragdollController.impactForce, collision.contacts[0].point, ForceMode.Impulse);
+            }
+        }
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle") && ragdollController.state == RagdollState.Animated)
+        {
+
+            if (collision.impulse.magnitude >= ragdollController.maxForce || (jumping || diving))
+            {
+                Vector3 collisionDirection = collision.contacts[0].normal;
+
+                bumpPs.transform.position = collision.contacts[0].point;
+                bumpPs.Play();
+
+                ragdollController.RagdollIn();
+                ragdollController.pelvis.AddForceAtPosition(-collisionDirection * ragdollController.impactForce, collision.contacts[0].point, ForceMode.Impulse);
+            }
+        }
+    }*/
 }
+
+public enum animNum { idle, run, jump, dive };
