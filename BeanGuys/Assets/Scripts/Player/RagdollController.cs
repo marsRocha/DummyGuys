@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class RagdollController : MonoBehaviour
@@ -39,11 +38,11 @@ public class RagdollController : MonoBehaviour
     void Start()
     {
         playerController = GetComponent<PlayerController>();
-        animator = GetComponent<Animator>();
+        animator = transform.GetChild(0).GetComponent<Animator>();
         cp = GetComponent<CapsuleCollider>();
 
-        ragdollRbs = this.gameObject.GetComponentsInChildren<Rigidbody>();
-        ragdollCols = this.gameObject.GetComponentsInChildren<Collider>();
+        ragdollRbs = transform.GetChild(0).GetComponentsInChildren<Rigidbody>();
+        ragdollCols = transform.GetChild(0).GetComponentsInChildren<Collider>();
         bodyParts = new List<BodyPart>();
 
         state = RagdollState.Animated;
@@ -63,22 +62,18 @@ public class RagdollController : MonoBehaviour
     {
         canRecover += Time.deltaTime;
 
-        /*if (Input.GetKeyDown(KeyCode.Z) && state == RagdollState.Animated)
-        {
-            RagdollIn();
-        }*/
-
         //Debug.Log("pelvis velocity:" + pelvis.velocity.magnitude);
-
         if (state == RagdollState.Ragdolled && canRecover > recoverTime //&& playerController.grounded
             && pelvis.velocity.magnitude < 0.1f)
         {
             RagdollOut();
         }
 
-        //verify this on collision
-        /*if (state == RagdollState.Animated && onAirTime > 3f)
-            RagdollIn();*/
+        if (state == RagdollState.Ragdolled)
+        {
+            pelvis.isKinematic = true;
+            pelvis.transform.localPosition = Vector3.zero;
+        }
     }
 
     public void RagdollIn()
@@ -102,6 +97,8 @@ public class RagdollController : MonoBehaviour
         ActivateRagdollComponents(false);
         playerController.enabled = false;
         GetUp();
+
+        animator.transform.parent.localRotation = Quaternion.identity;
     }
 
     private void GetUp()
@@ -186,11 +183,10 @@ public class RagdollController : MonoBehaviour
     {
         Vector3 playerSpeed = this.GetComponent<Rigidbody>().velocity;
 
-        cp.isTrigger = activate;
-        this.GetComponent<Rigidbody>().isKinematic = activate;
+        //cp.isTrigger = activate;
+        GetComponent<Rigidbody>().freezeRotation = !activate;
+        GetComponent<Rigidbody>().isKinematic = activate;
 
-        //TODO: UNCOMMENT THIS
-        //playerController.camera.GetComponent<PlayerCamera>().followRagdoll = activate;
         playerController.enabled = !activate;
 
         if (activate)
@@ -220,16 +216,17 @@ public class RagdollController : MonoBehaviour
     }
 }
 
-public enum RagdollState
-{
-    Animated,    //Mecanim is fully in control
-    Ragdolled,   //Mecanim turned off, physics controls the ragdoll
-    BlendToAnim  //Mecanim in control, but LateUpdate() is used to partially blend in the last ragdolled pose
-}
-
 public class BodyPart
 {
     public Transform transform;
     public Vector3 storedPosition;
     public Quaternion storedRotation;
+}
+
+
+public enum RagdollState
+{
+    Animated,    //Mecanim is fully in control
+    Ragdolled,   //Mecanim turned off, physics controls the ragdoll
+    BlendToAnim  //Mecanim in control, but LateUpdate() is used to partially blend in the last ragdolled pose
 }

@@ -5,10 +5,14 @@ using UnityEngine;
 public class PlayerAnimatedRagdoll : MonoBehaviour
 {
     [Header("Components")]
-    public PlayerController playerController;
-    public Animator animator;
-    public CapsuleCollider cp;
-    public Rigidbody rb;
+    [SerializeField]
+    private PlayerController playerController;
+    [SerializeField]
+    private Animator animator;
+    [SerializeField]
+    private CapsuleCollider cp;
+    [SerializeField]
+    private Rigidbody rb;
 
     [Header("Ragdoll Settings")]
     [SerializeField]
@@ -65,6 +69,7 @@ public class PlayerAnimatedRagdoll : MonoBehaviour
     public void RagdollIn()
     {
         Debug.Log("RagdollIn");
+        rb.freezeRotation = false;
         canRecover = 0.0f;
         state = RagdollState.Ragdolled;
         ActivateRagdollComponents(true);
@@ -73,6 +78,7 @@ public class PlayerAnimatedRagdoll : MonoBehaviour
     private void RagdollOut()
     {
         Debug.Log("RagdollOut");
+        rb.freezeRotation = false;
         state = RagdollState.BlendToAnim;
         ActivateRagdollComponents(false);
         GetUp();
@@ -150,5 +156,24 @@ public class PlayerAnimatedRagdoll : MonoBehaviour
         //playerController.camera.GetComponent<PlayerCamera>().followRagdoll = activate;
         //playerController.ragdolled = activate;
         animator.SetBool("isRagdolled", activate);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        // nao entrar em ragdoll quando bate num "Bounce" obj e quando salta para cima dum cushion
+        if ( state == RagdollState.Animated)
+        {
+            //Debug.Log(collision.transform.name);
+            Vector3 collisionDirection = collision.contacts[0].normal;
+            //Debug.DrawRay(collision.contacts[0].point, collisionDirection * 5);
+            Debug.Log("collision force:" + collision.impulse.magnitude);
+            Debug.Log("collision relative Velocity:" + collision.relativeVelocity.magnitude);
+            if (collision.impulse.magnitude >= maxForce || (playerController.jumping || playerController.diving))
+            {
+                RagdollIn();
+                //add force
+                rb.AddForceAtPosition(-collisionDirection * impactForce, collision.contacts[0].point, ForceMode.Impulse);
+            }
+        }
     }
 }

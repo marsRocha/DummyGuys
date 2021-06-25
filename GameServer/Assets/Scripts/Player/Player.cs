@@ -6,49 +6,66 @@ public class Player : MonoBehaviour
 {
     public Guid id;
 
-    //Player components
-    private Rigidbody rb;
     private PlayerController playerController;
+    private Rigidbody rb;
+    private LogicTimer logicTimer;
+    private PhysicsScene physicsScene;
 
-    ClientState currentInputState;
+    private ClientInputState currentInputState;
 
-    //Prediction & Reconciliation
-    private float lastFrame;
-    private Queue<ClientState> clientInputStates;
+    private int lastFrame;
+    private Queue<ClientInputState> clientInputStates;
     //  The amount of distance in units that we will allow the client's prediction to drift from it's position on the server, before a correction is necessary. 
     private float tolerance = 0.0000001f;
+    public int tick = 0;
 
+    private Vector3 velocity;
+    [SerializeField]
+    private bool isRunning;
 
-    [Header("Movement")]
-    public bool grounded;
-    public Transform Pelvis;
-    public LayerMask collisionMask;
-    public Vector3 move, groundNormal;
-    private PhysicsScene physicsScene;
+    private void Awake()
+    {
+        playerController = GetComponent<PlayerController>();
+        rb = GetComponent<Rigidbody>();
+        rb.freezeRotation = true;
+        rb.isKinematic = true;
+
+        lastFrame = 0;
+        clientInputStates = new Queue<ClientInputState>();
+        velocity = Vector3.zero;
+    }
 
     private void Start()
     {
-        rb = GetComponent<Rigidbody>();
-        //rb.freezeRotation = true;
-        //rb.isKinematic = true;
-
-        playerController = GetComponent<PlayerController>();
-        //playerController.StartController();
-
-        lastFrame = 0;
-        clientInputStates = new Queue<ClientState>();
-
         physicsScene = gameObject.scene.GetPhysicsScene();
+
+        logicTimer = new LogicTimer(() => FixedTime());
+        logicTimer.Start();
+
+        playerController.StartController(logicTimer);
+    }
+
+    private void Update()
+    {
+        logicTimer.Update();
     }
 
     public void Initialize(Guid _id)
     {
-        this.id = _id;
+        id = _id;
     }
 
-    public void FixedUpdate()
+    public void StartPlayer()
     {
-        ProcessInputs();
+        isRunning = true;
+    }
+
+    public void FixedTime()
+    {
+        if (isRunning)
+        {
+            ProcessInputs();
+        }
     }
 
     public void ProcessInputs()
@@ -58,21 +75,21 @@ public class Player : MonoBehaviour
         // Obtain CharacterInputState's from the queue. 
         while (clientInputStates.Count > 0 && (currentInputState = clientInputStates.Dequeue()) != null)
         {
-            // If frames are in the past ignore them
+            // Player is sending simulation frames that are in the past, dont process them
             if (currentInputState.SimulationFrame <= lastFrame)
                 continue;
 
             lastFrame = currentInputState.SimulationFrame;
 
             // Process the input.
-            //playerController.FixedUpdateController(currentInputState);
             ProcessInput(currentInputState);
 
+            SimulatePhysics();
 
-            // Obtain the current SimulationState of the player's object.
-            SimulationState state = new SimulationState(transform.position, transform.rotation, rb.velocity, currentInputState.SimulationFrame);
+            // Obtain the current SimulationState.
+            SimulationState state = new SimulationState(transform.position, transform.rotation, velocity, currentInputState.SimulationFrame);
 
-            //Check if received state is correct
+            // Send the state back to the client.
             CheckSimulationState(state);
         }
     }
@@ -99,125 +116,46 @@ public class Player : MonoBehaviour
             // Set the player's atributes(pos, rot, vel) to match the server's state. 
             CorrectPlayerSimulationState(serverSimulationState);
         }
-
-        //CHECK ROTATION
-        // Find the difference between the quaternion's values. 
-        /*float roationOffset = 1 - Quaternion.Dot(currentInputState.rotation, serverSimulationState.rotation);
-
-        // A correction is necessary.
-        if (roationOffset > tolerance)
-        {
-            Debug.LogWarning("Client misprediction of rotation with a difference of " + positionOffset + " at frame " + serverSimulationState.simulationFrame + ".");
-            // Set the player's atributes(pos, rot, vel) to match the server's state. 
-            CorrectPlayerSimulationState(serverSimulationState);
-        }*/
     }
 
     public void CorrectPlayerSimulationState(SimulationState state)
     {
-        Server.Rooms[Server.Clients[id].RoomID].CorrectPlayer(id, state);
+        RoomSend.CorrectPlayer(Server.Clients[id].RoomID, id, state);
     }
     #endregion
 
-    public void ReceivedClientState(ClientState _inputState)
+    private void ProcessInput(ClientInputState inputs)
+    {
+        rb.isKinematic = false;
+        rb.velocity = velocity;
+
+        playerController.UpdateController(inputs);
+    }
+
+    //Due to physicsSimULATE simulating all objects inside the scene, we store the velocity of this rb and use it from there, because other players maybe change it
+    private void SimulatePhysics()
+    {
+        physicsScene.Simulate(logicTimer.FixedDeltaTime);
+
+        velocity = rb.velocity;
+        rb.isKinematic = true;
+    }
+
+    public void ReceivedClientState(ClientInputState _inputState)
     {
         clientInputStates.Enqueue(_inputState);
     }
 
     public void Respawn(Vector3 _position, Quaternion _rotation)
     {
-
+        transform.position = _position;
+        transform.rotation = _rotation;
+        velocity = Vector3.zero;
     }
 
-    #region Movement
-    private void ProcessInput(ClientState currentInputs)
+    public void Destroy()
     {
-        GroundCheck();
-        Movement(currentInputs);
-        CounterMovement();
-    }
-
-    void GroundCheck()
-    {
-        RaycastHit hit;
-        physicsScene.Raycast(Pelvis.position, Vector3.down, out hit, -0.735f + 1.52f, collisionMask);
-        if (hit.collider)
-        {
-            grounded = true;
-            groundNormal = hit.normal;
-        }
-        else
-        {
-            grounded = false;
-            groundNormal = Vector3.zero;
-        }
-    }
-    private void Movement(ClientState currentInputs)
-    {
-        if (grounded)
-        {
-            move = new Vector3(currentInputs.HorizontalAxis, 0f, currentInputs.VerticalAxis);
-
-            if (move.sqrMagnitude > 0.1f)
-            {
-                //Camera direction
-                move = ToCameraSpace(currentInputs, move);
-
-                //For better movement on slopes/ramps
-                move = Vector3.ProjectOnPlane(move, groundNormal);
-
-                move.Normalize();
-                move *= 300 * Time.fixedDeltaTime;
-                Debug.DrawLine(this.transform.position, this.transform.position + move, Color.yellow, 1f);
-
-                rb.AddForce(move, ForceMode.VelocityChange);
-            }
-
-            //Player rotation
-            if (move.x != 0f || move.z != 0f)
-            {
-                //Character rotation
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(transform.forward + new Vector3(move.x, 0f, move.z)), 10 * Time.fixedDeltaTime);
-            }
-        }
-    }
-    private Vector3 ToCameraSpace(ClientState currentInputs, Vector3 moveVector)
-    {
-        Vector3 camFoward = (currentInputs.LookingRotation * Vector3.forward);
-        Vector3 camRight = (currentInputs.LookingRotation * Vector3.right);
-
-        camFoward.y = 0;
-        camRight.y = 0;
-
-        camFoward.Normalize();
-        camRight.Normalize();
-
-        Vector3 moveDirection = (camFoward * moveVector.z + camRight * moveVector.x);
-
-        return moveDirection;
-    }
-    private void CounterMovement()
-    {
-        rb.AddForce(Vector3.right * -rb.velocity.x, ForceMode.VelocityChange);
-        rb.AddForce(Vector3.forward * -rb.velocity.z, ForceMode.VelocityChange);
-    }
-    #endregion
-}
-
-public class SimulationState
-{
-    public int simulationFrame;
-    public Vector3 position, velocity;
-    public Quaternion rotation;
-
-    public SimulationState(Vector3 position, Quaternion rotation, Vector3 velocity, int simulationFrame)
-    {
-        this.position = position;
-        this.velocity = velocity;
-        this.simulationFrame = simulationFrame;
-    }
-
-    public SimulationState()
-    {
+        logicTimer.Stop();
+        Destroy(gameObject);
     }
 }

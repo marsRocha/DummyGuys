@@ -1,69 +1,63 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UIElements;
+﻿using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
     [Header("Components")]
-    public Transform pelvis;
+    public Transform Pelvis;
     private CapsuleCollider cp;
     private Rigidbody rb;
+    private LogicTimer logicTimer;
+    private PhysicsScene physicsScene;
 
     [Header("Movement Variables")]
-    public float gravityForce;
-    public float moveSpeed, turnSpeed;
-    public float jumpForce, jumpCooldown;
-    public float diveForwardForce, diveUpForce, diveCooldown;
-    public float dashforce, dashTime;
+    private float gravityForce = 15f;
+    private float moveSpeed = 300f, turnSpeed = 10f;
+    private float jumpForce = 12f, jumpCooldown = 0.25f;
+    private float diveForwardForce = 7f, diveUpForce = 7f, diveCooldown = 0.5f;
+    private float dashforce = 10f, dashTime = 0.5f;
     private Vector3 move;
-    private ClientState currentInputs;
+    private float jumpTime, diveTime;
+    private ClientInputState currentInputs;
 
     [Header("Collision Variables")]
-    public float checkDistance;
-    public float checkDistanceLayed;
-    public float getUpTime;
+    private float checkDistance = 1.52f;
+    private float checkDistanceLayed = 1.07f;
+    private float getUpDelay = 0.4f, getUpTime;
     public LayerMask collisionMask;
     private Vector3 colDir;
     private Vector3 groundNormal;
-    private float onAirTime;
 
     [Header("States")]
     public bool grounded;
     public bool ragdolled, getUp;
-    //[HideInInspector]
     public bool isRunning = false;
-    //[HideInInspector]
     public bool jumping = false, diving = false, dashing = false;
     private bool readyToJump = true, readyToDive = true;
     private bool dashTriggered;
-    public animNum currentAnim;
 
-    [Header("Particle Systems")]
-    public ParticleSystem jumpPs;
-    public ParticleSystem bumpPs;
-    public ParticleSystem respawnPs;
-
-    [Header("DEBUG")]
-    public bool debug;
-
-    // Start is called before the first frame update
-    public void StartController()
+    public void StartController(LogicTimer _logicTimer)
     {
         move = new Vector3();
         cp = GetComponent<CapsuleCollider>();
         rb = GetComponent<Rigidbody>();
-        currentAnim = animNum.idle;
+        logicTimer = _logicTimer;
+
+        physicsScene = gameObject.scene.GetPhysicsScene();
     }
 
-    public void FixedUpdateController(ClientState currentInput)
+    //Used in fixed update
+    public void UpdateController(ClientInputState currentInput)
     {
         this.currentInputs = currentInput;
 
         GroundChecking();
 
         //Extra gravity
-        rb.AddForce(Vector3.down * gravityForce * Time.fixedDeltaTime);
+        rb.AddForce(Vector3.down * gravityForce * logicTimer.FixedDeltaTime);
+
+        //Wait for player to getUp
+        if (getUp && getUpTime < Time.time + getUpDelay)
+            getUp = false;
 
         if (!ragdolled && !getUp)
         {
@@ -72,6 +66,48 @@ public class PlayerController : MonoBehaviour
     }
 
     #region Movement
+    private void GroundChecking()
+    {
+        RaycastHit hit;
+        physicsScene.Raycast(Pelvis.position + (diving ? transform.forward * 0.67f : Vector3.zero), Vector3.down, out hit, -0.735f + (diving ? checkDistanceLayed : checkDistance), collisionMask);
+        if (hit.collider)
+        {
+            grounded = true;
+            groundNormal = hit.normal;
+
+            if (jumping)
+            {
+                jumping = false;
+                jumpTime = Time.time + jumpCooldown;
+            }
+            if (diving)
+            {
+                diving = false;
+                CounterMovement();
+
+                cp.direction = 1;
+                getUp = true;
+                getUpTime = Time.time + getUpDelay;
+                diveTime = Time.time + diveCooldown;
+            }
+        }
+        else
+        {
+            grounded = false;
+            groundNormal = Vector3.zero;
+        }
+    }
+
+    private void Movement()
+    {
+        Dash();
+        Jump();
+        Dive();
+        Walk();
+
+        CounterMovement();
+    }
+
     private Vector3 ToCameraSpace(Vector3 moveVector)
     {
         Vector3 camFoward = (currentInputs.LookingRotation * Vector3.forward);
@@ -88,48 +124,6 @@ public class PlayerController : MonoBehaviour
         return moveDirection;
     }
 
-    private void Movement()
-    {
-        Dash();
-        Jump();
-        Dive();
-        Walk();
-
-        CounterMovement();
-
-        //Check animation
-        if (move.magnitude != 0)
-            currentAnim = animNum.run;
-        else
-            currentAnim = animNum.idle;
-        if (jumping)
-            currentAnim = animNum.jump;
-        if (diving)
-            currentAnim = animNum.dive;
-        //on GroudChecking in diving currentAnim is set to idle, 
-        //this is because invoke makes it so we have to wait that the player is up to know that we are not diving
-        //look for a better solution?
-    }
-
-    private void CounterMovement()
-    {
-        if (!dashing && !diving)
-        {
-            rb.AddForce(Vector3.right * -rb.velocity.x, ForceMode.VelocityChange);
-            rb.AddForce(Vector3.forward * -rb.velocity.z, ForceMode.VelocityChange);
-        }
-
-        if (rb.velocity.y > 0f && !jumping && !diving)
-            rb.AddForce(Vector3.up * -rb.velocity.y, ForceMode.VelocityChange);
-        else // apply gravity on jump
-            rb.AddForce(Vector3.down * gravityForce, ForceMode.Force);
-    }
-
-    private void GetUp()
-    {
-        getUp = false;
-    }
-
     //MOVEMENT TYPES
     private void Walk()
     {
@@ -141,14 +135,12 @@ public class PlayerController : MonoBehaviour
             {
                 //Camera direction
                 move = ToCameraSpace(move);
-                Debug.DrawLine(this.transform.position, this.transform.position + move, Color.red, 1f);
 
                 //For better movement on slopes/ramps
                 move = Vector3.ProjectOnPlane(move, groundNormal);
 
                 move.Normalize();
-                move *= moveSpeed * Time.deltaTime;
-                Debug.DrawLine(this.transform.position, this.transform.position + move, Color.yellow, 1f);
+                move *= moveSpeed * logicTimer.FixedDeltaTime;
 
                 rb.AddForce(move, ForceMode.VelocityChange);
             }
@@ -157,38 +149,37 @@ public class PlayerController : MonoBehaviour
             if (move.x != 0f || move.z != 0f)
             {
                 //Character rotation
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(transform.forward + new Vector3(move.x, 0f, move.z)), turnSpeed * Time.deltaTime);
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(transform.forward + new Vector3(move.x, 0f, move.z)), turnSpeed * logicTimer.FixedDeltaTime);
             }
         }
     }
 
     private void Jump()
     {
+        if (!readyToJump && jumpTime < Time.time + jumpCooldown)
+            readyToJump = true;
+
         if (currentInputs.Jump && !jumping && grounded && !dashing && readyToJump)
         {
-            //Debug.Log("Jump");
             readyToJump = false;
             rb.AddForce(Vector3.up * -rb.velocity.y, ForceMode.VelocityChange);//in case of slopes
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             jumping = true;
-            jumpPs.Play();
         }
-    }
-
-    private void ResetJump()
-    {
-        readyToJump = true;
     }
 
     private void Dive()
     {
+        if (!readyToDive && diveTime < Time.time + diveCooldown)
+            readyToDive = true;
+
         if (currentInputs.Dive && !diving && (grounded || jumping) && !dashing && readyToDive)
         {
             readyToDive = false;
             if (jumping)
             {
                 jumping = false;
-                ResetJump();
+                readyToJump = true; //Reset jump
                 rb.AddForce(Vector3.up * diveUpForce * 0.5f, ForceMode.Impulse);
             }
             else
@@ -203,13 +194,7 @@ public class PlayerController : MonoBehaviour
 
             rb.AddForce(transform.forward * diveForwardForce, ForceMode.Impulse);
             diving = true;
-            jumpPs.Play();
         }
-    }
-
-    private void ResetDive()
-    {
-        readyToDive = true;
     }
 
     private void Dash()
@@ -226,107 +211,21 @@ public class PlayerController : MonoBehaviour
 
     private void ResetDash()
     {
-        //Debug.Log("Dash has been reseted");
         dashing = false;
     }
+
+    private void CounterMovement()
+    {
+        if (!dashing && !diving)
+        {
+            rb.AddForce(Vector3.right * -rb.velocity.x, ForceMode.VelocityChange);
+            rb.AddForce(Vector3.forward * -rb.velocity.z, ForceMode.VelocityChange);
+        }
+
+        if (rb.velocity.y > 0f && !jumping && !diving)
+            rb.AddForce(Vector3.up * -rb.velocity.y, ForceMode.VelocityChange);
+        else // apply gravity on jump
+            rb.AddForce(Vector3.down * gravityForce, ForceMode.Force);
+    }
     #endregion
-
-    #region GroundChecking / Snapping
-    private void GroundChecking()
-    {
-        RaycastHit hit;
-        Physics.Raycast(pelvis.position + (diving ? transform.forward * 0.67f : Vector3.zero), Vector3.down, out hit, -0.735f + (diving ? checkDistanceLayed : checkDistance), collisionMask);
-        if (hit.collider)
-        {
-            grounded = true;
-            groundNormal = hit.normal;
-
-            /*if (onAirTime > 3f)
-                ragdollController.RagdollIn();*/
-            onAirTime = 0.0f;
-
-            if (jumping)
-            {
-                jumping = false;
-                Invoke(nameof(ResetJump), jumpCooldown);
-            }
-            if (diving)
-            {
-                diving = false;
-                currentAnim = animNum.idle;
-                CounterMovement();
-
-                cp.direction = 1;
-                getUp = true;
-                Invoke(nameof(GetUp), getUpTime);
-                Invoke(nameof(ResetDive), diveCooldown);
-            }
-        }
-        else
-        {
-            grounded = false;
-            groundNormal = Vector3.zero;
-        }
-
-        if (debug)
-            Debug.DrawRay(pelvis.position + (diving ? transform.forward * 0.67f : Vector3.zero), Vector3.down * (-0.735f + (diving ? checkDistanceLayed : checkDistance)), Color.black);
-    }
-
-    #endregion
-
-    public void Respawn()
-    {
-        respawnPs.Play();
-    }
-
-    /*
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.layer == LayerMask.NameToLayer("Bounce") && (!dashing || !dashTriggered))
-        {
-            dashTriggered = true;
-            //Debug.Log("Dashing");
-            colDir = (collision.contacts[0].point - transform.position).normalized * -1;
-
-            bumpPs.transform.position = collision.contacts[0].point;
-            bumpPs.Play();
-        }
-        // nao entrar em ragdoll quando bate num "Bounce" obj e quando salta para cima dum cushion
-        if ((collision.gameObject.layer != LayerMask.NameToLayer("Floor") && collision.gameObject.layer != LayerMask.NameToLayer("Wall")
-            && collision.gameObject.layer != LayerMask.NameToLayer("Bounce")) && ragdollController.state == RagdollState.Animated)
-        {
-            Vector3 collisionDirection = collision.contacts[0].normal;
-
-            //Debug.Log("collision force:" + collision.impulse.magnitude);
-            //Debug.Log("collision relative Velocity:" + collision.relativeVelocity.magnitude);
-            if (collision.impulse.magnitude >= ragdollController.maxForce || (jumping || diving))
-            {
-                bumpPs.transform.position = collision.contacts[0].point;
-                bumpPs.Play();
-
-                ragdollController.RagdollIn();
-                ragdollController.pelvis.AddForceAtPosition(-collisionDirection * ragdollController.impactForce, collision.contacts[0].point, ForceMode.Impulse);
-            }
-        }
-    }
-
-    private void OnCollisionStay(Collision collision)
-    {
-        if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle") && ragdollController.state == RagdollState.Animated)
-        {
-
-            if (collision.impulse.magnitude >= ragdollController.maxForce || (jumping || diving))
-            {
-                Vector3 collisionDirection = collision.contacts[0].normal;
-
-                bumpPs.transform.position = collision.contacts[0].point;
-                bumpPs.Play();
-
-                ragdollController.RagdollIn();
-                ragdollController.pelvis.AddForceAtPosition(-collisionDirection * ragdollController.impactForce, collision.contacts[0].point, ForceMode.Impulse);
-            }
-        }
-    }*/
 }
-
-public enum animNum { idle, run, jump, dive };

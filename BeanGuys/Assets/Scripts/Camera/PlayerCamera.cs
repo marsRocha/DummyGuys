@@ -1,50 +1,62 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
+/// <summary>
+/// Contains all methods to control the player's camera.
+/// </summary>
 public class PlayerCamera : MonoBehaviour
 {
-    public Transform player;
-    public Transform ragdoll;
+    // Bodys
+    [SerializeField]
+    private Transform player;
+    [SerializeField]
+    private Transform ragdoll;
+
     [HideInInspector]
     public bool followRagdoll;
     private Vector3 targetPosition;
 
-    public Vector3 FollowingOffset = new Vector3(0f, 1.5f, 0f);
-    public Vector3 FollowingOffsetDirection = new Vector3(0f, 0f, 0f);
+    // Position
+    [SerializeField]
+    private Vector3 FollowingOffset = new Vector3(0f, 1.5f, 0f);
+    [SerializeField]
+    private Vector3 FollowingOffsetDirection = new Vector3(0f, 0f, 0f);
 
     [Header("Clamp values for zoom of camera")]
-    public Vector2 DistanceRanges = new Vector2(5f, 10f);
     private float targetDistance;
     private float animatedDistance;
 
-    public Vector2 RotationRanges = new Vector2(-60f, 60f);
+    // Rotation
+    [SerializeField]
+    private Vector2 RotationRanges = new Vector2(-60f, 60f);
     private Vector2 targetSphericRotation = new Vector2(0f, 0f);
     private Vector2 animatedSphericRotation = new Vector2(0f, 0f);
-
     public float RotationSensitivity = 10f;
-
     [Range(0.1f, 1f)]
     public float RotationSpeed = 1f;
+
     [Range(0f, 1f)]
     public float HardFollowValue = 1f;
     public float ScrollSpeed = 5f;
 
     public bool LockCursor = true;
-
     private bool rotateCamera = true;
     private RaycastHit sightObstacleHit;
 
-    //Layer mask to check obstacles in sight ray
-    public LayerMask SightLayerMask;
-    //How far forward raycast should check collision for camera
-    public float CollisionOffset = 1f;
+    // LayerMask to check obstacles in sight ray
+    [SerializeField]
+    private LayerMask SightLayerMask;
+    // How far forward-raycast should check collision for camera
+    [SerializeField]
+    private float CollisionOffset = 1f;
 
+    // Spectating
+    private int playerIndex = 0;
+    private bool spectating = false;
 
     void Start()
     {
-        targetDistance = (DistanceRanges.x + DistanceRanges.y) / 2;
-        animatedDistance = DistanceRanges.y;
+        targetDistance = 10f;
+        animatedDistance = 10f;
 
         targetSphericRotation = new Vector2(0f, 23f);
         animatedSphericRotation = targetSphericRotation;
@@ -60,11 +72,21 @@ public class PlayerCamera : MonoBehaviour
         if (player && ragdoll)
         {
             InputCalculations();
-            ZoomCalculations();
             FollowCalculations();
             RaycastCalculations();
             SwitchCalculations();
         }
+
+        if (spectating)
+        {
+            Spectating();
+        }
+    }
+
+    public void SetFollowTargets(Transform _player, Transform _ragdoll)
+    {
+        player = _player;
+        ragdoll = _ragdoll;
     }
 
     void InputCalculations()
@@ -75,14 +97,6 @@ public class PlayerCamera : MonoBehaviour
 
         targetSphericRotation.x += Input.GetAxis("Mouse X") * RotationSensitivity;
         targetSphericRotation.y -= Input.GetAxis("Mouse Y") * RotationSensitivity;
-    }
-
-    private void ZoomCalculations()
-    {
-        if (!sightObstacleHit.transform) 
-            targetDistance = Mathf.Clamp(targetDistance, DistanceRanges.x, DistanceRanges.y);
-
-        animatedDistance = Mathf.Lerp(animatedDistance, targetDistance, Time.deltaTime * 8f);
     }
 
     private void FollowCalculations()
@@ -182,5 +196,35 @@ public class PlayerCamera : MonoBehaviour
         rotateCamera = true;
     }
 
+    public void StartSpectating()
+    {
+        spectating = true;
+        player = MapController.instance.GetPlayerTransform(playerIndex);
+    }
+
+    public void Spectating()
+    {
+        bool next = Input.GetKeyDown(KeyCode.Mouse0);
+        bool previous = Input.GetKeyDown(KeyCode.Mouse1);
+
+        if (next)
+        {
+            if (playerIndex + 1 < MapController.instance.players.Count)
+                playerIndex++;
+            else 
+                playerIndex = 0;
+
+            player = MapController.instance.GetPlayerTransform(playerIndex);
+        }
+        else if (previous)
+        {
+            if (playerIndex - 1 > 0)
+                playerIndex--;
+            else
+                playerIndex = MapController.instance.players.Count - 1;
+
+            player = MapController.instance.GetPlayerTransform(playerIndex);
+        }
+    }
     #endregion
 }

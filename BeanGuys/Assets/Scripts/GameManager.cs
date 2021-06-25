@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviour
 
     [Header("States")]
     public bool isRunning;
+    public bool isOnline;
     public bool debug;
 
     #region Singleton
@@ -60,6 +61,9 @@ public class GameManager : MonoBehaviour
             Debug.Log("DEBUG: GameWorld Loaded");
             GameObject.Find("Canvas").SetActive(false);
             mapController.InitializeDebug();
+
+            if (isOnline)
+                ClientSend.PlayerReady();
         }
     }
 
@@ -128,13 +132,6 @@ public class GameManager : MonoBehaviour
         else mapController.StartCountDown();
     }
 
-    public void EndGame()
-    {
-        Debug.Log("Game has ended");
-        Client.instance.Disconnect();
-        LoadMainMenu();
-    }
-
     public void RemovePlayer(Guid peerID)
     {
         if (mapController != null && mapController.isRunning)
@@ -148,37 +145,51 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    #region Player messages
-    public void PlayerMovement(Guid peerId, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angular_velocity, float tick_number)
+    public void PlayerMovement(Guid _id, Vector3 _position, Quaternion _rotation, int _tick)
     {
-        mapController.players[peerId].UpdateMovement(position, rotation, velocity, angular_velocity, tick_number);
+        if (mapController.players.TryGetValue(_id, out RemotePlayerManager _player))
+        {
+            if (_tick > GlobalVariables.serverTick) //TODO: CHANGE TO PLAYER LASTTICK?
+                GlobalVariables.serverTick = _tick;
+
+            _player.NewPlayerState(_tick, _position, _rotation);
+        }
     }
 
-    public void PlayerCorrection(Guid clientId, SimulationState simulationState)
+    public void PlayerCorrection(SimulationState simulationState)
     {
-        if(clientId != Client.instance.clientInfo.id)
+        if (!mapController.localPlayer.gameObject)
+            return;
+
+        mapController.localPlayer.ReceivedCorrectionState(simulationState);
+    }
+
+    public void PlayerRespawn(Guid _clientId, int _checkPointNum)
+    {
+        if (_clientId == ClientInfo.instance.Id)
         {
-            mapController.players[clientId].ReceivedCorrectionState(simulationState);
+            mapController.LocalPlayerRespawn(_checkPointNum);
         }
         else
         {
-            mapController.localPlayer.ReceivedCorrectionState(simulationState);
+            mapController.PlayerRespawn(_clientId, _checkPointNum);
         }
     }
 
-    public void PlayerAnim(Guid peerID, int animNum)
+    public void PlayerFinish(Guid _clientId)
     {
-        mapController.players[peerID].UpdateAnimaiton(animNum);
+        mapController.PlayerFinish(_clientId);
     }
 
-    public void PlayerRespawn(Guid peerID, int checkPointNum)
+    public void EndGame()
     {
-        mapController.PlayerRespawn(peerID, checkPointNum);
+        mapController.EndRace();
     }
 
-    public void PlayerFinish(Guid peerID, float time)
+    public void LeaveRoom()
     {
-        mapController.FinishRaceForPlayer(peerID, time);
+        Debug.Log("Game has ended");
+        Client.instance.Disconnect();
+        LoadMainMenu();
     }
-    #endregion
 }
