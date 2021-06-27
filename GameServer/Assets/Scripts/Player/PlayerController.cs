@@ -10,9 +10,13 @@ public class PlayerController : MonoBehaviour
     private PhysicsScene physicsScene;
 
     [Header("Movement Variables")]
+    [SerializeField]
     private float gravityForce = 15f;
+    [SerializeField]
     private float moveSpeed = 300f, turnSpeed = 10f;
+    [SerializeField]
     private float jumpForce = 12f, jumpCooldown = 0.25f;
+    [SerializeField]
     private float diveForwardForce = 7f, diveUpForce = 7f, diveCooldown = 0.5f;
     private float dashforce = 10f, dashTime = 0.5f;
     private Vector3 move;
@@ -31,16 +35,20 @@ public class PlayerController : MonoBehaviour
     public bool grounded;
     public bool ragdolled, getUp;
     public bool isRunning = false;
-    public bool jumping = false, diving = false, dashing = false;
+    public bool jumping { get; private set; }
+    public bool diving { get; private set; }
+    public bool dashing { get; private set; }
     private bool readyToJump = true, readyToDive = true;
-    private bool dashTriggered;
+    public bool dashTriggered { get; private set; }
 
     public void StartController(LogicTimer _logicTimer)
     {
+        logicTimer = _logicTimer;
+
         move = new Vector3();
         cp = GetComponent<CapsuleCollider>();
         rb = GetComponent<Rigidbody>();
-        logicTimer = _logicTimer;
+        rb.centerOfMass = Vector3.up * 0.9009846f;
 
         physicsScene = gameObject.scene.GetPhysicsScene();
     }
@@ -209,6 +217,12 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    public void ActivateDash(Vector3 _direction)
+    {
+        dashTriggered = true;
+        colDir = _direction;
+    }
+
     private void ResetDash()
     {
         dashing = false;
@@ -228,4 +242,22 @@ public class PlayerController : MonoBehaviour
             rb.AddForce(Vector3.down * gravityForce, ForceMode.Force);
     }
     #endregion
+
+    private void ResetBehaviours()
+    {
+        jumping = false;
+        diving = false;
+    }
+
+    public void EnterRagdoll(Vector3 _point)
+    {
+        ragdolled = true;
+        ResetBehaviours();
+    }
+
+    public void ExitRagdoll()
+    {
+        ragdolled = false;
+        cp.direction = 1;
+    }
 }

@@ -136,12 +136,13 @@ public class ClientHandle : MonoBehaviour
         Quaternion rotation =_packet.ReadQuaternion();
         Vector3 velocity =_packet.ReadVector3();
         int simulationFrame =_packet.ReadInt();
+        bool ragdoll =_packet.ReadBool();
 
         //TODO: FOR NOW SERVER SEND MULTICAST, SHOULD I CHANGE IT?
         //TODO: ALSO OTHER METHODS ARE CHECKING IF ROOM IS CORRECT, CHANGE THAT TO BEFORE COMING TO THIS FUNCTIONS
 
         if (_clientId == ClientInfo.instance.Id)
-            GameManager.instance.PlayerCorrection(new SimulationState(position, rotation, velocity, simulationFrame));
+            GameManager.instance.PlayerCorrection(new SimulationState(position, rotation, velocity, simulationFrame, ragdoll));
     }
 
     /// <summary>Handles 'playerRespawn' packet sent from the server.</summary>

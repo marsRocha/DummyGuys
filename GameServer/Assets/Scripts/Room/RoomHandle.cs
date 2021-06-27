@@ -38,6 +38,7 @@ public class RoomHandle
 
         state.position = _packet.ReadVector3();
         state.rotation = _packet.ReadQuaternion();
+        state.ragdoll = _packet.ReadBool();
 
         //Check if player does exist
         if (!Server.Clients[_clientId].player)

@@ -57,10 +57,10 @@ public partial class Room
         Console.WriteLine($"New lobby created [{RoomId}]: listenning in {multicastIP}:{multicastPort}");
 
         // TODO: FORNOW
-        //Wait x seconds to give time for more players to join in
-        //Thread.Sleep(2000);
-        //After waiting x time, we now load the map
-        //LoadMap();
+        // Wait x seconds to give time for more players to join in
+        Thread.Sleep(2000);
+        // After waiting x time, we now load the map
+        LoadMap();
     }
 
     #region Communication

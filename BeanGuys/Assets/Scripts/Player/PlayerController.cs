@@ -48,11 +48,13 @@ public class PlayerController : MonoBehaviour
 
     public void StartController(LogicTimer _logicTimer)
     {
+        logicTimer = _logicTimer;
+
         move = new Vector3();
         cp = GetComponent<CapsuleCollider>();
         rb = GetComponent<Rigidbody>();
+        rb.centerOfMass = Vector3.up * 0.9009846f;
         animator = transform.GetChild(0).GetComponent<Animator>();
-        logicTimer = _logicTimer;
     }
 
     //Used in fixed update
@@ -72,7 +74,7 @@ public class PlayerController : MonoBehaviour
         if (!ragdolled && !getUp)
         {
             Movement();
-        }
+        }        
     }
 
     #region Movement
@@ -271,4 +273,28 @@ public class PlayerController : MonoBehaviour
         bumpPs.Play();
     }
     #endregion
+
+    private void ResetBehaviours()
+    {
+        animator.SetBool("isRunning", false);
+        jumping = false;
+        animator.SetBool("isJumping", false);
+        diving = false;
+        animator.SetBool("isDiving", false);
+    }
+
+    public void EnterRagdoll(Vector3 _point)
+    {
+        bumpPs.transform.position = _point;
+        bumpPs.Play();
+
+        ragdolled = true;
+        ResetBehaviours();
+    }
+    
+    public void ExitRagdoll()
+    {
+        ragdolled = false;
+        cp.direction = 1;
+    }
 }

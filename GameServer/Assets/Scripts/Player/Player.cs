@@ -7,6 +7,7 @@ public class Player : MonoBehaviour
     public Guid id;
 
     private PlayerController playerController;
+    private RagdollController ragdollController;
     private Rigidbody rb;
     private LogicTimer logicTimer;
     private PhysicsScene physicsScene;
@@ -20,15 +21,20 @@ public class Player : MonoBehaviour
     public int tick = 0;
 
     private Vector3 velocity;
+
+    [Header("Ragdoll Params")]
+    public bool isRagdoled = false;
     [SerializeField]
     private bool isRunning;
 
     private void Awake()
     {
         playerController = GetComponent<PlayerController>();
+        ragdollController = GetComponent<RagdollController>();
+
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
-        rb.isKinematic = true;
+        //rb.isKinematic = true;
 
         lastFrame = 0;
         clientInputStates = new Queue<ClientInputState>();
@@ -43,10 +49,14 @@ public class Player : MonoBehaviour
         logicTimer.Start();
 
         playerController.StartController(logicTimer);
+        ragdollController.StartController();
     }
 
     private void Update()
     {
+        ragdollController.UpdateController();
+        //ragdollController.FixedUpdateController();
+
         logicTimer.Update();
     }
 
@@ -64,35 +74,53 @@ public class Player : MonoBehaviour
     {
         if (isRunning)
         {
-            ProcessInputs();
+            currentInputState = null;
+
+            // Obtain CharacterInputState's from the queue. 
+            while (clientInputStates.Count > 0 && (currentInputState = clientInputStates.Dequeue()) != null)
+            {
+                // Player is sending simulation frames that are in the past, dont process them
+                if (currentInputState.SimulationFrame <= lastFrame)
+                    continue;
+
+                lastFrame = currentInputState.SimulationFrame;
+
+                // Process the input.
+                ProcessInput(currentInputState);
+
+                // Obtain the current SimulationState.
+                SimulationState state = new SimulationState(transform.position, transform.rotation, velocity, currentInputState.SimulationFrame, isRagdoled);
+
+                // Send the state back to the client.
+                CheckSimulationState(state);
+            }
         }
     }
 
-    public void ProcessInputs()
+    private void ProcessInput(ClientInputState inputs)
     {
-        currentInputState = null;
+        if (isRagdoled)
+            rb.freezeRotation = false;
+        //rb.isKinematic = false;
+        rb.velocity = velocity;
 
-        // Obtain CharacterInputState's from the queue. 
-        while (clientInputStates.Count > 0 && (currentInputState = clientInputStates.Dequeue()) != null)
-        {
-            // Player is sending simulation frames that are in the past, dont process them
-            if (currentInputState.SimulationFrame <= lastFrame)
-                continue;
+        playerController.UpdateController(inputs);
 
-            lastFrame = currentInputState.SimulationFrame;
-
-            // Process the input.
-            ProcessInput(currentInputState);
-
-            SimulatePhysics();
-
-            // Obtain the current SimulationState.
-            SimulationState state = new SimulationState(transform.position, transform.rotation, velocity, currentInputState.SimulationFrame);
-
-            // Send the state back to the client.
-            CheckSimulationState(state);
-        }
+        //Simulate physics
+        SimulatePhysics();
     }
+
+    //Due to physicsSimULATE simulating all objects inside the scene, we store the velocity of this rb and use it from there, because other players maybe change it
+    private void SimulatePhysics()
+    {
+        physicsScene.Simulate(logicTimer.FixedDeltaTime);
+
+        velocity = rb.velocity;
+        //rb.isKinematic = true;
+        if (!isRagdoled)
+            rb.freezeRotation = true;
+    }
+
 
     #region Client-Server Reconciliation
     public void CheckSimulationState(SimulationState serverSimulationState)
@@ -124,23 +152,6 @@ public class Player : MonoBehaviour
     }
     #endregion
 
-    private void ProcessInput(ClientInputState inputs)
-    {
-        rb.isKinematic = false;
-        rb.velocity = velocity;
-
-        playerController.UpdateController(inputs);
-    }
-
-    //Due to physicsSimULATE simulating all objects inside the scene, we store the velocity of this rb and use it from there, because other players maybe change it
-    private void SimulatePhysics()
-    {
-        physicsScene.Simulate(logicTimer.FixedDeltaTime);
-
-        velocity = rb.velocity;
-        rb.isKinematic = true;
-    }
-
     public void ReceivedClientState(ClientInputState _inputState)
     {
         clientInputStates.Enqueue(_inputState);
@@ -158,4 +169,58 @@ public class Player : MonoBehaviour
         logicTimer.Stop();
         Destroy(gameObject);
     }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (ragdollController.enabled)
+        {
+            if (ragdollController.state == RagdollState.Animated)
+            {
+                Vector3 collisionDirection = collision.contacts[0].normal;
+
+                if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
+                {
+                    isRagdoled = true;
+                    playerController.EnterRagdoll(collision.contacts[0].point);
+                    ragdollController.RagdollIn();
+
+                    rb.isKinematic = false;
+                    rb.freezeRotation = false;
+
+                    // Add obstacle extra force
+                    rb.AddForceAtPosition(collisionDirection * ragdollController.obstacleModifier, collision.contacts[0].point, ForceMode.Impulse);
+                    velocity = rb.velocity;
+
+                    return;
+                }
+                else if (collision.gameObject.layer == LayerMask.NameToLayer("Bounce"))
+                {
+                    // Add obstacle extra force
+                    rb.AddForceAtPosition(collisionDirection * ragdollController.bounceModifier, collision.contacts[0].point, ForceMode.Impulse);
+                    velocity = rb.velocity;
+
+                    return;
+                }
+                else if (collision.gameObject.layer == LayerMask.NameToLayer("Floor"))
+                {
+                    if (collision.impulse.magnitude >= 20)
+                    {
+                        playerController.EnterRagdoll(collision.contacts[0].point);
+                    }
+
+                    return;
+                }
+
+                Debug.Log("collision force:" + collision.impulse.magnitude);
+                Debug.Log("collision relative Velocity:" + collision.relativeVelocity.magnitude);
+                if (collision.impulse.magnitude >= ragdollController.minForce || (playerController.jumping || playerController.diving))
+                {
+                    playerController.EnterRagdoll(collision.contacts[0].point);
+                    // Add extra force
+                    rb.AddForceAtPosition(collisionDirection * ragdollController.multiplier, collision.contacts[0].point, ForceMode.Impulse);
+                }
+            }
+        }
+    }
+
 }

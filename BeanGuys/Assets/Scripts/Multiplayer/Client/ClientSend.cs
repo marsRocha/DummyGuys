@@ -71,7 +71,7 @@ public class ClientSend : MonoBehaviour
     /// <param name="_state">Inputs/State of the player.</param>
     /// <param name="_position">Position of the player.</param>
     /// <param name="_rotation">Rotation of the player.</param>
-    public static void PlayerMovement(ClientInputState _state, Vector3 _position, Quaternion _rotation)
+    public static void PlayerMovement(ClientInputState _state, Vector3 _position, Quaternion _rotation, bool _ragdoll)
     {
         using (Packet packet = new Packet((int)ClientPackets.playerMovement))
         {
@@ -88,6 +88,7 @@ public class ClientSend : MonoBehaviour
             packet.Write(_state.LookingRotation);
             packet.Write(_position);
             packet.Write(_rotation);
+            packet.Write(_ragdoll);
 
             SendUDPData(packet);
         }
