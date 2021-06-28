@@ -12,7 +12,7 @@ public class Server
     public static int Port { get; private set; }
 
     public static bool isActive = false;
-    public static int tickrate = 32;
+    public static int tickrate = 30;
 
     public static MainThread MainThread;
 

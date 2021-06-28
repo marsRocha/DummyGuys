@@ -80,7 +80,7 @@ public class PlayerManager : MonoBehaviour
 
         currentInputState = new ClientInputState
         {
-            Tick = GlobalVariables.clientTick,
+            Tick = GameLogic.clientTick,
             SimulationFrame = simulationFrame,
             HorizontalAxis = Input.GetAxisRaw("Horizontal"),
             VerticalAxis = Input.GetAxisRaw("Vertical"),
@@ -155,9 +155,10 @@ public class PlayerManager : MonoBehaviour
         //Send to server
         ClientSend.PlayerMovement(currentInputState, transform.position, transform.rotation, isRagdoled);
         //Sent to peers
-        ClientSend.PlayerMovement(new SimulationState(transform.position, transform.rotation, velocity, currentInputState.SimulationFrame, isRagdoled));
+        ClientSend.PlayerMovement(new SimulationState(transform.position, transform.rotation, velocity, GameLogic.Tick, isRagdoled)); //currentInputState.SimulationFrame
     }
 
+    #region Client-Server Reconciliation
     private void Reconciliate()
     {
         // Sanity check, don't reconciliate for old states.
@@ -236,6 +237,7 @@ public class PlayerManager : MonoBehaviour
         transform.rotation = simulationState.rotation;
         velocity = simulationState.velocity;
     }
+    #endregion
 
     public void ReceivedCorrectionState(SimulationState simulationState)
     {

@@ -12,7 +12,6 @@ public class Client : MonoBehaviour
     public static Client instance;
 
     public static int dataBufferSize = 4096;
-    public static int tickrate = 32; // Ticks per second 32 - 128;
 
     public delegate void PacketHandler(Guid id, Packet packet);
     public static Dictionary<int, PacketHandler> packetHandlers;

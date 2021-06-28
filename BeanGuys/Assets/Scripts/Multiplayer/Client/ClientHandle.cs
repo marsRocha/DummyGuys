@@ -169,7 +169,10 @@ public class ClientHandle : MonoBehaviour
     {
         int _serverTick = _packet.ReadInt();
 
-        if (_serverTick > GlobalVariables.serverTick)
-            GlobalVariables.serverTick = _serverTick;
+        if (_serverTick > GameLogic.serverTick)
+        {
+            GameLogic.serverTick = _serverTick;
+            GameLogic.SetTick(_serverTick);
+        }
     }
 }

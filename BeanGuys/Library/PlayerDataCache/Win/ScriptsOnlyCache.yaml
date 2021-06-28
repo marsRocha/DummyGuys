@@ -2,12 +2,16 @@ ScriptsOnlyBuild:
   usedScripts:
     Assembly-CSharp.dll:
     - CheckPoint
+    - Client
+    - ClientInfo
+    - CountDown
     - DebugStuff.ConsoleToGUI
     - GameManager
     - Interpolator
     - LerpManager
     - MapController
     - MoveBehaviour
+    - NetworkManager
     - PlayerCamera
     - PlayerController
     - PlayerInput
@@ -17,6 +21,9 @@ ScriptsOnlyBuild:
     - RotateBehaviour
     - SpinBehaviour
     - SwingBehaviour
+    - ThreadManager
+    - Timer
+    - UIManager
     Unity.RenderPipelines.Core.Runtime.dll:
     - UnityEngine.Rendering.UI.DebugUIHandlerBitField
     - UnityEngine.Rendering.UI.DebugUIHandlerButton
@@ -57,6 +64,7 @@ ScriptsOnlyBuild:
     - TMPro.TMP_Settings
     - TMPro.TMP_SpriteAsset
     - TMPro.TMP_StyleSheet
+    - TMPro.TextMeshProUGUI
     UnityEditor.Graphs.dll:
     - UnityEditor.Graphs.AnimationBlendTree.Graph
     - UnityEditor.Graphs.AnimationBlendTree.GraphGUI
@@ -68,6 +76,8 @@ ScriptsOnlyBuild:
     - UnityEditor.TestTools.TestRunner.TestListCacheData
     - UnityEditor.TestTools.TestRunner.TestRun.TestJobDataHolder
     UnityEngine.UI.dll:
+    - UnityEngine.EventSystems.EventSystem
+    - UnityEngine.EventSystems.StandaloneInputModule
     - UnityEngine.UI.Button
     - UnityEngine.UI.CanvasScaler
     - UnityEngine.UI.ContentSizeFitter
@@ -82,7 +92,7 @@ ScriptsOnlyBuild:
     - UnityEngine.UI.Toggle
     - UnityEngine.UI.VerticalLayoutGroup
   sceneClasses:
-    Assets/Scenes/noMultiplayerSandbox 1.unity:
+    Assets/Scenes/MultiplayerCourseTest.unity:
     - Class: 1
       Script: {instanceID: 0}
     - Class: 4
@@ -104,8 +114,6 @@ ScriptsOnlyBuild:
     - Class: 49
       Script: {instanceID: 0}
     - Class: 54
-      Script: {instanceID: 0}
-    - Class: 59
       Script: {instanceID: 0}
     - Class: 64
       Script: {instanceID: 0}
@@ -150,17 +158,23 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 12218}
     - Class: 114
+      Script: {instanceID: 12266}
+    - Class: 114
       Script: {instanceID: 12396}
     - Class: 114
       Script: {instanceID: 12442}
     - Class: 114
       Script: {instanceID: 12634}
     - Class: 114
+      Script: {instanceID: 12944}
+    - Class: 114
       Script: {instanceID: 12962}
     - Class: 114
       Script: {instanceID: 13010}
     - Class: 114
       Script: {instanceID: 13074}
+    - Class: 114
+      Script: {instanceID: 13202}
     - Class: 114
       Script: {instanceID: 13266}
     - Class: 114
@@ -171,6 +185,8 @@ ScriptsOnlyBuild:
       Script: {instanceID: 13324}
     - Class: 114
       Script: {instanceID: 13442}
+    - Class: 114
+      Script: {instanceID: 13530}
     - Class: 114
       Script: {instanceID: 13564}
     - Class: 114
@@ -189,6 +205,8 @@ ScriptsOnlyBuild:
       Script: {instanceID: 13922}
     - Class: 114
       Script: {instanceID: 13962}
+    - Class: 114
+      Script: {instanceID: 14058}
     - Class: 114
       Script: {instanceID: 14128}
     - Class: 114
@@ -216,6 +234,8 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 14704}
     - Class: 114
+      Script: {instanceID: 14914}
+    - Class: 114
       Script: {instanceID: 15028}
     - Class: 114
       Script: {instanceID: 15076}
@@ -224,13 +244,19 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 15350}
     - Class: 114
+      Script: {instanceID: 15400}
+    - Class: 114
       Script: {instanceID: 15402}
     - Class: 114
       Script: {instanceID: 15404}
     - Class: 114
       Script: {instanceID: 15544}
     - Class: 114
+      Script: {instanceID: 15578}
+    - Class: 114
       Script: {instanceID: 15594}
+    - Class: 114
+      Script: {instanceID: 15684}
     - Class: 114
       Script: {instanceID: 15800}
     - Class: 114
@@ -238,13 +264,13 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 15804}
     - Class: 114
+      Script: {instanceID: 15834}
+    - Class: 114
       Script: {instanceID: 15862}
     - Class: 114
       Script: {instanceID: 15998}
     - Class: 114
       Script: {instanceID: 16006}
-    - Class: 114
-      Script: {instanceID: 18036}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -790,7 +816,7 @@ ScriptsOnlyBuild:
     className: SignalTrack
   - hash:
       serializedVersion: 2
-      Hash: 79369f91aca9f26d15aebf556cf9672b
+      Hash: d8a0b11a48eb344d4c813e7e53c8a235
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: PlayerManager
@@ -814,7 +840,7 @@ ScriptsOnlyBuild:
     className: TMP_SpriteAnimator
   - hash:
       serializedVersion: 2
-      Hash: 0df7318648747b6ef471a474fdd1465d
+      Hash: 6eb708e21d32bb0bbd7c11af3e2d7c89
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: RagdollController
@@ -904,7 +930,7 @@ ScriptsOnlyBuild:
     className: MotionBlur
   - hash:
       serializedVersion: 2
-      Hash: 2da48722cfbd5468bbb170bbfeffee04
+      Hash: 54f3c2d6ff1fb9fbe8e41d842008c026
     assemblyName: Assembly-CSharp.dll
     namespaceName: 
     className: Interpolator
@@ -1360,5 +1386,5 @@ ScriptsOnlyBuild:
     className: PlayableTrack
   platform: 5
   scenePathNames:
-  - Assets/Scenes/noMultiplayerSandbox 1.unity
-  playerPath: C:/Users/Marci/Desktop/test/BeanGuys.exe
+  - Assets/Scenes/MultiplayerCourseTest.unity
+  playerPath: D:/Unity/Projects/BeanGuys/BuildGame_Multiplayer/BeanGuys.exe

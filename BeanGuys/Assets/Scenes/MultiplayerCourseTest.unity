@@ -2549,7 +2549,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapController: {fileID: 2095060470}
   totalPlayers: 0
-  RemotePlayerObj: {fileID: 8803182987063549214, guid: cec2b99fb80d36746b091c36f8ed19da, type: 3}
+  RemotePlayerObj: {fileID: 8803182987063549214, guid: cb2ff0654c093234dbce82111ab00ba4, type: 3}
   LocalPlayerObj: {fileID: 5739421182979693056, guid: ea1847cb134de8545aa400abb450baec, type: 3}
   isRunning: 0
   isOnline: 0

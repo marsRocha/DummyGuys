@@ -149,8 +149,8 @@ public class GameManager : MonoBehaviour
     {
         if (mapController.players.TryGetValue(_id, out RemotePlayerManager _player))
         {
-            if (_tick > GlobalVariables.serverTick) //TODO: CHANGE TO PLAYER LASTTICK?
-                GlobalVariables.serverTick = _tick;
+            /*if (_tick > GlobalVariables.serverTick) //TODO: CHANGE TO PLAYER LASTTICK?
+                GlobalVariables.serverTick = _tick;*/
 
             _player.NewPlayerState(_tick, _position, _rotation);
         }

@@ -1,5 +1,109 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using UnityEngine;
+
+public class Interpolator : MonoBehaviour
+{
+    private List<PlayerState> futureTransformUpdates = new List<PlayerState>(); // Oldest first
+
+    private PlayerState to;
+    private PlayerState from;
+    private PlayerState previous;
+
+    [SerializeField] private float timeElapsed = 0f;
+    [SerializeField] private float timeToReachTarget = 0.1f;
+
+    private void Start()
+    {
+        to = new PlayerState(GameLogic.Tick, transform.position, transform.rotation);
+        from = new PlayerState(GameLogic.InterpolationTick, transform.position, transform.rotation);
+        previous = new PlayerState(GameLogic.InterpolationTick, transform.position, transform.rotation);
+    }
+
+    private void Update()
+    {
+        for (int i = 0; i < futureTransformUpdates.Count; i++)
+        {
+            if (GameLogic.Tick >= futureTransformUpdates[i].tick)
+            {
+                previous = to;
+                to = futureTransformUpdates[i];
+                from = new PlayerState(GameLogic.InterpolationTick, transform.position, transform.rotation);
+                futureTransformUpdates.RemoveAt(i);
+                timeElapsed = 0;
+                timeToReachTarget = (to.tick - from.tick) * GameLogic.SecPerTick;
+            }
+        }
+
+        timeElapsed += Time.deltaTime;
+        Interpolate(timeElapsed / timeToReachTarget);
+    }
+
+    #region Interpolate
+    private void Interpolate(float _lerpAmount)
+    {
+        InterpolatePosition(_lerpAmount);
+        InterpolateRotation(_lerpAmount);
+    }
+
+    private void InterpolatePosition(float _lerpAmount)
+    {
+        if (to.position == previous.position)
+        {
+            // If this object isn't supposed to be moving, we don't want to interpolate and potentially extrapolate
+            if (to.position != from.position)
+            {
+                // If this object hasn't reached it's intended position
+                transform.position = Vector3.Lerp(from.position, to.position, _lerpAmount); // Interpolate with the _lerpAmount clamped so no extrapolation occurs
+            }
+            return;
+        }
+
+        transform.position = Vector3.LerpUnclamped(from.position, to.position, _lerpAmount); // Interpolate with the _lerpAmount unclamped so it can extrapolate
+    }
+
+    private void InterpolateRotation(float _lerpAmount)
+    {
+        if (to.rotation == previous.rotation)
+        {
+            // If this object isn't supposed to be rotating, we don't want to interpolate and potentially extrapolate
+            if (to.rotation != from.rotation)
+            {
+                // If this object hasn't reached it's intended rotation
+                transform.rotation = Quaternion.Slerp(from.rotation, to.rotation, _lerpAmount); // Interpolate with the _lerpAmount clamped so no extrapolation occurs
+            }
+            return;
+        }
+
+        transform.rotation = Quaternion.SlerpUnclamped(from.rotation, to.rotation, _lerpAmount); // Interpolate with the _lerpAmount unclamped so it can extrapolate
+    }
+    #endregion
+
+    internal void NewPlayerState(int _tick, Vector3 _position, Quaternion _rotation)
+    {
+        if (_tick <= GameLogic.InterpolationTick)
+        {
+            return;
+        }
+
+        if (futureTransformUpdates.Count == 0)
+        {
+            futureTransformUpdates.Add(new PlayerState(_tick, _position, _rotation));
+            return;
+        }
+
+        for (int i = 0; i < futureTransformUpdates.Count; i++)
+        {
+            if (_tick < futureTransformUpdates[i].tick)
+            {
+                // Transform update is older
+                futureTransformUpdates.Insert(i, new PlayerState(_tick, _position, _rotation));
+                break;
+            }
+        }
+    }
+}
+
+/*using System.Collections.Generic;
 using UnityEngine;
 
 public class Interpolator : MonoBehaviour
@@ -40,7 +144,7 @@ public class Interpolator : MonoBehaviour
         lastLerpAmount = 0f;
 
         // The localPlayer uses a different tick
-        int currentTick = isLocalPlayer ? 0 : GlobalVariables.clientTick - Utils.TimeToTicks(interpolation);
+        int currentTick = isLocalPlayer ? 0 : GameLogic.clientTick - Utils.TimeToTicks(interpolation);
         if (currentTick < 0)
             currentTick = 0;
 
@@ -54,7 +158,7 @@ public class Interpolator : MonoBehaviour
             return;
 
         // Compute render timestamp.
-        long render_timestamp = (long)(GlobalVariables.clientTick - (0.001f / Client.tickrate));
+        long render_timestamp = (long)(GameLogic.clientTick - (0.001f / Client.tickrate));
 
         // Find the two positions surrounding the rendering timestamp.
         // Drop older updates
@@ -86,30 +190,22 @@ public class Interpolator : MonoBehaviour
     }
 
 }
+*/
 
 
 //used to store incoming desired states for the player to be in
 class PlayerState
 {
-    public int tick;
-
-    public float time;
-    public float lastTime;
+    public float tick;
     public Vector3 position;
-    public Vector3 lastPosition;
     public Quaternion rotation;
-    public Quaternion lastRotation;
 
-    public static PlayerState zero = new PlayerState(0, 0, 0, Vector3.zero, Vector3.zero, Quaternion.identity, Quaternion.identity);
+    public static PlayerState zero = new PlayerState(0, Vector3.zero, Quaternion.identity);
 
-    internal PlayerState(int _tick, float _time, float _lastTime, Vector3 _position, Vector3 _lastPosition, Quaternion _rotation, Quaternion _lastRotation)
+    internal PlayerState(float _tick, Vector3 _position, Quaternion _rotation)
     {
         tick = _tick;
-        time = _time;
-        lastTime = _lastTime;
         position = _position;
         rotation = _rotation;
-        lastPosition = _lastPosition;
-        lastRotation = _lastRotation;
     }
 }
