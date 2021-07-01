@@ -3,7 +3,9 @@ using UnityEngine;
 
 public class Interpolator : MonoBehaviour
 {
-    private List<PlayerState> futureTransformUpdates = new List<PlayerState>(); // Oldest first
+    private RemotePlayerManager remotePlayer;
+
+    private List<PlayerState> futureTransformUpdates; // Oldest first
 
     private PlayerState to;
     private PlayerState from;
@@ -12,11 +14,15 @@ public class Interpolator : MonoBehaviour
     [SerializeField] private float timeElapsed = 0f;
     [SerializeField] private float timeToReachTarget = 0.1f;
 
-    private void Start()
+    public void StartInterpolator(RemotePlayerManager _remotePlayer)
     {
-        to = new PlayerState(GameLogic.Tick, transform.position, transform.rotation);
-        from = new PlayerState(GameLogic.InterpolationTick, transform.position, transform.rotation);
-        previous = new PlayerState(GameLogic.InterpolationTick, transform.position, transform.rotation);
+        remotePlayer = _remotePlayer;
+
+        futureTransformUpdates = new List<PlayerState>();
+
+        to = new PlayerState(GameLogic.Tick, transform.position, transform.rotation, remotePlayer.Ragdolled, remotePlayer.currentAnimation);
+        from = new PlayerState(GameLogic.InterpolationTick, transform.position, transform.rotation, remotePlayer.Ragdolled, remotePlayer.currentAnimation);
+        previous = new PlayerState(GameLogic.InterpolationTick, transform.position, transform.rotation, remotePlayer.Ragdolled, remotePlayer.currentAnimation);
     }
 
     private void Update()
@@ -27,10 +33,23 @@ public class Interpolator : MonoBehaviour
             {
                 previous = to;
                 to = futureTransformUpdates[i];
-                from = new PlayerState(GameLogic.InterpolationTick, transform.position, transform.rotation);
+                from = new PlayerState(GameLogic.InterpolationTick, transform.position, transform.rotation, remotePlayer.Ragdolled, remotePlayer.currentAnimation);
                 futureTransformUpdates.RemoveAt(i);
                 timeElapsed = 0;
                 timeToReachTarget = (to.tick - from.tick) * GameLogic.SecPerTick;
+
+                // Ragdoll state
+                // If not in the correct ragdoll state then transition to it
+                if(from.ragdoll != to.ragdoll)
+                {
+                    if (to.ragdoll)
+                        remotePlayer.EnterRagdoll();
+                    else
+                        remotePlayer.ExitRagdoll();
+                }
+
+                // Animations
+                remotePlayer.SetAnimation(to.animation);
             }
         }
 
@@ -78,7 +97,7 @@ public class Interpolator : MonoBehaviour
     }
     #endregion
 
-    internal void NewPlayerState(int _tick, Vector3 _position, Quaternion _rotation)
+    internal void NewPlayerState(int _tick, Vector3 _position, Quaternion _rotation, bool _ragdoll, int _animation)
     {
         if (_tick <= GameLogic.InterpolationTick)
         {
@@ -87,7 +106,7 @@ public class Interpolator : MonoBehaviour
 
         if (futureTransformUpdates.Count == 0)
         {
-            futureTransformUpdates.Add(new PlayerState(_tick, _position, _rotation));
+            futureTransformUpdates.Add(new PlayerState(_tick, _position, _rotation, _ragdoll, _animation));
             return;
         }
 
@@ -96,116 +115,9 @@ public class Interpolator : MonoBehaviour
             if (_tick < futureTransformUpdates[i].tick)
             {
                 // Transform update is older
-                futureTransformUpdates.Insert(i, new PlayerState(_tick, _position, _rotation));
+                futureTransformUpdates.Insert(i, new PlayerState(_tick, _position, _rotation, _ragdoll, _animation));
                 break;
             }
         }
-    }
-}
-
-/*using System.Collections.Generic;
-using UnityEngine;
-
-public class Interpolator : MonoBehaviour
-{
-    public float interpolation = 0.1f;
-
-    private List<PlayerState> playerStates;
-
-    private Vector3 lastPosition;
-    private Quaternion lastRotation;
-    private float lastTime;
-
-    private int lastTick;
-    private float lastLerpAmount;
-
-    private PlayerState currentPlayerState;
-
-    [SerializeField] private float timeElapsed = 0f;
-    [SerializeField] private float timeToReachTarget = 0.1f;
-
-    [Header("Behaviours")]
-    public bool isLocalPlayer = false;
-    public bool Sync = false;
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        if (isLocalPlayer)
-            Sync = false;
-
-        playerStates = new List<PlayerState>();
-
-        lastPosition = transform.position;
-        lastRotation = transform.rotation;
-        lastTime = Time.time;
-
-        lastTick = 0;
-        lastLerpAmount = 0f;
-
-        // The localPlayer uses a different tick
-        int currentTick = isLocalPlayer ? 0 : GameLogic.clientTick - Utils.TimeToTicks(interpolation);
-        if (currentTick < 0)
-            currentTick = 0;
-
-        currentPlayerState = new PlayerState(currentTick, Time.time, Time.time, transform.position, transform.position, transform.rotation, transform.rotation);
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        if (playerStates.Count <= 0)
-            return;
-
-        // Compute render timestamp.
-        long render_timestamp = (long)(GameLogic.clientTick - (0.001f / Client.tickrate));
-
-        // Find the two positions surrounding the rendering timestamp.
-        // Drop older updates
-        while (playerStates.Count >= 2 && playerStates[1].tick <= render_timestamp)
-        {
-            playerStates.RemoveAt(0);
-        }
-
-        // Interpolate between the two surrounding authoritative positions.
-        if (playerStates.Count >= 2 && playerStates[0].tick <= render_timestamp && render_timestamp <= playerStates[1].tick) // :: Addition (instead of nested array, use struct to access named fields)
-        {
-            PlayerState from = playerStates[0];
-            PlayerState to = playerStates[1];
-
-
-            //rb.position = (x0 + (x1 - x0) * (render_timestamp - t0) / (t1 - t0));
-            transform.position = Vector3.Lerp(from.position, to.position, Mathf.Abs((render_timestamp - from.time) / (to.time - from.time)));
-            transform.rotation = Quaternion.Lerp(from.rotation, to.rotation, Mathf.Abs((render_timestamp - from.time) / (to.time - from.time)));
-        }
-    }
-
-    // Updates are used to add a new tick to the list
-    // the list is sorted and then set the last tick info to the respective variables
-
-    internal void NewPlayerState(int _tick, Vector3 _position, Quaternion _rotation)
-    {
-        playerStates.Add(new PlayerState(_tick, Time.time, lastTime, _position, lastPosition, _rotation, lastRotation));
-
-    }
-
-}
-*/
-
-
-//used to store incoming desired states for the player to be in
-class PlayerState
-{
-    public float tick;
-    public Vector3 position;
-    public Quaternion rotation;
-
-    public static PlayerState zero = new PlayerState(0, Vector3.zero, Quaternion.identity);
-
-    internal PlayerState(float _tick, Vector3 _position, Quaternion _rotation)
-    {
-        tick = _tick;
-        position = _position;
-        rotation = _rotation;
     }
 }

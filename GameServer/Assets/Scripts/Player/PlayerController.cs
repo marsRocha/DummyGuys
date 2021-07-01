@@ -10,13 +10,9 @@ public class PlayerController : MonoBehaviour
     private PhysicsScene physicsScene;
 
     [Header("Movement Variables")]
-    [SerializeField]
     private float gravityForce = 15f;
-    [SerializeField]
     private float moveSpeed = 300f, turnSpeed = 10f;
-    [SerializeField]
-    private float jumpForce = 12f, jumpCooldown = 0.25f;
-    [SerializeField]
+    private float jumpForce = 12f, jumpCooldown = 0.1f;
     private float diveForwardForce = 7f, diveUpForce = 7f, diveCooldown = 0.5f;
     private float dashforce = 10f, dashTime = 0.5f;
     private Vector3 move;
@@ -87,6 +83,7 @@ public class PlayerController : MonoBehaviour
             {
                 jumping = false;
                 jumpTime = Time.time + jumpCooldown;
+                readyToJump = false;
             }
             if (diving)
             {
@@ -97,6 +94,7 @@ public class PlayerController : MonoBehaviour
                 getUp = true;
                 getUpTime = Time.time + getUpDelay;
                 diveTime = Time.time + diveCooldown;
+                readyToDive = false;
             }
         }
         else
@@ -164,13 +162,13 @@ public class PlayerController : MonoBehaviour
 
     private void Jump()
     {
-        if (!readyToJump && jumpTime < Time.time + jumpCooldown)
+        if (!readyToJump && jumpTime < Time.time)
             readyToJump = true;
 
         if (currentInputs.Jump && !jumping && grounded && !dashing && readyToJump)
         {
             readyToJump = false;
-            rb.AddForce(Vector3.up * -rb.velocity.y, ForceMode.VelocityChange);//in case of slopes
+            rb.AddForce(Vector3.up * -rb.velocity.y, ForceMode.VelocityChange); // In case of slopes
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             jumping = true;
         }
@@ -178,7 +176,7 @@ public class PlayerController : MonoBehaviour
 
     private void Dive()
     {
-        if (!readyToDive && diveTime < Time.time + diveCooldown)
+        if (!readyToDive && diveTime < Time.time)
             readyToDive = true;
 
         if (currentInputs.Dive && !diving && (grounded || jumping) && !dashing && readyToDive)

@@ -145,14 +145,14 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void PlayerMovement(Guid _id, Vector3 _position, Quaternion _rotation, int _tick)
+    public void PlayerMovement(Guid _id, int _tick, Vector3 _position, Quaternion _rotation, bool _ragdoll, int _animation)
     {
         if (mapController.players.TryGetValue(_id, out RemotePlayerManager _player))
         {
             /*if (_tick > GlobalVariables.serverTick) //TODO: CHANGE TO PLAYER LASTTICK?
                 GlobalVariables.serverTick = _tick;*/
 
-            _player.NewPlayerState(_tick, _position, _rotation);
+            _player.NewPlayerState(_tick, _position, _rotation, _ragdoll, _animation);
         }
     }
 

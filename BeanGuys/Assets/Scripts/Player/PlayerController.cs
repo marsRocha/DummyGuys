@@ -2,21 +2,19 @@
 
 public class PlayerController : MonoBehaviour
 {
-    [Header("Components")]
-    public Transform Pelvis;
+    // Components
+    public Transform pelvis;
     private CapsuleCollider cp;
     private Rigidbody rb;
     private Animator animator;
     private LogicTimer logicTimer;
 
+    public int currentAnimation { get; private set; } = 0;
+
     [Header("Movement Variables")]
-    [SerializeField]
     private float gravityForce = 15f;
-    [SerializeField]
     private float moveSpeed = 300f, turnSpeed = 10f;
-    [SerializeField]
-    private float jumpForce = 12f, jumpCooldown = 0.25f;
-    [SerializeField]
+    private float jumpForce = 12f, jumpCooldown = 0.1f;
     private float diveForwardForce = 7f, diveUpForce = 7f, diveCooldown = 0.5f;
     private float dashforce = 10f, dashTime = 0.5f;
     private Vector3 move;
@@ -43,7 +41,7 @@ public class PlayerController : MonoBehaviour
     public bool jumping { get; private set; }
     public bool diving { get; private set; }
     public bool dashing { get; private set; }
-    private bool readyToJump = true, readyToDive = true;
+    public bool readyToJump = true, readyToDive = true;
     public bool dashTriggered { get; private set; }
 
     public void StartController(LogicTimer _logicTimer)
@@ -57,17 +55,17 @@ public class PlayerController : MonoBehaviour
         animator = transform.GetChild(0).GetComponent<Animator>();
     }
 
-    //Used in fixed update
+    // Used in fixed update
     public void UpdateController(ClientInputState currentInput)
     {
         this.currentInputs = currentInput;
 
         GroundChecking();
 
-        //Extra gravity
+        // Extra gravity
         rb.AddForce(Vector3.down * gravityForce * logicTimer.FixedDeltaTime);
 
-        //Wait for player to getUp
+        // Wait for player to getUp
         if (getUp && getUpTime < Time.time + getUpDelay)
             getUp = false;
 
@@ -81,7 +79,7 @@ public class PlayerController : MonoBehaviour
     private void GroundChecking()
     {
         RaycastHit hit;
-        Physics.Raycast(Pelvis.position + (diving ? transform.forward * 0.67f : Vector3.zero), Vector3.down, out hit, -0.735f + (diving ? checkDistanceLayed : checkDistance), collisionMask);
+        Physics.Raycast(pelvis.position + (diving ? transform.forward * 0.67f : Vector3.zero), Vector3.down, out hit, -0.735f + (diving ? checkDistanceLayed : checkDistance), collisionMask);
         if (hit.collider)
         {
             grounded = true;
@@ -92,6 +90,7 @@ public class PlayerController : MonoBehaviour
                 jumping = false;
                 animator.SetBool("isJumping", false);
                 jumpTime = Time.time + jumpCooldown;
+                readyToJump = false;
             }
             if (diving)
             {
@@ -103,6 +102,7 @@ public class PlayerController : MonoBehaviour
                 getUp = true;
                 getUpTime = Time.time + getUpDelay;
                 diveTime = Time.time + diveCooldown;
+                readyToDive = false;
             }
         }
         else
@@ -120,6 +120,16 @@ public class PlayerController : MonoBehaviour
         Walk();
 
         CounterMovement();
+
+        // Determine current animation
+        if (move.magnitude == 0)
+            currentAnimation = 0;
+        else
+            currentAnimation = 1;
+        if (jumping)
+            currentAnimation = 2;
+        if (diving)
+            currentAnimation = 3;
     }
 
     private Vector3 ToCameraSpace(Vector3 moveVector)
@@ -178,7 +188,7 @@ public class PlayerController : MonoBehaviour
 
     private void Jump()
     {
-        if (!readyToJump && jumpTime < Time.time + jumpCooldown)
+        if (!readyToJump && jumpTime < Time.time)
             readyToJump = true;
 
         if (currentInputs.Jump && !jumping && grounded && !dashing && readyToJump)
@@ -194,7 +204,7 @@ public class PlayerController : MonoBehaviour
 
     private void Dive()
     {
-        if (!readyToDive && diveTime < Time.time + diveCooldown)
+        if (!readyToDive && diveTime < Time.time)
             readyToDive = true;
 
         if (currentInputs.Dive && !diving && (grounded || jumping) && !dashing && readyToDive)
@@ -262,17 +272,18 @@ public class PlayerController : MonoBehaviour
             rb.AddForce(Vector3.down * gravityForce, ForceMode.Force);
     }
 
-    public void Respawn()
-    {
-        respawnPs.Play();
-    }
-
     public void Bump(Vector3 _point)
     {
         bumpPs.transform.position = _point;
         bumpPs.Play();
     }
     #endregion
+
+    public void Respawn()
+    {
+        currentAnimation = 0;
+        respawnPs.Play();
+    }
 
     private void ResetBehaviours()
     {
@@ -281,6 +292,7 @@ public class PlayerController : MonoBehaviour
         animator.SetBool("isJumping", false);
         diving = false;
         animator.SetBool("isDiving", false);
+        currentAnimation = 0;
     }
 
     public void EnterRagdoll(Vector3 _point)

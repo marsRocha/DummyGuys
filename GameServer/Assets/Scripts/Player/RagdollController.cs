@@ -1,41 +1,52 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Contains all methods to control the local and remote player's ragdoll.
+/// </summary>
 public class RagdollController : MonoBehaviour
 {
     // Components
     private PlayerController playerController;
     private Animator animator;
     private CapsuleCollider cp;
-    public Rigidbody pelvis;
-    public Rigidbody rb;
+    private Rigidbody rb;
+    [SerializeField]
+    private Rigidbody pelvis;
 
     // Ragdoll components
     private Rigidbody[] ragdollRbs;
     private Collider[] ragdollCols;
     private List<BodyPart> bodyParts;
 
-    // Ragdoll Settings
+    // Ragdoll Params
     [SerializeField]
-    public RagdollState state;
-    public LayerMask collisionMask;
+    public RagdollState State { get; private set; }
+    [SerializeField]
+    private LayerMask collisionMask;
     private float canRecover;
-    public float recoverTime;
-    private Vector3 hitPoint;
+    [SerializeField]
+    private float recoverTime;
 
-    //Time transitioning from ragdolled to animated
-    public float ragdollToMecanimBlendTime = 0.5f;
-    public float mecanimToGetUpTransitionTime = 0.05f;
+    // Collision Params
+    [SerializeField]
+    public float Multiplier { get; private set; } = 2;
+    [SerializeField]
+    public float ObstacleModifier { get; private set; } = 8;
+    [SerializeField]
+    public float BounceModifier { get; private set; } = 8;
+    [SerializeField]
+    public float MinForce { get; private set; } = 15;
 
-    //A helper variable to store the time when we transitioned from ragdolled to blendToAnim state
-    float ragdollingEndTime = -100;
+    [Header("Transition Params")]
+    [SerializeField]
+    public float ragdollToMecanimBlendTime = 0.5f; // Transitioning time from ragdolled to animated
+    [SerializeField]
+    private float mecanimToGetUpTransitionTime = 0.05f;
+    private float ragdollingEndTime = -100; // A helper variable to store the time when we transitioned from ragdolled to blendToAnim state
 
-    //Additional vectores for storing the pose the ragdoll ended up in.
-    Vector3 ragdolledHipPosition, ragdolledHeadPosition, ragdolledFeetPosition;
-
-    public float multiplier = 2;
-    public float obstacleModifier = 8, bounceModifier = 8;
-    public float minForce = 15;
+    // Additional vectores for storing the pose the ragdoll ended up in.
+    private Vector3 ragdolledHipPosition, ragdolledHeadPosition, ragdolledFeetPosition;
 
     public void StartController()
     {
@@ -43,15 +54,17 @@ public class RagdollController : MonoBehaviour
         animator = transform.GetChild(0).GetComponent<Animator>();
         cp = GetComponent<CapsuleCollider>();
 
+        rb = GetComponent<Rigidbody>();
+
         ragdollRbs = transform.GetChild(0).GetComponentsInChildren<Rigidbody>();
         ragdollCols = transform.GetChild(0).GetComponentsInChildren<Collider>();
         bodyParts = new List<BodyPart>();
 
-        state = RagdollState.Animated;
+        State = RagdollState.Animated;
         canRecover = 0.0f;
         ActivateRagdollComponents(false);
 
-        //For each of the transforms, create a BodyPart instance and store the transform 
+        // Create a BodyPart instance, for each of the transforms, and store it
         foreach (Transform t in GetComponentsInChildren(typeof(Transform)))
         {
             BodyPart bodyPart = new BodyPart();
@@ -64,7 +77,7 @@ public class RagdollController : MonoBehaviour
     {
         canRecover += Time.deltaTime;
 
-        if (state == RagdollState.Ragdolled && canRecover > recoverTime //&& playerController.grounded
+        if (State == RagdollState.Ragdolled && canRecover > recoverTime //&& playerController.grounded
             && pelvis.velocity.magnitude < 0.1f)
         {
             RagdollOut();
@@ -73,7 +86,7 @@ public class RagdollController : MonoBehaviour
 
     public void FixedUpdateController()
     {
-        if (state == RagdollState.BlendToAnim)
+        if (State == RagdollState.BlendToAnim)
         {
             if (Time.time <= ragdollingEndTime + mecanimToGetUpTransitionTime)
             {
@@ -90,7 +103,6 @@ public class RagdollController : MonoBehaviour
                     newRootPosition.y = hit.point.y;
                 }
 
-                hitPoint = newRootPosition;
                 transform.position = newRootPosition;
 
                 //CALCULATE ROTATION
@@ -127,9 +139,9 @@ public class RagdollController : MonoBehaviour
             //if the ragdoll blend amount has decreased to zero, move to animated state
             if (ragdollBlendAmount == 0)
             {
-                state = RagdollState.Animated;
+                State = RagdollState.Animated;
                 playerController.ragdolled = false;
-                GetComponent<Player>().isRagdoled = false;
+                GetComponent<Player>().Ragdolled = false;
                 animator.transform.localRotation = Quaternion.identity;
             }
         }
@@ -150,7 +162,7 @@ public class RagdollController : MonoBehaviour
     public void RagdollIn()
     {
         canRecover = 0.0f;
-        state = RagdollState.Ragdolled;
+        State = RagdollState.Ragdolled;
         ActivateRagdollComponents(true);
 
         pelvis.isKinematic = true;
@@ -166,16 +178,29 @@ public class RagdollController : MonoBehaviour
     public void RagdollOut()
     {
         rb.isKinematic = false;
-        state = RagdollState.BlendToAnim;
+        State = RagdollState.BlendToAnim;
         ActivateRagdollComponents(false);
-        GetUp();
+        //GetUp();
 
         //TODOD: FOR NOW
-        state = RagdollState.Animated;
-        GetComponent<Player>().isRagdoled = false;
+        State = RagdollState.Animated;
+        GetComponent<Player>().Ragdolled = false;
         playerController.ExitRagdoll();
+        
         animator.transform.localRotation = Quaternion.identity;
+        transform.rotation = Quaternion.identity;
+    }
 
+    /// <summary>Returns the player instantly to animated state.</summary>
+    public void BackToAnimated()
+    {
+        rb.isKinematic = false;
+        ActivateRagdollComponents(false);
+        State = RagdollState.Animated;
+        GetComponent<Player>().Ragdolled = false;
+        playerController.ExitRagdoll();
+
+        animator.transform.localRotation = Quaternion.identity;
         transform.rotation = Quaternion.identity;
     }
 
@@ -195,12 +220,6 @@ public class RagdollController : MonoBehaviour
         ragdolledHeadPosition = animator.GetBoneTransform(HumanBodyBones.Head).position;
         ragdolledHipPosition = animator.GetBoneTransform(HumanBodyBones.Hips).position;
     }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawSphere(hitPoint, 1f);
-    }
 }
 
 public class BodyPart
@@ -213,8 +232,8 @@ public class BodyPart
 
 public enum RagdollState
 {
-    Animated,    //Mecanim is fully in control
-    Ragdolled,   //Mecanim turned off, physics controls the ragdoll
-    BlendToAnim  //Mecanim in control, but LateUpdate() is used to partially blend in the last ragdolled pose
+    Animated,    // Mecanim is fully in control
+    Ragdolled,   // Mecanim turned off, physics controls the ragdoll
+    BlendToAnim  // Mecanim in control, but LateUpdate() is used to partially blend in the last ragdolled pose
 }
 

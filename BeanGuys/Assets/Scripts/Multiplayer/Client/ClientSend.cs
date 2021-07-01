@@ -9,49 +9,49 @@ public class ClientSend : MonoBehaviour
     //TODO: SUBSTITUTE THIS METHOD AND SENDUDPDATA FOR RELIABLE UDP COMMUNICATION
     /// <summary>Sends a packet to the server via TCP.</summary>
     /// <param name="_packet">The packet to send to the sever.</param>
-    private static void SendTCPData(Packet packet)
+    private static void SendTCPData(Packet _packet)
     {
-        packet.WriteLength();
-        Client.instance.Server.SendData(packet);
+        _packet.WriteLength();
+        Client.instance.Server.SendData(_packet);
     }
 
     /// <summary>Sends a packet to the server via UDP.</summary>
     /// <param name="_packet">The packet to send to the server.</param>
-    private static void SendUDPData(Packet packet)
+    private static void SendUDPData(Packet _packet)
     {
-        packet.WriteLength();
-        Client.SendUDPData(packet);
+        _packet.WriteLength();
+        Client.SendUDPData(_packet);
     }
 
     /// <summary>Sends a packet to everyone in the Room via UDP Multicast.</summary>
     /// <param name="_packet">The packet to send to the Room.</param>
-    private static void MulticastUDPData(Packet packet)
+    private static void MulticastUDPData(Packet _packet)
     {
-        packet.WriteLength();
-        Client.MulticastUDPData(packet);
+        _packet.WriteLength();
+        Client.MulticastUDPData(_packet);
     }
     #endregion
 
     //TODO: Debug
     public static void Test()
     {
-        using (Packet packet = new Packet((int)ClientPackets.test))
+        using (Packet _packet = new Packet((int)ClientPackets.test))
         {
-            packet.Write(ClientInfo.instance.Id);
+            _packet.Write(ClientInfo.instance.Id);
 
-            SendUDPData(packet);
+            SendUDPData(_packet);
         }
     }
 
     /// <summary>Lets the server know that the welcome message was received.</summary>
     public static void WelcomeReceived()
     {
-        using (Packet packet = new Packet((int)ClientPackets.welcomeReceived))
+        using (Packet _packet = new Packet((int)ClientPackets.welcomeReceived))
         {
-            packet.Write(ClientInfo.instance.Id);
-            packet.Write(ClientInfo.instance.Username);
+            _packet.Write(ClientInfo.instance.Id);
+            _packet.Write(ClientInfo.instance.Username);
 
-            SendTCPData(packet);
+            SendTCPData(_packet);
         }
     }
 
@@ -59,13 +59,34 @@ public class ClientSend : MonoBehaviour
     public static void PlayerReady()
     {
         Debug.Log("Player sent ready");
-        using (Packet packet = new Packet((int)ClientPackets.playerReady))
+        using (Packet _packet = new Packet((int)ClientPackets.playerReady))
         {
-            packet.Write(ClientInfo.instance.Id);
+            _packet.Write(ClientInfo.instance.Id);
 
-            SendUDPData(packet);
+            SendUDPData(_packet);
         }
     }
+
+    /// <summary>Sends player inputs to the server.</summary>
+    /// <param name="_state">Inputs/State of the player.</param>
+    public static void PlayerInput(ClientInputState _state)
+    {
+        using (Packet _packet = new Packet((int)ClientPackets.playerMovement))
+        {
+            _packet.Write(ClientInfo.instance.Id);
+
+            _packet.Write(_state.Tick);
+
+            _packet.Write(_state.HorizontalAxis);
+            _packet.Write(_state.VerticalAxis);
+            _packet.Write(_state.Jump);
+            _packet.Write(_state.Dive);
+
+            SendUDPData(_packet);
+        }
+    }
+
+
 
     /// <summary>Sends player inputs/state to the server.</summary>
     /// <param name="_state">Inputs/State of the player.</param>
@@ -73,40 +94,42 @@ public class ClientSend : MonoBehaviour
     /// <param name="_rotation">Rotation of the player.</param>
     public static void PlayerMovement(ClientInputState _state, Vector3 _position, Quaternion _rotation, bool _ragdoll)
     {
-        using (Packet packet = new Packet((int)ClientPackets.playerMovement))
+        using (Packet _packet = new Packet((int)ClientPackets.playerMovement))
         {
-            packet.Write(ClientInfo.instance.Id);
+            _packet.Write(ClientInfo.instance.Id);
 
-            packet.Write(_state.Tick);
-            packet.Write(_state.SimulationFrame);
+            _packet.Write(_state.Tick);
+            _packet.Write(_state.SimulationFrame);
 
-            packet.Write(_state.HorizontalAxis);
-            packet.Write(_state.VerticalAxis);
-            packet.Write(_state.Jump);
-            packet.Write(_state.Dive);
+            _packet.Write(_state.HorizontalAxis);
+            _packet.Write(_state.VerticalAxis);
+            _packet.Write(_state.Jump);
+            _packet.Write(_state.Dive);
+            _packet.Write(_state.LookingRotation);
 
-            packet.Write(_state.LookingRotation);
-            packet.Write(_position);
-            packet.Write(_rotation);
-            packet.Write(_ragdoll);
+            _packet.Write(_position);
+            _packet.Write(_rotation);
+            _packet.Write(_ragdoll);
 
-            SendUDPData(packet);
+            SendUDPData(_packet);
         }
     }
 
     /// <summary>Sends player inputs/state to the server.</summary>
     /// <param name="_state">State of the player, namely position, rotation and tick.</param>
-    public static void PlayerMovement(SimulationState _state)
+    public static void PlayerMovement(PlayerState _state)
     {
-        using (Packet packet = new Packet((int)ClientPackets.playerMovement))
+        using (Packet _packet = new Packet((int)ClientPackets.playerMovement))
         {
-            packet.Write(ClientInfo.instance.Id);
+            _packet.Write(ClientInfo.instance.Id);
 
-            packet.Write(_state.position);
-            packet.Write(_state.rotation);
-            packet.Write(_state.simulationFrame);
+            _packet.Write(_state.tick);
+            _packet.Write(_state.position);
+            _packet.Write(_state.rotation);
+            _packet.Write(_state.ragdoll);
+            _packet.Write(_state.animation);
 
-            MulticastUDPData(packet);
+            MulticastUDPData(_packet);
         }
     }
 }

@@ -2,7 +2,7 @@
 
 public class ClientInputState
 {
-    public float Tick; // Global clock
+    public int Tick; // Global clock
     public int SimulationFrame; // PlayerObject tick
 
     public float HorizontalAxis, VerticalAxis;

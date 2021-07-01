@@ -68,10 +68,10 @@ public class RoomSend
 
             _packet.Write(_clientId);
 
+            _packet.Write(_simulationState.simulationFrame);
             _packet.Write(_simulationState.position);
             _packet.Write(_simulationState.rotation);
             _packet.Write(_simulationState.velocity);
-            _packet.Write(_simulationState.simulationFrame);
             _packet.Write(_simulationState.ragdoll);
 
             Server.Rooms[_roomId].MulticastUDPData(_packet);

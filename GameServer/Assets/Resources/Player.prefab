@@ -1777,6 +1777,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tick: 0
+  simulationFrame: 0
   isRagdoled: 0
   isRunning: 0
 --- !u!114 &1594371345341518424
@@ -1796,7 +1797,7 @@ MonoBehaviour:
   moveSpeed: 300
   turnSpeed: 10
   jumpForce: 12
-  jumpCooldown: 0.25
+  jumpCooldown: 0.1
   diveForwardForce: 7
   diveUpForce: 7
   diveCooldown: 0.5

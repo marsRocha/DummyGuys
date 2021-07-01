@@ -116,7 +116,7 @@ public class MapController : MonoBehaviour
     public void StartRace()
     {
         isRunning = true;
-        localPlayer.isRunning = true;
+        localPlayer.Running = true;
     }
 
     #region Spawn Players
@@ -134,7 +134,7 @@ public class MapController : MonoBehaviour
         localPlayer = p.GetComponent<PlayerManager>();
 
         camera.enabled = true;
-        camera.SetFollowTargets( p.transform, p.GetComponent<PlayerController>().Pelvis);
+        camera.SetFollowTargets( p.transform, p.GetComponent<PlayerController>().pelvis);
     }
 
     public void SpawnRemotePlayer(Guid id, string username)

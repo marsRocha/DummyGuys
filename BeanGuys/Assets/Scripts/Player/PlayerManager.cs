@@ -24,12 +24,16 @@ public class PlayerManager : MonoBehaviour
     private SimulationState serverSimulationState;
     private int lastCorrectedFrame;
 
-    private Vector3 velocity;
+    private Vector3 velocity, angularVelocity;
+    private Vector3 impact = Vector3.zero, point = Vector3.zero;
+
+    [Range(0,1)]
+    public float packet_loss_percent;
 
     [Header("State")]
-    public bool isOnline = false;
-    public bool isRunning = false;
-    public bool isRagdoled = false;
+    public bool Online = false;
+    public bool Running = false;
+    public bool Ragdolled = false;
 
     private void Awake()
     {
@@ -39,11 +43,12 @@ public class PlayerManager : MonoBehaviour
         
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
-        //rb.isKinematic = true;
+        rb.isKinematic = true;
 
         simulationFrame = 0;
         lastCorrectedFrame = 0;
         velocity = Vector3.zero;
+        angularVelocity = Vector3.zero;
 
         currentInputState = new ClientInputState();
         serverSimulationState = new SimulationState();
@@ -80,7 +85,7 @@ public class PlayerManager : MonoBehaviour
 
         currentInputState = new ClientInputState
         {
-            Tick = GameLogic.clientTick,
+            Tick = GameLogic.Tick,
             SimulationFrame = simulationFrame,
             HorizontalAxis = Input.GetAxisRaw("Horizontal"),
             VerticalAxis = Input.GetAxisRaw("Vertical"),
@@ -97,19 +102,22 @@ public class PlayerManager : MonoBehaviour
 
     private void FixedTime()
     {
-        if (isRunning)
+        if (Running)
         {
             //Update player's movement
             ProcessInput(currentInputState);
 
-            if (isOnline)
-                SendMovement();
+            if(Random.value > packet_loss_percent)
+            {
+                if (Online)
+                    SendMovement();
+            }
 
             // Reconciliate
             if (serverSimulationState != null) Reconciliate();
 
             // Determine current simulationState
-            SimulationState simulationState = new SimulationState(transform.position, transform.rotation, velocity, currentInputState.SimulationFrame, isRagdoled);
+            SimulationState simulationState = new SimulationState(currentInputState.SimulationFrame, transform.position, transform.rotation, velocity, Ragdolled);
 
             int cacheSlot = simulationFrame % CACHE_SIZE;
 
@@ -129,10 +137,22 @@ public class PlayerManager : MonoBehaviour
 
     private void ProcessInput(ClientInputState currentInputs)
     {
-        if(isRagdoled)
+        if(Ragdolled)
             rb.freezeRotation = false;
-        //rb.isKinematic = false;
+        rb.isKinematic = false;
         rb.velocity = velocity;
+        rb.angularVelocity = angularVelocity;
+
+        if(impact != Vector3.zero && point != Vector3.zero)
+        {
+            rb.freezeRotation = false;
+            Ragdolled = true;
+            playerController.EnterRagdoll(point);
+            //ragdollController.RagdollIn();
+
+            rb.AddForceAtPosition(impact, point, ForceMode.Impulse);
+            impact = Vector3.zero; point = Vector3.zero;
+        }
 
         playerController.UpdateController(currentInputs);
 
@@ -145,17 +165,18 @@ public class PlayerManager : MonoBehaviour
         Physics.Simulate(logicTimer.FixedDeltaTime);
 
         velocity = rb.velocity;
-        //rb.isKinematic = true;
-        if (!isRagdoled)
+        angularVelocity = rb.angularVelocity;
+        rb.isKinematic = true;
+        if (!Ragdolled)
             rb.freezeRotation = true;
     }
 
     private void SendMovement()
     {
-        //Send to server
-        ClientSend.PlayerMovement(currentInputState, transform.position, transform.rotation, isRagdoled);
-        //Sent to peers
-        ClientSend.PlayerMovement(new SimulationState(transform.position, transform.rotation, velocity, GameLogic.Tick, isRagdoled)); //currentInputState.SimulationFrame
+        // Send player input/state to the server
+        ClientSend.PlayerMovement(currentInputState, transform.position, transform.rotation, Ragdolled);
+        // Send player state to the peers
+        ClientSend.PlayerMovement(new PlayerState(currentInputState.Tick, transform.position, transform.rotation, Ragdolled, playerController.currentAnimation));
     }
 
     #region Client-Server Reconciliation
@@ -219,7 +240,7 @@ public class PlayerManager : MonoBehaviour
             ProcessInput(rewindCachedInputState);
 
             // Replace the simulationStateCache index with the new value.
-            SimulationState rewoundSimulationState = new SimulationState(transform.position, transform.rotation, velocity, rewindFrame, isRagdoled);
+            SimulationState rewoundSimulationState = new SimulationState(rewindFrame, transform.position, transform.rotation, velocity, Ragdolled);
             simStateCache[rewindCacheIndex] = rewoundSimulationState;
 
             // Increase the amount of frames that we've rewound.
@@ -236,6 +257,8 @@ public class PlayerManager : MonoBehaviour
         transform.position = simulationState.position;
         transform.rotation = simulationState.rotation;
         velocity = simulationState.velocity;
+
+        //TODO: ADD RESET TO RAGDOLL IF NEEDED 
     }
     #endregion
 
@@ -247,9 +270,14 @@ public class PlayerManager : MonoBehaviour
 
     public void Respawn(Vector3 _position, Quaternion _rotation)
     {
+        rb.isKinematic = true;
         transform.position = _position;
         transform.rotation = _rotation;
         velocity = Vector3.zero;
+
+        // Go back to animated state if not already
+        ragdollController.BackToAnimated();
+        rb.isKinematic = false;
 
         playerController.Respawn();
     }
@@ -258,29 +286,22 @@ public class PlayerManager : MonoBehaviour
     {
         if (ragdollController.enabled)
         {
-            if (ragdollController.state == RagdollState.Animated)
+            if (ragdollController.State == RagdollState.Animated)
             {
                 Vector3 collisionDirection = collision.contacts[0].normal;
 
                 if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
                 {
-                    isRagdoled = true;
-                    playerController.EnterRagdoll(collision.contacts[0].point);
-                    ragdollController.RagdollIn();
-
-                    rb.isKinematic = false;
-                    rb.freezeRotation = false;
-
                     // Add obstacle extra force
-                    rb.AddForceAtPosition(collisionDirection * ragdollController.obstacleModifier, collision.contacts[0].point, ForceMode.Impulse);
-                    velocity = rb.velocity;
+                    impact = collisionDirection * ragdollController.ObstacleModifier;
+                    point = collision.contacts[0].point;
 
                     return;
                 }
                 else if (collision.gameObject.layer == LayerMask.NameToLayer("Bounce"))
                 {
                     // Add obstacle extra force
-                    rb.AddForceAtPosition(collisionDirection * ragdollController.bounceModifier, collision.contacts[0].point, ForceMode.Impulse);
+                    rb.AddForceAtPosition(collisionDirection * ragdollController.BounceModifier, collision.contacts[0].point, ForceMode.Impulse);
                     velocity = rb.velocity;
 
                     playerController.jumpPs.Play();
@@ -299,22 +320,18 @@ public class PlayerManager : MonoBehaviour
 
                 Debug.Log("collision force:" + collision.impulse.magnitude);
                 Debug.Log("collision relative Velocity:" + collision.relativeVelocity.magnitude);
-                if (collision.impulse.magnitude >= ragdollController.minForce || (playerController.jumping || playerController.diving))
+                if (collision.impulse.magnitude >= ragdollController.MinForce || (playerController.jumping || playerController.diving))
                 {
                     playerController.EnterRagdoll(collision.contacts[0].point);
                     // Add extra force
-                    rb.AddForceAtPosition(collisionDirection * ragdollController.multiplier, collision.contacts[0].point, ForceMode.Impulse);
+                    rb.AddForceAtPosition(collisionDirection * ragdollController.Multiplier, collision.contacts[0].point, ForceMode.Impulse);
                 }
             }
         }
     }
-
 
     private void OnApplicationQuit()
     {
         logicTimer.Stop();
     }
 }
-
-/// Added isOline to ClientSend messages
-/// Added rb.freezeRotation = false; and true on processinputs and on simulatephysics

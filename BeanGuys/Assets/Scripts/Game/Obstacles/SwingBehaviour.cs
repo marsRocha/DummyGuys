@@ -26,7 +26,6 @@ public class SwingBehaviour : MonoBehaviour
             transform.rotation = Quaternion.Lerp(start, end, ((Mathf.Sin(MapController.instance.Game_Clock * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
         else
             transform.rotation = Quaternion.Lerp(end, start, ((Mathf.Sin(MapController.instance.Game_Clock * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
-        transform.GetChild(0).GetComponent<Rigidbody>().velocity = Vector3.forward * 100;
     }
 
     private IEnumerator WaitFor(float time)

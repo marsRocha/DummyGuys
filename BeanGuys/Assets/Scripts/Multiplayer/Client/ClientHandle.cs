@@ -119,11 +119,13 @@ public class ClientHandle : MonoBehaviour
     /// <param name="_packet">The recieved packet.</param>
     public static void PlayerMovement(Guid _clientId, Packet _packet)
     {
+        int _tick = _packet.ReadInt();
         Vector3 _position = _packet.ReadVector3();
         Quaternion _rotation = _packet.ReadQuaternion();
-        int _tick = _packet.ReadInt();
+        bool _ragdoll = _packet.ReadBool();
+        int _animation = _packet.ReadInt();
 
-        GameManager.instance.PlayerMovement(_clientId, _position, _rotation, _tick);
+        GameManager.instance.PlayerMovement(_clientId, _tick, _position, _rotation, _ragdoll, _animation);
     }
 
     /// <summary>Handles 'playerCorrection' packet sent from the server.</summary>
@@ -132,17 +134,17 @@ public class ClientHandle : MonoBehaviour
     {
         Guid _clientId = _packet.ReadGuid();
 
+        int simulationFrame = _packet.ReadInt();
         Vector3 position =_packet.ReadVector3();
         Quaternion rotation =_packet.ReadQuaternion();
         Vector3 velocity =_packet.ReadVector3();
-        int simulationFrame =_packet.ReadInt();
         bool ragdoll =_packet.ReadBool();
 
         //TODO: FOR NOW SERVER SEND MULTICAST, SHOULD I CHANGE IT?
         //TODO: ALSO OTHER METHODS ARE CHECKING IF ROOM IS CORRECT, CHANGE THAT TO BEFORE COMING TO THIS FUNCTIONS
 
         if (_clientId == ClientInfo.instance.Id)
-            GameManager.instance.PlayerCorrection(new SimulationState(position, rotation, velocity, simulationFrame, ragdoll));
+            GameManager.instance.PlayerCorrection(new SimulationState(simulationFrame, position, rotation, velocity, ragdoll));
     }
 
     /// <summary>Handles 'playerRespawn' packet sent from the server.</summary>
