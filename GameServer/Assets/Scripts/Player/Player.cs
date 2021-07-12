@@ -13,22 +13,18 @@ public class Player : MonoBehaviour
     private PhysicsScene physicsScene;
 
     private ClientInputState currentInputState;
-    private SimulationState lastState;
+    private Vector3 velocity, angularVelocity;
 
     private int lastFrame;
     private Queue<ClientInputState> clientInputStates;
     //  The amount of distance in units that we will allow the client's prediction to drift from it's position on the server, before a correction is necessary. 
     private float tolerance = 0.0000001f;
     public int tick = 0;
-    public int simulationFrame;
-
-    private Vector3 velocity, angularVelocity;
-    private Vector3 impact = Vector3.zero, point = Vector3.zero;
 
     [Header("Ragdoll Params")]
     public bool Ragdolled = false;
     [SerializeField]
-    private bool isRunning;
+    private bool Running;
 
     private void Awake()
     {
@@ -43,8 +39,6 @@ public class Player : MonoBehaviour
         clientInputStates = new Queue<ClientInputState>();
         velocity = Vector3.zero;
         angularVelocity = Vector3.zero;
-
-        simulationFrame = 0;
     }
 
     private void Start()
@@ -73,9 +67,37 @@ public class Player : MonoBehaviour
 
     public void StartPlayer()
     {
-        isRunning = true;
+        Running = true;
     }
 
+    public void FixedTime()
+    {
+        if (Running)
+        {
+            currentInputState = null;
+
+            // Obtain CharacterInputState's from the queue. 
+            while (clientInputStates.Count > 0 && (currentInputState = clientInputStates.Dequeue()) != null)
+            {
+                // Player is sending simulation frames that are in the past, dont process them
+                if (currentInputState.SimulationFrame <= lastFrame)
+                    continue;
+
+                lastFrame = currentInputState.SimulationFrame;
+
+                // Process the input.
+                ProcessInput(currentInputState);
+
+                // Obtain the current SimulationState.
+                SimulationState state = new SimulationState(currentInputState.SimulationFrame, transform.position, transform.rotation, velocity, angularVelocity, ragdollController);
+
+                // Send the state back to the client.
+                CheckSimulationState(state);
+            }
+        }
+    }
+
+    /*
     public void FixedTime()
     {
         if (isRunning)
@@ -90,12 +112,12 @@ public class Player : MonoBehaviour
                 if (currentInputState.SimulationFrame <= lastFrame)
                     continue;
 
-               /* // Re-run frame now that message has reached the server
-                // This is in case the server simulated a frame without a message due to delay in receiving them
-                if(simulationFrame >= currentInputState.SimulationFrame && lastState != null)
-                {
-                    SetSimulationState(lastState);
-                }*/
+                 // Re-run frame now that message has reached the server
+                 // This is in case the server simulated a frame without a message due to delay in receiving them
+                 if(simulationFrame >= currentInputState.SimulationFrame && lastState != null)
+                 {
+                     SetSimulationState(lastState);
+                 }
 
                 // Process the input.
                 ProcessInput(currentInputState);
@@ -115,20 +137,21 @@ public class Player : MonoBehaviour
                 //simulated = true;
             }
 
-           /* if(simulated) return;
+             if(simulated) return;
 
-            currentInputState = new ClientInputState();
-            currentInputState.HorizontalAxis = 0;
-            currentInputState.VerticalAxis = 0;
-            currentInputState.Jump = false;
-            currentInputState.Dive = false;
+             currentInputState = new ClientInputState();
+             currentInputState.HorizontalAxis = 0;
+             currentInputState.VerticalAxis = 0;
+             currentInputState.Jump = false;
+             currentInputState.Dive = false;
 
-            // Process the input.
-            ProcessInput(currentInputState);
+             // Process the input.
+             ProcessInput(currentInputState);
 
-            simulationFrame++;*/
+             simulationFrame++;
         }
     }
+    */
 
     private void ProcessInput(ClientInputState inputs)
     {
@@ -137,17 +160,6 @@ public class Player : MonoBehaviour
         rb.isKinematic = false;
         rb.velocity = velocity;
         rb.angularVelocity = angularVelocity;
-
-        if (impact != Vector3.zero && point != Vector3.zero)
-        {
-            rb.freezeRotation = false;
-            Ragdolled = true;
-            playerController.EnterRagdoll(point);
-            //ragdollController.RagdollIn();
-
-            rb.AddForceAtPosition(impact, point, ForceMode.Impulse);
-            impact = Vector3.zero; point = Vector3.zero;
-        }
 
         playerController.UpdateController(inputs);
 
@@ -163,8 +175,7 @@ public class Player : MonoBehaviour
         velocity = rb.velocity;
         angularVelocity = rb.angularVelocity;
         rb.isKinematic = true;
-        if (!Ragdolled)
-            rb.freezeRotation = true;
+        rb.freezeRotation = true;
     }
 
 
@@ -228,50 +239,4 @@ public class Player : MonoBehaviour
         logicTimer.Stop();
         Destroy(gameObject);
     }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (ragdollController.enabled)
-        {
-            if (ragdollController.State == RagdollState.Animated)
-            {
-                Vector3 collisionDirection = collision.contacts[0].normal;
-
-                if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
-                {
-                    impact = collisionDirection * ragdollController.ObstacleModifier;
-                    point = collision.contacts[0].point;
-
-                    return;
-                }
-                else if (collision.gameObject.layer == LayerMask.NameToLayer("Bounce"))
-                {
-                    // Add obstacle extra force
-                    rb.AddForceAtPosition(collisionDirection * ragdollController.BounceModifier, collision.contacts[0].point, ForceMode.Impulse);
-                    velocity = rb.velocity;
-
-                    return;
-                }
-                else if (collision.gameObject.layer == LayerMask.NameToLayer("Floor"))
-                {
-                    if (collision.impulse.magnitude >= 20)
-                    {
-                        playerController.EnterRagdoll(collision.contacts[0].point);
-                    }
-
-                    return;
-                }
-
-                Debug.Log("collision force:" + collision.impulse.magnitude);
-                Debug.Log("collision relative Velocity:" + collision.relativeVelocity.magnitude);
-                if (collision.impulse.magnitude >= ragdollController.MinForce || (playerController.jumping || playerController.diving))
-                {
-                    playerController.EnterRagdoll(collision.contacts[0].point);
-                    // Add extra force
-                    rb.AddForceAtPosition(collisionDirection * ragdollController.Multiplier, collision.contacts[0].point, ForceMode.Impulse);
-                }
-            }
-        }
-    }
-
 }

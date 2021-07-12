@@ -12,6 +12,7 @@ public class ServerHandle
         packetHandlers = new Dictionary<int, PacketHandler>()
             {
                 { (int)ClientPackets.welcomeReceived, WelcomeReceived },
+                { (int)ClientPackets.ping, Ping },
                 { (int)ClientPackets.test, Test },
             };
     }
@@ -68,6 +69,11 @@ public class ServerHandle
             if(p.id != _client.Id)
                 ServerSend.PlayerInfo(_client.Id, foundRoom.RoomId, p);
         }
+    }
+
+    public static void Ping(Guid _clientId, Packet _packet)
+    {
+        ServerSend.Pong(_clientId);
     }
 
     public static void Test(Guid _clientId, Packet packet)

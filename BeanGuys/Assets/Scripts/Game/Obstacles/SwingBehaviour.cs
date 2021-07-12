@@ -23,9 +23,9 @@ public class SwingBehaviour : MonoBehaviour
     void FixedUpdate()
     {
         if (Left)
-            transform.rotation = Quaternion.Lerp(start, end, ((Mathf.Sin(MapController.instance.Game_Clock * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
+            transform.rotation = Quaternion.Lerp(start, end, ((Mathf.Sin(GameLogic.Clock * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
         else
-            transform.rotation = Quaternion.Lerp(end, start, ((Mathf.Sin(MapController.instance.Game_Clock * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
+            transform.rotation = Quaternion.Lerp(end, start, ((Mathf.Sin(GameLogic.Clock * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
     }
 
     private IEnumerator WaitFor(float time)

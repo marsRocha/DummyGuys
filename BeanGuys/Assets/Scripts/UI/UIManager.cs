@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 
 /// <summary>
@@ -9,7 +8,7 @@ public class UIManager : MonoBehaviour
 {
     // Canvas
     [SerializeField]
-    private GameObject HUD, ExitMenu;
+    private GameObject HUD, Menu;
 
     // Frames
     [SerializeField]
@@ -29,18 +28,18 @@ public class UIManager : MonoBehaviour
     public void Initialize()
     {
         HUD.SetActive(true);
-        ExitMenu.SetActive(false);
+        Menu.SetActive(false);
 
         PlayersFrame.SetActive(true);
         WinnerFrame.SetActive(false);
         LoserFrame.SetActive(false);
     }
 
-    /// <summary>Activates/Deactivates the exit menu.</summary>
+    /// <summary>Activates/Deactivates the menu.</summary>
     /// <param name="_activate">The state to which the menu will transition.</param>
-    public void OpenExitMenu(bool _activate)
+    public void OpenMenu(bool _activate)
     {
-        ExitMenu.SetActive(_activate);
+        Menu.SetActive(_activate);
     }
 
     /// <summary>Activates the winner frame element if player qualified in the race.</summary>

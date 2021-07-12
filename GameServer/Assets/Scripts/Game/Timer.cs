@@ -25,10 +25,10 @@ public class Timer : MonoBehaviour
         switch (action)
         {
             case 1:
-                transform.GetComponent<RoomScene>().StartRace();
+                gameObject.scene.GetRootGameObjects()[0].GetComponent<RoomScene>().StartRace();
                 break;
             case 2:
-                transform.GetComponent<RoomScene>().EndRace();
+                gameObject.scene.GetRootGameObjects()[0].GetComponent<RoomScene>().EndRace();
                 break;
             default:
                 break;

@@ -13,7 +13,7 @@ public class RotateBehaviour : MonoBehaviour
     }
     void Update()
     {
-        rb.rotation = Quaternion.Euler(0f, MapController.instance.Game_Clock * rotationSpeed, 0f);
-        rb.angularVelocity = transform.up * (MapController.instance.Game_Clock > 0 ? 2f : 0f);
+        rb.rotation = Quaternion.Euler(0f, GameLogic.Clock * rotationSpeed, 0f);
+        rb.angularVelocity = transform.up * (GameLogic.Clock > 0 ? 2f : 0f);
     }
 }

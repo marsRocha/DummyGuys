@@ -30,7 +30,7 @@ public class RagdollController : MonoBehaviour
 
     // Collision Params
     [SerializeField]
-    public float Multiplier { get; private set; } = 2;
+    public float Modifier { get; private set; } = 2;
     [SerializeField]
     public float ObstacleModifier { get; private set; } = 8;
     [SerializeField]
@@ -144,7 +144,7 @@ public class RagdollController : MonoBehaviour
             if (ragdollBlendAmount == 0)
             {
                 State = RagdollState.Animated;
-                playerController.ragdolled = false;
+                playerController.ExitRagdoll();
                 GetComponent<PlayerManager>().Ragdolled = false;
                 animator.transform.localRotation = Quaternion.identity;
             }

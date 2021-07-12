@@ -11,8 +11,12 @@ public class GameManager : MonoBehaviour
 
     public int totalPlayers = 0;
 
-    //REMOVE THIS FROM HERE LATER ON
+    //TODO: REMOVE THIS FROM HERE LATER ON
     public GameObject RemotePlayerObj, LocalPlayerObj;
+
+    // Ping stuff
+    public float pingCountdown = 1f;
+    public float pingCountdownLimit = 1f;
 
     [Header("States")]
     public bool isRunning;
@@ -41,12 +45,20 @@ public class GameManager : MonoBehaviour
         isRunning = false;
     }
 
-    private void Update()
+    public void FixedUpdate()
     {
-        if (Input.GetKeyDown(KeyCode.P))
+        if (!debug)
         {
-            ClientSend.Test();
-            Debug.Log("sent test");
+            if (Client.instance.isConnected)
+            {
+                pingCountdown += Time.fixedDeltaTime;
+                if (pingCountdown >= pingCountdownLimit)
+                {
+                    pingCountdown = 0;
+                    //Debug.Log($"{Client.instance.ping}ms");
+                    ClientSend.Ping();
+                }
+            }
         }
     }
 

@@ -42,12 +42,12 @@ public class PhysicsSceneManager : MonoBehaviour
     }
 
     //necessary because we need to 1 frame to load scene, used by physicsSceneManager ienumerator
-    private static IEnumerator WaitFrame(Scene scene, Guid _roomId, string _mapName)
+    private static IEnumerator WaitFrame(Scene _scene, Guid _roomId, string _mapName)
     {
         //returning 0 makes it wait 1 frame (needed to load scene)
         yield return 0;
 
-        Server.Rooms[_roomId].roomScene = scene.GetRootGameObjects()[0].GetComponent<RoomScene>();
-        Server.Rooms[_roomId].InitializeMap(scene);
+        Server.Rooms[_roomId].roomScene = _scene.GetRootGameObjects()[0].GetComponent<RoomScene>();
+        Server.Rooms[_roomId].InitializeMap(_scene);
     }
 }

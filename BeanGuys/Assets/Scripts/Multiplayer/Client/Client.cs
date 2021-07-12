@@ -13,8 +13,6 @@ public class Client : MonoBehaviour
 
     public static int dataBufferSize = 4096;
 
-    public delegate void PacketHandler(Guid id, Packet packet);
-    public static Dictionary<int, PacketHandler> packetHandlers;
     public static Dictionary<Guid, Peer> peers = new Dictionary<Guid, Peer>();
 
     private static UdpClient _udpClient;
@@ -34,7 +32,12 @@ public class Client : MonoBehaviour
     //Client Info
     private static IPAddress _localIPaddress;
 
-    private bool isConnected = false;
+    //TODO: set private
+    public bool isConnected = false;
+
+    // Ping
+    public DateTime pingSent;
+    public double ping;
 
     #region Singleton
     private void Awake()
@@ -67,7 +70,6 @@ public class Client : MonoBehaviour
     {
         Server = new TCP();
 
-        isConnected = true;
         Server.Connect(_serverIPaddress, _serverPort);
     }
 
@@ -92,7 +94,8 @@ public class Client : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.Log($"Error receiving UDP Multicast data: {ex}");
+            if(instance.isConnected)
+                Debug.Log($"Error receiving UDP Multicast data: {ex}");
         }
     }
 
@@ -125,7 +128,7 @@ public class Client : MonoBehaviour
                 /*if (ClientInfo.instance.RoomId != Guid.Empty && ClientInfo.instance.RoomId != id)
                     return;*/
 
-                packetHandlers[packetId](id, packet);
+                ClientHandle.packetHandlers[packetId](id, packet);
             }
         });
     }
@@ -279,7 +282,7 @@ public class Client : MonoBehaviour
                     using (Packet packet = new Packet(packetBytes))
                     {
                         int packetId = packet.ReadInt();
-                        packetHandlers[packetId](Guid.Empty, packet);
+                        ClientHandle.packetHandlers[packetId](Guid.Empty, packet);
                     }
                 });
 
@@ -311,24 +314,7 @@ public class Client : MonoBehaviour
     /// <summary>Initializes all necessary client data.</summary>
     private void InitializeData()
     {
-        packetHandlers = new Dictionary<int, PacketHandler>()
-        {   
-            //SERVER SENT
-            { (int) ServerPackets.welcome, ClientHandle.WelcomeServer },
-            { (int) ServerPackets.joinedRoom, ClientHandle.JoinedRoom },
-            { (int) ServerPackets.playerJoined, ClientHandle.PlayerJoined },
-            { (int) ServerPackets.playerLeft, ClientHandle.PlayerLeft },
-            { (int) ServerPackets.map, ClientHandle.Map },
-            { (int) ServerPackets.startGame, ClientHandle.StartGame },
-            { (int) ServerPackets.endGame, ClientHandle.EndGame },
-            { (int) ServerPackets.playerRespawn, ClientHandle.PlayerRespawn },
-            { (int) ServerPackets.playerCorrection, ClientHandle.PlayerCorrection },
-            { (int) ServerPackets.playerFinish, ClientHandle.PlayerFinish },
-            { (int) ServerPackets.serverTick, ClientHandle.ServerTick },
-
-            //CLIENT SENT
-            { (int) ClientPackets.playerMovement, ClientHandle.PlayerMovement }
-        };
+        ClientHandle.InitializeData();
     }
 
     /// <summary>Disconnects from the server and stops all network traffic.</summary>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -6,6 +7,32 @@ using UnityEngine;
 /// </summary>
 public class ClientHandle : MonoBehaviour
 {
+    public delegate void PacketHandler(Guid id, Packet packet);
+    public static Dictionary<int, PacketHandler> packetHandlers;
+
+    public static void InitializeData()
+    {
+        packetHandlers = new Dictionary<int, PacketHandler>()
+        {   
+            //SERVER SENT
+            { (int) ServerPackets.welcome, WelcomeServer },
+            { (int) ServerPackets.joinedRoom, JoinedRoom },
+            { (int) ServerPackets.playerJoined, PlayerJoined },
+            { (int) ServerPackets.playerLeft, PlayerLeft },
+            { (int) ServerPackets.map, Map },
+            { (int) ServerPackets.startGame, StartGame },
+            { (int) ServerPackets.endGame, EndGame },
+            { (int) ServerPackets.playerRespawn, PlayerRespawn },
+            { (int) ServerPackets.playerCorrection, PlayerCorrection },
+            { (int) ServerPackets.playerFinish, PlayerFinish },
+            { (int) ServerPackets.serverTick, ServerTick },
+            { (int) ServerPackets.pong, Pong },
+            //CLIENT SENT
+            { (int) ClientPackets.playerMovement, PlayerMovement }
+        };
+    }
+
+
     /// <summary>Handles 'welcome' packet sent from the server.</summary>
     /// <param name="_packet">The recieved packet.</param>
     public static void WelcomeServer(Guid not_needed, Packet _packet)
@@ -13,6 +40,7 @@ public class ClientHandle : MonoBehaviour
         Guid myId = _packet.ReadGuid();
         ClientInfo.instance.Id = myId;
         Debug.Log($"[SERVER] Welcome, your Id is {myId}");
+        Client.instance.isConnected = true;
 
         ClientSend.WelcomeReceived();
     }
@@ -38,6 +66,14 @@ public class ClientHandle : MonoBehaviour
         ClientInfo.instance.SpawnId = spawnId;
 
         Debug.Log($"Joined room, multicast info Ip:{ip} Port:{port}");
+    }
+
+    /// <summary>Handles 'pong' packet sent from the server.</summary>
+    /// <param name="_packet">The recieved packet.</param>
+    public static void Pong(Guid not_needed, Packet _packet)
+    {
+        // We receive the ping packet, update the stored ping variable
+        Client.instance.ping = Math.Round((DateTime.UtcNow - Client.instance.pingSent).TotalMilliseconds, 0);
     }
 
     /// <summary>Handles 'playerJoined' packet sent from the server.</summary>
@@ -138,13 +174,14 @@ public class ClientHandle : MonoBehaviour
         Vector3 position =_packet.ReadVector3();
         Quaternion rotation =_packet.ReadQuaternion();
         Vector3 velocity =_packet.ReadVector3();
+        Vector3 angularVelocity =_packet.ReadVector3();
         bool ragdoll =_packet.ReadBool();
 
         //TODO: FOR NOW SERVER SEND MULTICAST, SHOULD I CHANGE IT?
         //TODO: ALSO OTHER METHODS ARE CHECKING IF ROOM IS CORRECT, CHANGE THAT TO BEFORE COMING TO THIS FUNCTIONS
 
         if (_clientId == ClientInfo.instance.Id)
-            GameManager.instance.PlayerCorrection(new SimulationState(simulationFrame, position, rotation, velocity, ragdoll));
+            GameManager.instance.PlayerCorrection(new SimulationState(simulationFrame, position, rotation, velocity, angularVelocity, ragdoll));
     }
 
     /// <summary>Handles 'playerRespawn' packet sent from the server.</summary>
@@ -169,12 +206,13 @@ public class ClientHandle : MonoBehaviour
     /// <param name="_packet">The recieved packet.</param>
     public static void ServerTick(Guid _roomId, Packet _packet)
     {
-        int _serverTick = _packet.ReadInt();
+        int _roomTick = _packet.ReadInt();
+        float _roomClock = _packet.ReadFloat();
 
-        if (_serverTick > GameLogic.serverTick)
-        {
-            GameLogic.serverTick = _serverTick;
-            GameLogic.SetTick(_serverTick);
-        }
+        if (_roomTick > GameLogic.Tick)
+            GameLogic.SetTick(_roomTick);
+
+        if (_roomClock > GameLogic.Clock)
+            GameLogic.SetClock(_roomClock);
     }
 }

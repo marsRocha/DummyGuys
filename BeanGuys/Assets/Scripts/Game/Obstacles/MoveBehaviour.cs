@@ -18,7 +18,7 @@ public class MoveBehaviour : MonoBehaviour
 
     void FixedUpdate()
     {
-        transform.position = Vector3.Lerp(initialPos + points[0], initialPos + points[1], ((Mathf.Sin((MapController.instance.Game_Clock + offset) * speed) + 1.0f) / 2.0f));
+        transform.position = Vector3.Lerp(initialPos + points[0], initialPos + points[1], ((Mathf.Sin((GameLogic.Clock + offset) * speed) + 1.0f) / 2.0f));
     }
 
     private void OnDrawGizmos()

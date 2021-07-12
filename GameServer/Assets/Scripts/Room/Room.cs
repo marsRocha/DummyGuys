@@ -58,9 +58,9 @@ public partial class Room
 
         // TODO: FORNOW
         // Wait x seconds to give time for more players to join in
-        Thread.Sleep(2000);
+        //Thread.Sleep(2000);
         // After waiting x time, we now load the map
-        LoadMap();
+        //LoadMap();
     }
 
     #region Communication

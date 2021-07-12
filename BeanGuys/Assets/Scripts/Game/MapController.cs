@@ -24,14 +24,11 @@ public class MapController : MonoBehaviour
     public Dictionary<Guid, RemotePlayerManager> players { get; private set; }
     public PlayerManager localPlayer { get; private set; }
 
-    //Controls game
-    public float Game_Clock { get; private set; }
     public bool isRunning { get; private set; } = false;
 
     private int qualifiedPlayers;
     private int totalPlayers;
     private bool qualified;
-
 
     #region Singleton
     private void Awake()
@@ -60,7 +57,6 @@ public class MapController : MonoBehaviour
 
         players = new Dictionary<Guid, RemotePlayerManager>();
 
-        Game_Clock = 0;
         isRunning = true;
         qualified = false;
 
@@ -83,7 +79,6 @@ public class MapController : MonoBehaviour
         players = new Dictionary<Guid, RemotePlayerManager>();
         SpawnPlayers();
 
-        Game_Clock = 0;
         isRunning = true;
         qualified = false;
 
@@ -96,19 +91,18 @@ public class MapController : MonoBehaviour
         startCountDown.startCountdown = true;
     }
 
-
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             camera.StopFollowMouse();
-            uiManager.OpenExitMenu(true);
+            uiManager.OpenMenu(true);
         }
 
         if (isRunning)
         {
-            Game_Clock += Time.deltaTime;
+            GameLogic.SetClock(GameLogic.Clock + Time.deltaTime);
         }
     }
 
@@ -207,11 +201,6 @@ public class MapController : MonoBehaviour
 
         returnCountDown.gameObject.SetActive(true);
         returnCountDown.startCountdown = true;
-    }
-
-    public void SetCheckPoint(int newCheckPoint)
-    {
-        //playerCheckPoint = newCheckPoint;
     }
 
     public Transform GetPlayerTransform(int _index)

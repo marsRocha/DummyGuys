@@ -2,12 +2,13 @@
 
 public class PlayerController : MonoBehaviour
 {
-    [Header("Components")]
-    public Transform Pelvis;
-    private CapsuleCollider cp;
+    // Components
     private Rigidbody rb;
+    public Transform pelvis;
+    private CapsuleCollider cp;
     private LogicTimer logicTimer;
     private PhysicsScene physicsScene;
+    private RagdollController ragdollController;
 
     [Header("Movement Variables")]
     private float gravityForce = 15f;
@@ -26,16 +27,16 @@ public class PlayerController : MonoBehaviour
     public LayerMask collisionMask;
     private Vector3 colDir;
     private Vector3 groundNormal;
+    private Vector3 collisionForce, collisionPoint;
 
-    [Header("States")]
-    public bool grounded;
-    public bool ragdolled, getUp;
-    public bool isRunning = false;
-    public bool jumping { get; private set; }
-    public bool diving { get; private set; }
-    public bool dashing { get; private set; }
+    // States
+    private bool grounded;
+    private bool ragdolled, getUp;
+    private bool jumping;
+    private bool diving;
+    private bool dashing;
     private bool readyToJump = true, readyToDive = true;
-    public bool dashTriggered { get; private set; }
+    private bool dashTriggered;
 
     public void StartController(LogicTimer _logicTimer)
     {
@@ -45,21 +46,32 @@ public class PlayerController : MonoBehaviour
         cp = GetComponent<CapsuleCollider>();
         rb = GetComponent<Rigidbody>();
         rb.centerOfMass = Vector3.up * 0.9009846f;
-
         physicsScene = gameObject.scene.GetPhysicsScene();
+        ragdollController = GetComponent<RagdollController>();
+
+        collisionForce = Vector3.zero;
+        collisionPoint = Vector3.zero;
     }
 
-    //Used in fixed update
+    // Used in fixed update
     public void UpdateController(ClientInputState currentInput)
     {
         this.currentInputs = currentInput;
 
+        // Check if there as been an impact last frame
+        if (collisionForce != Vector3.zero && collisionPoint != Vector3.zero)
+        {
+            rb.AddForceAtPosition(collisionForce, collisionPoint, ForceMode.Impulse);
+
+            collisionForce = Vector3.zero; collisionPoint = Vector3.zero;
+        }
+
         GroundChecking();
 
-        //Extra gravity
+        // Extra gravity
         rb.AddForce(Vector3.down * gravityForce * logicTimer.FixedDeltaTime);
 
-        //Wait for player to getUp
+        // Wait for player to getUp
         if (getUp && getUpTime < Time.time + getUpDelay)
             getUp = false;
 
@@ -73,7 +85,7 @@ public class PlayerController : MonoBehaviour
     private void GroundChecking()
     {
         RaycastHit hit;
-        physicsScene.Raycast(Pelvis.position + (diving ? transform.forward * 0.67f : Vector3.zero), Vector3.down, out hit, -0.735f + (diving ? checkDistanceLayed : checkDistance), collisionMask);
+        physicsScene.Raycast(pelvis.position + (diving ? transform.forward * 0.67f : Vector3.zero), Vector3.down, out hit, -0.735f + (diving ? checkDistanceLayed : checkDistance), collisionMask);
         if (hit.collider)
         {
             grounded = true;
@@ -130,7 +142,7 @@ public class PlayerController : MonoBehaviour
         return moveDirection;
     }
 
-    //MOVEMENT TYPES
+    // MOVEMENT TYPES
     private void Walk()
     {
         if (!diving && !dashing)
@@ -185,17 +197,17 @@ public class PlayerController : MonoBehaviour
             if (jumping)
             {
                 jumping = false;
-                readyToJump = true; //Reset jump
+                readyToJump = true; // Reset jump
                 rb.AddForce(Vector3.up * diveUpForce * 0.5f, ForceMode.Impulse);
             }
             else
             {
                 rb.AddForce(Vector3.up * diveUpForce, ForceMode.Impulse);
             }
-            //capsule collider's direction goes to the Z-Axis
+            // Capsule collider's direction goes to the Z-Axis
             cp.direction = 2;
 
-            //if falling while diving, reset velocity
+            // If falling while diving, reset velocity
             rb.velocity = Vector3.zero;
 
             rb.AddForce(transform.forward * diveForwardForce, ForceMode.Impulse);
@@ -247,15 +259,57 @@ public class PlayerController : MonoBehaviour
         diving = false;
     }
 
-    public void EnterRagdoll(Vector3 _point)
+    public void EnterRagdoll()
     {
         ragdolled = true;
         ResetBehaviours();
+
+        GetComponent<Player>().Ragdolled = true;
+        ragdollController.RagdollIn();
     }
 
     public void ExitRagdoll()
     {
         ragdolled = false;
         cp.direction = 1;
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (ragdollController.State == RagdollState.Animated)
+        {
+            Vector3 collisionDirection = collision.contacts[0].normal;
+
+            // Determine what has been and operate accordingly
+            if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
+            {
+                // Add obstacle extra force
+                collisionForce = collisionDirection * ragdollController.ObstacleModifier;
+                collisionPoint = collision.contacts[0].point;
+
+                EnterRagdoll();
+            }
+            else if (collision.gameObject.layer == LayerMask.NameToLayer("Bounce"))
+            {
+                // Add bounce extra force
+                collisionForce = collisionDirection * ragdollController.BounceModifier;
+                collisionPoint = collision.contacts[0].point;
+            }
+            else if (collision.gameObject.layer == LayerMask.NameToLayer("Floor"))
+            {
+                if (collision.impulse.magnitude >= 20)
+                {
+                    EnterRagdoll();
+                }
+            }
+            else if (collision.impulse.magnitude >= ragdollController.MinForce || (jumping || diving))
+            {
+                // Add extra force
+                collisionForce = collisionDirection * ragdollController.Modifier;
+                collisionPoint = collision.contacts[0].point;
+
+                EnterRagdoll();
+            }
+        }
     }
 }

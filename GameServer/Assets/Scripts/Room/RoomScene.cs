@@ -5,10 +5,8 @@ using UnityEngine.SceneManagement;
 
 public class RoomScene : MonoBehaviour
 {
-    public static RoomScene instance;
-
     private Room room;
-    private static LogicTimer logicTimer;
+    private LogicTimer logicTimer;
 
     //Objects inside Scene
     [HideInInspector]
@@ -28,21 +26,9 @@ public class RoomScene : MonoBehaviour
     private int qualifiedPlayers;
     private int totalPlayers;
 
-    private void Awake()
-    {
-        if (instance == null)
-        {
-            instance = this;
-        }
-        else if (instance != this)
-        {
-            Debug.Log("Instance roomScene already exists, destroying object.");
-            Destroy(this);
-        }
-    }
-
     private void Start()
     {
+        Debug.Log("Start");
         logicTimer = new LogicTimer(() => FixedTime());
         logicTimer.Start();
     }
@@ -76,7 +62,7 @@ public class RoomScene : MonoBehaviour
         {
             p.tick = tick;
         }
-        RoomSend.ServerTick(room.RoomId, tick);
+        RoomSend.ServerTick(room.RoomId, tick, Game_Clock);
     }
 
     public void Initialize(Guid _roomId, Scene scene)

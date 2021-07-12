@@ -1777,8 +1777,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tick: 0
-  simulationFrame: 0
-  isRagdoled: 0
+  Ragdolled: 0
   isRunning: 0
 --- !u!114 &1594371345341518424
 MonoBehaviour:
@@ -1792,22 +1791,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 692f60bc698e88f4f801df357a4421a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Pelvis: {fileID: 7713884538500440032}
-  gravityForce: 15
-  moveSpeed: 300
-  turnSpeed: 10
-  jumpForce: 12
-  jumpCooldown: 0.1
-  diveForwardForce: 7
-  diveUpForce: 7
-  diveCooldown: 0.5
+  pelvis: {fileID: 7713884538500440032}
   collisionMask:
     serializedVersion: 2
     m_Bits: 256
-  grounded: 0
-  ragdolled: 0
-  getUp: 0
-  isRunning: 0
 --- !u!114 &8898294872009973438
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1821,15 +1808,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pelvis: {fileID: 3659003646114553735}
-  rb: {fileID: 1712632351796233498}
-  state: 0
   collisionMask:
     serializedVersion: 2
     m_Bits: 256
   recoverTime: 3
   ragdollToMecanimBlendTime: 0.5
   mecanimToGetUpTransitionTime: 0.05
-  multiplier: 2
-  obstacleModifier: 8
-  bounceModifier: 8
-  minForce: 15

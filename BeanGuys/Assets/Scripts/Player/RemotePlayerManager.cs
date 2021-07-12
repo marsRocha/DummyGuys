@@ -8,15 +8,23 @@ public class RemotePlayerManager : MonoBehaviour
 {
     public Guid Id;
     public string Username;
+    public int Checkpoint;
 
     private Animator animator;
     public int currentAnimation { get; private set; }
 
     private Interpolator interpolator;
     private RagdollController ragdollController;
+    private PlayerAudioManager playerAudio;
     public bool Ragdolled { get; private set; }
 
-    public ParticleSystem jumpPs;
+    // Effects
+    [SerializeField]
+    private ParticleSystem jumpPs;
+    [SerializeField]
+    private ParticleSystem ckeckpointPs;
+    [SerializeField]
+    private ParticleSystem respawnPs;
 
     // Start is called before the first frame update
     void Start()
@@ -25,6 +33,7 @@ public class RemotePlayerManager : MonoBehaviour
         interpolator = GetComponent<Interpolator>();
         ragdollController = GetComponent<RagdollController>();
         ragdollController.StartController();
+        playerAudio = GetComponent<PlayerAudioManager>();
         Ragdolled = false;
 
         interpolator.StartInterpolator(this);
@@ -54,6 +63,7 @@ public class RemotePlayerManager : MonoBehaviour
     {
         ragdollController.RagdollIn();
         Ragdolled = true;
+        playerAudio.PlayImpact(2);
     }
     
     /// <summary>Deactivates ragdoll.</summary>
@@ -89,6 +99,7 @@ public class RemotePlayerManager : MonoBehaviour
                 // diving
                 case 3:
                     animator.SetBool("isDiving", true);
+                    DiveEfx();
                     break;
             }
 
@@ -104,8 +115,39 @@ public class RemotePlayerManager : MonoBehaviour
         animator.SetBool("isDiving", false);
     }
 
+    #region Effects & Audio
     public void JumpEfx()
     {
         jumpPs.Play();
+        playerAudio.PlayMovement(0);
     }
+
+    public void DiveEfx()
+    {
+        playerAudio.PlayMovement(1);
+    }
+
+    /// <summary>Stores player's checkpoint info and plays effects.</summary>
+    /// <param name="_checkpointIndex">The checkpoint index. This integer is never used to actualy spawn the player, 
+    /// only the information sent by the server does that.</param>
+    public void SetCheckpoint(int _checkpointIndex)
+    {
+        Checkpoint = _checkpointIndex;
+        ckeckpointPs.Play();
+        playerAudio.PlayEffect(4);
+    }
+
+    public void Die()
+    {
+        playerAudio.PlayEffect(5);
+    }
+
+    public void Respawn()
+    {
+        respawnPs.Play();
+        playerAudio.PlayEffect(6);
+    }
+
+
+    #endregion
 }

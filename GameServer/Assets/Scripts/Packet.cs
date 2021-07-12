@@ -18,7 +18,8 @@ public enum ServerPackets
     startGame,
     endGame,
 
-    serverTick
+    serverTick,
+    pong
 }
 
 /// <summary>Sent from client to server.</summary>
@@ -32,7 +33,8 @@ public enum ClientPackets
     playerReady,
     map,
     startGame,
-    test
+    test,
+    ping
 }
 
 public class Packet : IDisposable

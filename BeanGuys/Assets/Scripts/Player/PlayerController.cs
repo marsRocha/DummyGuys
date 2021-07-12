@@ -3,13 +3,16 @@
 public class PlayerController : MonoBehaviour
 {
     // Components
+    private Rigidbody rb;
     public Transform pelvis;
     private CapsuleCollider cp;
-    private Rigidbody rb;
     private Animator animator;
     private LogicTimer logicTimer;
+    private RagdollController ragdollController;
+    private PlayerAudioManager playerAudio;
 
     public int currentAnimation { get; private set; } = 0;
+    private int lastAnimation = 0;
 
     [Header("Movement Variables")]
     private float gravityForce = 15f;
@@ -26,23 +29,27 @@ public class PlayerController : MonoBehaviour
     private float checkDistanceLayed = 1.07f;
     private float getUpDelay = 0.4f, getUpTime;
     public LayerMask collisionMask;
-    private Vector3 colDir;
     private Vector3 groundNormal;
+    private Vector3 collisionForce, collisionPoint;
 
     [Header("Particle Systems")]
-    public ParticleSystem jumpPs;
-    public ParticleSystem bumpPs;
-    public ParticleSystem respawnPs;
+    [SerializeField]
+    private ParticleSystem jumpPs;
+    [SerializeField]
+    private ParticleSystem bumpPs;
+    [SerializeField]
+    private ParticleSystem respawnPs;
+    [SerializeField]
+    private ParticleSystem checkpointPs;
 
-    [Header("States")]
-    public bool grounded;
-    public bool ragdolled, getUp;
-    public bool isRunning = false;
-    public bool jumping { get; private set; }
-    public bool diving { get; private set; }
-    public bool dashing { get; private set; }
-    public bool readyToJump = true, readyToDive = true;
-    public bool dashTriggered { get; private set; }
+    // States
+    private bool grounded;
+    private bool ragdolled, getUp;
+    private bool jumping;
+    private bool diving;
+    private bool dashing;
+    private bool readyToJump = true, readyToDive = true;
+    private bool dashTriggered;
 
     public void StartController(LogicTimer _logicTimer)
     {
@@ -53,12 +60,27 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.centerOfMass = Vector3.up * 0.9009846f;
         animator = transform.GetChild(0).GetComponent<Animator>();
+        ragdollController = GetComponent<RagdollController>();
+        playerAudio = GetComponent<PlayerAudioManager>();
+
+        collisionForce = Vector3.zero;
+        collisionPoint = Vector3.zero;
     }
 
     // Used in fixed update
-    public void UpdateController(ClientInputState currentInput)
+    public void UpdateController(ClientInputState _currentInputs)
     {
-        this.currentInputs = currentInput;
+        currentInputs = _currentInputs;
+
+        // Check if there as been an impact last frame
+        if (collisionForce != Vector3.zero && collisionPoint != Vector3.zero)
+        {
+            rb.AddForceAtPosition(collisionForce, collisionPoint, ForceMode.Impulse);
+            // Reset values
+            collisionForce = Vector3.zero; collisionPoint = Vector3.zero;
+            // Play hit audio
+            playerAudio.PlayImpact(2);
+        }
 
         GroundChecking();
 
@@ -121,15 +143,7 @@ public class PlayerController : MonoBehaviour
 
         CounterMovement();
 
-        // Determine current animation
-        if (move.magnitude == 0)
-            currentAnimation = 0;
-        else
-            currentAnimation = 1;
-        if (jumping)
-            currentAnimation = 2;
-        if (diving)
-            currentAnimation = 3;
+        AnimAudio();
     }
 
     private Vector3 ToCameraSpace(Vector3 moveVector)
@@ -240,7 +254,7 @@ public class PlayerController : MonoBehaviour
         if (dashTriggered)
         {
             dashTriggered = false;
-            rb.AddForce(colDir * dashforce, ForceMode.Impulse);
+            rb.AddForce(collisionForce * dashforce, ForceMode.Impulse);
             dashing = true;
 
             Invoke(nameof(ResetDash), dashTime);
@@ -250,7 +264,7 @@ public class PlayerController : MonoBehaviour
     public void ActivateDash(Vector3 _direction)
     {
         dashTriggered = true;
-        colDir = _direction;
+        collisionForce = _direction;
     }
 
     private void ResetDash()
@@ -277,12 +291,51 @@ public class PlayerController : MonoBehaviour
         bumpPs.transform.position = _point;
         bumpPs.Play();
     }
+
+    // Determine current animation and sounds to play
+    private void AnimAudio()
+    {
+        if (move.magnitude == 0)
+        {
+            currentAnimation = 0;
+        }
+        else
+        {
+            currentAnimation = 1;
+        }
+        if (jumping)
+        {
+            currentAnimation = 2;
+            if(lastAnimation != currentAnimation)
+                playerAudio.PlayMovement(0);
+        }
+        if (diving)
+        {
+            currentAnimation = 3;
+            if (lastAnimation != currentAnimation)
+                playerAudio.PlayMovement(1);
+        }
+
+        lastAnimation = currentAnimation;
+    }
     #endregion
+
+    public void Die()
+    {
+        playerAudio.PlayEffect(5);
+    }
 
     public void Respawn()
     {
         currentAnimation = 0;
         respawnPs.Play();
+        playerAudio.PlayEffect(6);
+    }
+
+    public void Checkpoint()
+    {
+        checkpointPs.Play();
+        playerAudio.PlayEffect(4);
     }
 
     private void ResetBehaviours()
@@ -297,16 +350,61 @@ public class PlayerController : MonoBehaviour
 
     public void EnterRagdoll(Vector3 _point)
     {
-        bumpPs.transform.position = _point;
-        bumpPs.Play();
-
         ragdolled = true;
         ResetBehaviours();
+
+        GetComponent<PlayerManager>().Ragdolled = true;
+        ragdollController.RagdollIn();
+
+        // Player collision effect
+        Bump(_point);
     }
-    
+
     public void ExitRagdoll()
     {
         ragdolled = false;
         cp.direction = 1;
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (ragdollController.State == RagdollState.Animated)
+        {
+            Vector3 collisionDirection = collision.contacts[0].normal;
+
+            // Determine what has been and operate accordingly
+            if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
+            {
+                // Add obstacle extra force
+                collisionForce = collisionDirection * ragdollController.ObstacleModifier;
+                collisionPoint = collision.contacts[0].point;
+
+                EnterRagdoll(collisionPoint);
+            }
+            else if (collision.gameObject.layer == LayerMask.NameToLayer("Bounce"))
+            {
+                // Add bounce extra force
+                collisionForce = collisionDirection * ragdollController.BounceModifier;
+                collisionPoint = collision.contacts[0].point;
+
+                // Play jump effect
+                jumpPs.Play();
+            }
+            else if (collision.gameObject.layer == LayerMask.NameToLayer("Floor"))
+            {
+                if (collision.impulse.magnitude >= 20)
+                {
+                    EnterRagdoll(collision.contacts[0].point);
+                }
+            }
+            else if (collision.impulse.magnitude >= ragdollController.MinForce || (jumping || diving))
+            {
+                // Add extra force
+                collisionForce = collisionDirection * ragdollController.Modifier;
+                collisionPoint = collision.contacts[0].point;
+
+                EnterRagdoll(collision.contacts[0].point);
+            }
+        }
     }
 }

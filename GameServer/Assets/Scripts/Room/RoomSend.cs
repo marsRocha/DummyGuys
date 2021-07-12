@@ -72,6 +72,7 @@ public class RoomSend
             _packet.Write(_simulationState.position);
             _packet.Write(_simulationState.rotation);
             _packet.Write(_simulationState.velocity);
+            _packet.Write(_simulationState.angularVelocity);
             _packet.Write(_simulationState.ragdoll);
 
             Server.Rooms[_roomId].MulticastUDPData(_packet);
@@ -103,13 +104,14 @@ public class RoomSend
         }
     }
 
-    public static void ServerTick(Guid _roomId, int tick)
+    public static void ServerTick(Guid _roomId, int _tick, float _clock)
     {
         using (Packet _packet = new Packet((int)ServerPackets.serverTick))
         {
             _packet.Write(_roomId);
 
-            _packet.Write(tick);
+            _packet.Write(_tick);
+            _packet.Write(_clock);
 
             Server.Rooms[_roomId].MulticastUDPData(_packet);
         }

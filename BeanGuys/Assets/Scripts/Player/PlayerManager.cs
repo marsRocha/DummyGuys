@@ -2,8 +2,9 @@
 
 public class PlayerManager : MonoBehaviour
 {
-    public int id;
-    public string username;
+    public int Id;
+    public string Username;
+    public int Checkpoint;
 
     // Components
     private PlayerController playerController;
@@ -25,7 +26,6 @@ public class PlayerManager : MonoBehaviour
     private int lastCorrectedFrame;
 
     private Vector3 velocity, angularVelocity;
-    private Vector3 impact = Vector3.zero, point = Vector3.zero;
 
     [Range(0,1)]
     public float packet_loss_percent;
@@ -70,8 +70,8 @@ public class PlayerManager : MonoBehaviour
 
     public void Initialize(int _id, string _username)
     {
-        id = _id;
-        username = _username;
+        Id = _id;
+        Username = _username;
     }
 
     void Update()
@@ -117,7 +117,7 @@ public class PlayerManager : MonoBehaviour
             if (serverSimulationState != null) Reconciliate();
 
             // Determine current simulationState
-            SimulationState simulationState = new SimulationState(currentInputState.SimulationFrame, transform.position, transform.rotation, velocity, Ragdolled);
+            SimulationState simulationState = new SimulationState(currentInputState.SimulationFrame, transform.position, transform.rotation, velocity, angularVelocity, Ragdolled);
 
             int cacheSlot = simulationFrame % CACHE_SIZE;
 
@@ -143,17 +143,6 @@ public class PlayerManager : MonoBehaviour
         rb.velocity = velocity;
         rb.angularVelocity = angularVelocity;
 
-        if(impact != Vector3.zero && point != Vector3.zero)
-        {
-            rb.freezeRotation = false;
-            Ragdolled = true;
-            playerController.EnterRagdoll(point);
-            //ragdollController.RagdollIn();
-
-            rb.AddForceAtPosition(impact, point, ForceMode.Impulse);
-            impact = Vector3.zero; point = Vector3.zero;
-        }
-
         playerController.UpdateController(currentInputs);
 
         //Simulate physics
@@ -167,8 +156,7 @@ public class PlayerManager : MonoBehaviour
         velocity = rb.velocity;
         angularVelocity = rb.angularVelocity;
         rb.isKinematic = true;
-        if (!Ragdolled)
-            rb.freezeRotation = true;
+        rb.freezeRotation = true;
     }
 
     private void SendMovement()
@@ -240,7 +228,7 @@ public class PlayerManager : MonoBehaviour
             ProcessInput(rewindCachedInputState);
 
             // Replace the simulationStateCache index with the new value.
-            SimulationState rewoundSimulationState = new SimulationState(rewindFrame, transform.position, transform.rotation, velocity, Ragdolled);
+            SimulationState rewoundSimulationState = new SimulationState(rewindFrame, transform.position, transform.rotation, velocity, angularVelocity, Ragdolled);
             simStateCache[rewindCacheIndex] = rewoundSimulationState;
 
             // Increase the amount of frames that we've rewound.
@@ -257,6 +245,7 @@ public class PlayerManager : MonoBehaviour
         transform.position = simulationState.position;
         transform.rotation = simulationState.rotation;
         velocity = simulationState.velocity;
+        angularVelocity = simulationState.angularVelocity;
 
         //TODO: ADD RESET TO RAGDOLL IF NEEDED 
     }
@@ -282,52 +271,10 @@ public class PlayerManager : MonoBehaviour
         playerController.Respawn();
     }
 
-    private void OnCollisionEnter(Collision collision)
+    public void SetCheckpoint(int _checkpointIndex)
     {
-        if (ragdollController.enabled)
-        {
-            if (ragdollController.State == RagdollState.Animated)
-            {
-                Vector3 collisionDirection = collision.contacts[0].normal;
-
-                if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
-                {
-                    // Add obstacle extra force
-                    impact = collisionDirection * ragdollController.ObstacleModifier;
-                    point = collision.contacts[0].point;
-
-                    return;
-                }
-                else if (collision.gameObject.layer == LayerMask.NameToLayer("Bounce"))
-                {
-                    // Add obstacle extra force
-                    rb.AddForceAtPosition(collisionDirection * ragdollController.BounceModifier, collision.contacts[0].point, ForceMode.Impulse);
-                    velocity = rb.velocity;
-
-                    playerController.jumpPs.Play();
-
-                    return;
-                }
-                else if (collision.gameObject.layer == LayerMask.NameToLayer("Floor"))
-                {
-                    if (collision.impulse.magnitude >= 20)
-                    {
-                        playerController.EnterRagdoll(collision.contacts[0].point);
-                    }
-
-                    return;
-                }
-
-                Debug.Log("collision force:" + collision.impulse.magnitude);
-                Debug.Log("collision relative Velocity:" + collision.relativeVelocity.magnitude);
-                if (collision.impulse.magnitude >= ragdollController.MinForce || (playerController.jumping || playerController.diving))
-                {
-                    playerController.EnterRagdoll(collision.contacts[0].point);
-                    // Add extra force
-                    rb.AddForceAtPosition(collisionDirection * ragdollController.Multiplier, collision.contacts[0].point, ForceMode.Impulse);
-                }
-            }
-        }
+        Checkpoint = _checkpointIndex;
+        playerController.Checkpoint();
     }
 
     private void OnApplicationQuit()

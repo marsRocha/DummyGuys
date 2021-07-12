@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 7803773044572950646}
   - component: {fileID: 7803773044572950641}
-  - component: {fileID: 7803773044572950640}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -44,22 +43,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb949845ac5e86045a91bb917850c080, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  networkManager: {fileID: 7803773044572950640}
-  spawnpoint: {fileID: 0}
-  Main: {fileID: 6579526926383179819, guid: b4de234d05774fe4d8b34e84199c875f, type: 3}
-  Slave: {fileID: 1703374940374476682, guid: 52a23366d9b5f484a889bf2a3b5e653a, type: 3}
-  mainCam: {fileID: 0}
---- !u!114 &7803773044572950640
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7803773044572950643}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b915d0968803793408e65f7afeea9bde, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  isNull: 0
-  isConnected: 0
+  mapController: {fileID: 0}
+  totalPlayers: 0
+  RemotePlayerObj: {fileID: 0}
+  LocalPlayerObj: {fileID: 0}
+  pingCountdown: 1
+  pingCountdownLimit: 1
+  isRunning: 0
+  isOnline: 0
+  debug: 0

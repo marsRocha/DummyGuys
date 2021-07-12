@@ -9,7 +9,6 @@ public class RagdollController : MonoBehaviour
     // Components
     private PlayerController playerController;
     private Animator animator;
-    private CapsuleCollider cp;
     private Rigidbody rb;
     [SerializeField]
     private Rigidbody pelvis;
@@ -25,17 +24,12 @@ public class RagdollController : MonoBehaviour
     [SerializeField]
     private LayerMask collisionMask;
     private float canRecover;
-    [SerializeField]
-    private float recoverTime;
+    private float recoverTime = 3;
 
     // Collision Params
-    [SerializeField]
-    public float Multiplier { get; private set; } = 2;
-    [SerializeField]
+    public float Modifier { get; private set; } = 2;
     public float ObstacleModifier { get; private set; } = 8;
-    [SerializeField]
     public float BounceModifier { get; private set; } = 8;
-    [SerializeField]
     public float MinForce { get; private set; } = 15;
 
     [Header("Transition Params")]
@@ -52,7 +46,6 @@ public class RagdollController : MonoBehaviour
     {
         playerController = GetComponent<PlayerController>();
         animator = transform.GetChild(0).GetComponent<Animator>();
-        cp = GetComponent<CapsuleCollider>();
 
         rb = GetComponent<Rigidbody>();
 
@@ -140,7 +133,7 @@ public class RagdollController : MonoBehaviour
             if (ragdollBlendAmount == 0)
             {
                 State = RagdollState.Animated;
-                playerController.ragdolled = false;
+                playerController.ExitRagdoll();
                 GetComponent<Player>().Ragdolled = false;
                 animator.transform.localRotation = Quaternion.identity;
             }

@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class SwingBehaviour : MonoBehaviour
 {
+    public RoomScene roomScene;
+
     public float speed = 5f;
     public float angle = 30;
     public float timeToWait = 1f;
@@ -13,6 +15,8 @@ public class SwingBehaviour : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        roomScene = gameObject.scene.GetRootGameObjects()[0].GetComponent<RoomScene>();
+
         start = SwingRotation(angle);
         end = SwingRotation(-angle);
 
@@ -23,9 +27,9 @@ public class SwingBehaviour : MonoBehaviour
     void FixedUpdate()
     {
         if (Left)
-            transform.rotation = Quaternion.Lerp(start, end, ((Mathf.Sin(RoomScene.instance.Game_Clock * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
+            transform.rotation = Quaternion.Lerp(start, end, ((Mathf.Sin(roomScene.Game_Clock * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
         else
-            transform.rotation = Quaternion.Lerp(end, start, ((Mathf.Sin(RoomScene.instance.Game_Clock * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
+            transform.rotation = Quaternion.Lerp(end, start, ((Mathf.Sin(roomScene.Game_Clock * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
     }
 
     private IEnumerator WaitFor(float time)

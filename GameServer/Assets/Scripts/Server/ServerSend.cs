@@ -29,6 +29,14 @@ public class ServerSend
         }
     }
 
+    public static void Pong(Guid _toClient)
+    {
+        using (Packet _packet = new Packet((int)ServerPackets.pong))
+        {
+            SendTCPData(_toClient, _packet);
+        }
+    }
+
     public static void JoinedRoom(Guid _toClient, Guid _roomId, string _lobbyIP, int _lobbyPort, int _spawnPos)
     {
         using (Packet packet = new Packet((int)ServerPackets.joinedRoom))

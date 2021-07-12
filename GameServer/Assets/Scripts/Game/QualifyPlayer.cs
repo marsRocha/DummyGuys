@@ -4,11 +4,18 @@ using UnityEngine;
 
 public class QualifyPlayer : MonoBehaviour
 {
+    private RoomScene roomScene;
+
+    private void Start()
+    {
+        roomScene = gameObject.scene.GetRootGameObjects()[0].GetComponent<RoomScene>();
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.layer == LayerMask.NameToLayer("Player"))
         {
-            RoomScene.instance.FinishRacePlayer(other.gameObject.GetComponent<Player>().id);
+            roomScene.FinishRacePlayer(other.gameObject.GetComponent<Player>().id);
         }
     }
 }
