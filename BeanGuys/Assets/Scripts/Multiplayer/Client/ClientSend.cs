@@ -6,7 +6,7 @@ using UnityEngine;
 /// </summary>
 public class ClientSend : MonoBehaviour
 {
-    #region methods of sending info
+    #region Methods of sending data
     //TODO: SUBSTITUTE THIS METHOD AND SENDUDPDATA FOR RELIABLE UDP COMMUNICATION
     /// <summary>Sends a packet to the server via TCP.</summary>
     /// <param name="_packet">The packet to send to the sever.</param>
@@ -45,12 +45,13 @@ public class ClientSend : MonoBehaviour
     }
 
     /// <summary>Lets the server know that the welcome message was received.</summary>
-    public static void WelcomeReceived()
+    public static void Introduction()
     {
-        using (Packet _packet = new Packet((int)ClientPackets.welcomeReceived))
+        using (Packet _packet = new Packet((int)ClientPackets.introduction))
         {
             _packet.Write(ClientInfo.instance.Id);
             _packet.Write(ClientInfo.instance.Username);
+            _packet.Write(ClientInfo.instance.Color);
 
             SendTCPData(_packet);
         }
@@ -60,7 +61,7 @@ public class ClientSend : MonoBehaviour
     {
         using (Packet _packet = new Packet((int)ClientPackets.ping))
         {
-            SendTCPData(_packet);
+            SendUDPData(_packet);
         }
         // We send the client ping packet and set pingSent to now
         Client.instance.pingSent = DateTime.UtcNow;
@@ -75,7 +76,7 @@ public class ClientSend : MonoBehaviour
         {
             _packet.Write(ClientInfo.instance.Id);
 
-            SendUDPData(_packet);
+            SendTCPData(_packet);
         }
     }
 

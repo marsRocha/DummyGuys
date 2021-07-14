@@ -25,12 +25,6 @@ public class NetworkManager : MonoBehaviour
         connectTo = ip;
     }
 
-    public void SetClientName(string name)
-    {
-        Debug.Log("Username changed!");
-        ClientInfo.instance.Username = name;
-    }
-
     public void GoOnline()
     {
         Client.instance.GoOnline(connectTo, 26950);

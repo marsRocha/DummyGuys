@@ -129,7 +129,7 @@ public class GameManager : MonoBehaviour
     {
         foreach(Peer peer in Client.peers.Values)
         {
-            mapController.SpawnRemotePlayer(peer.Id, peer.Username);
+            mapController.SpawnRemotePlayer(peer.Id, peer.Username, peer.Color);
         }
     }
 

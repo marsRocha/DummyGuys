@@ -8,6 +8,7 @@ using UnityEngine;
 public class Server
 {
     public const int MaxPlayersPerLobby = 2;
+    public const int MaxNumberOfRooms = 1;
     public static int Port { get; private set; }
 
     public static bool isActive = false;
@@ -15,7 +16,6 @@ public class Server
 
     public static MainThread MainThread;
 
-    public static Dictionary<Guid, Client> Clients;
     public static Dictionary<Guid, Room> Rooms;
 
     private static TcpListener tcpListener;
@@ -36,6 +36,7 @@ public class Server
 
         InitializeData();
         GetMulticastAdresses();
+        InitializeRooms();
 
         tcpListener = new TcpListener(IPAddress.Any, Port);
         tcpListener.Start();
@@ -43,7 +44,7 @@ public class Server
 
         isActive = true;
 
-        Debug.Log($"Server started on {Port}.");
+        Debug.Log($"Server successfuly started, listening on {Port}.");
     }
 
     /// <summary>
@@ -52,24 +53,55 @@ public class Server
     private static void TCPConnectCallback(IAsyncResult result)
     {
         TcpClient client = tcpListener.EndAcceptTcpClient(result);
-        //Once it connects we want to still keep on listening for more clients so we call it again
+        // Once it connects we want to still keep on listening for more clients so we call it again
         tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
         Debug.Log($"Incoming connection from {client.Client.RemoteEndPoint}...");
 
-        //Add and Connect to Client
-        Guid pId = Guid.NewGuid();
-        Clients.Add(pId, new Client(pId));
-        Clients[pId].tcp.Connect(client);
+        // Handle new connection
+        NewConnection newConnection = new NewConnection(client);
     }
 
     private static void InitializeData()
     {
-        Clients = new Dictionary<Guid, Client>();
-        Rooms = new Dictionary<Guid, Room>();
-
-        ServerHandle.InitializeData();
         RoomHandle.InitializeData();
         Debug.Log("Packets initialized.");
+    }
+
+    private static void InitializeRooms()
+    {
+        Rooms = new Dictionary<Guid, Room>();
+
+        for(int i = 0; i < MaxNumberOfRooms; i++)
+        {
+            Guid newGuid = Guid.NewGuid();
+            Rooms.Add(newGuid, new Room(newGuid, GetNextAdress(), multicastPort));
+        }
+        Debug.Log("Rooms initialized.");
+    }
+
+    // "Matchmaking"
+    public static Guid SearchForRoom()
+    {
+        Room foundRoom = null;
+
+        if (Rooms.Count > 0)
+        {
+            foreach (Room room in Rooms.Values)
+            {
+                if (room.RoomState == RoomState.looking)
+                {
+                    foundRoom = room;
+                    break;
+                }
+            }
+        }
+
+        return foundRoom.RoomId;
+    }
+
+    public static void AddClientToRoom(Client _client, Guid _roomId)
+    {
+        Rooms[_roomId].AddPlayer(_client);
     }
 
     private static void GetMulticastAdresses()

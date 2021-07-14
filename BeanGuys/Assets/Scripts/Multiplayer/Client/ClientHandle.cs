@@ -15,7 +15,6 @@ public class ClientHandle : MonoBehaviour
         packetHandlers = new Dictionary<int, PacketHandler>()
         {   
             //SERVER SENT
-            { (int) ServerPackets.welcome, WelcomeServer },
             { (int) ServerPackets.joinedRoom, JoinedRoom },
             { (int) ServerPackets.playerJoined, PlayerJoined },
             { (int) ServerPackets.playerLeft, PlayerLeft },
@@ -32,19 +31,6 @@ public class ClientHandle : MonoBehaviour
         };
     }
 
-
-    /// <summary>Handles 'welcome' packet sent from the server.</summary>
-    /// <param name="_packet">The recieved packet.</param>
-    public static void WelcomeServer(Guid not_needed, Packet _packet)
-    {
-        Guid myId = _packet.ReadGuid();
-        ClientInfo.instance.Id = myId;
-        Debug.Log($"[SERVER] Welcome, your Id is {myId}");
-        Client.instance.isConnected = true;
-
-        ClientSend.WelcomeReceived();
-    }
-
     /// <summary>Handles 'joinedRoom' packet sent from the server.</summary>
     /// <param name="_packet">The recieved packet.</param>
     public static void JoinedRoom(Guid not_needed, Packet _packet)
@@ -59,6 +45,7 @@ public class ClientHandle : MonoBehaviour
         Client.ListenToRoom(ip, port);
         //Add themselves to the playerCount
         GameManager.instance.UpdatePlayerCount();
+        Client.instance.isConnected = true;
 
         GameManager.instance.isOnline = true;
 
@@ -66,14 +53,6 @@ public class ClientHandle : MonoBehaviour
         ClientInfo.instance.SpawnId = spawnId;
 
         Debug.Log($"Joined room, multicast info Ip:{ip} Port:{port}");
-    }
-
-    /// <summary>Handles 'pong' packet sent from the server.</summary>
-    /// <param name="_packet">The recieved packet.</param>
-    public static void Pong(Guid not_needed, Packet _packet)
-    {
-        // We receive the ping packet, update the stored ping variable
-        Client.instance.ping = Math.Round((DateTime.UtcNow - Client.instance.pingSent).TotalMilliseconds, 0);
     }
 
     /// <summary>Handles 'playerJoined' packet sent from the server.</summary>
@@ -91,9 +70,10 @@ public class ClientHandle : MonoBehaviour
             if (ClientInfo.instance.Id != id)
             {
                 string username = _packet.ReadString();
+                int color = _packet.ReadInt();
                 int spawnId = _packet.ReadInt();
 
-                Client.peers.Add(id, new Peer(id, username, spawnId));
+                Client.peers.Add(id, new Peer(id, username, color, spawnId));
                 GameManager.instance.UpdatePlayerCount();
                 Debug.Log($"{username} has joined the game!");
             }
@@ -214,5 +194,13 @@ public class ClientHandle : MonoBehaviour
 
         if (_roomClock > GameLogic.Clock)
             GameLogic.SetClock(_roomClock);
+    }
+
+    /// <summary>Handles 'pong' packet sent from the server.</summary>
+    /// <param name="_packet">The recieved packet.</param>
+    public static void Pong(Guid not_needed, Packet _packet)
+    {
+        // We receive the ping packet, update the stored ping variable
+        Client.instance.ping = Math.Round((DateTime.UtcNow - Client.instance.pingSent).TotalMilliseconds, 0);
     }
 }

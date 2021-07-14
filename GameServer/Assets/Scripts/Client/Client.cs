@@ -1,17 +1,20 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
 
 public class Client
 {
-    public Guid Id { get; set; }
-    public string Username { get; set; }
+    public readonly Guid Id;
+    public readonly string Username;
+    public readonly int Color;
 
-    public Player player { get; private set; }
-    public Guid RoomID { get; set; }
+    public int SpawnId;
+    public readonly Guid RoomID;
+    public bool ready, finished;
+
+
+    public Player Player { get; private set; }
 
 
     public static int dataBufferSize = 4036;
@@ -19,11 +22,15 @@ public class Client
     public TCP tcp;
     public UDP udp;
 
-    public Client(Guid clientId)
+    public Client(Guid _id, string _username, int _color, Guid _roomId)
     {
-        Id = clientId;
-        tcp = new TCP(Id);
-        udp = new UDP(Id);
+        Id = _id;
+        Username = _username;
+        Color = _color;
+        RoomID = _roomId;
+
+        tcp = new TCP(Id, RoomID);
+        udp = new UDP(Id, RoomID);
     }
 
     public class TCP
@@ -33,10 +40,12 @@ public class Client
         private Packet receivedData;
         private byte[] receiveBuffer;
         private readonly Guid id;
+        private readonly Guid roomId;
 
-        public TCP(Guid clientId)
+        public TCP(Guid _clientId, Guid _roomId)
         {
-            id = clientId;
+            id = _clientId;
+            roomId = _roomId;
         }
 
         public void Connect(TcpClient clientSocket)
@@ -50,9 +59,6 @@ public class Client
             receiveBuffer = new byte[dataBufferSize];
 
             stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
-
-            //Welcome message
-            ServerSend.Welcome(id);
         }
 
         public void SendData(Packet packet)
@@ -77,7 +83,7 @@ public class Client
                 int byteLength = stream.EndRead(result);
                 if (byteLength <= 0)
                 {
-                    Server.Clients[id].Disconnect();
+                    Server.Rooms[roomId].Clients[id].Disconnect();
                     return;
                 }
 
@@ -115,7 +121,7 @@ public class Client
                     using (Packet packet = new Packet(packetBytes))
                     {
                         int packetId = packet.ReadInt();
-                        ServerHandle.packetHandlers[packetId](id, packet);
+                        RoomHandle.packetHandlers[packetId](roomId, id, packet);
                     }
                 });
 
@@ -147,9 +153,12 @@ public class Client
     {
         public IPEndPoint endPoint;
         private readonly Guid id;
-        public UDP(Guid clientId)
+        private readonly Guid roomId;
+
+        public UDP(Guid _clientId, Guid _roomId)
         {
-            id = clientId;
+            id = _clientId;
+            roomId = _roomId;
         }
 
         public void Connect(IPEndPoint _endPoint)
@@ -172,7 +181,7 @@ public class Client
                 using (Packet packet = new Packet(packetBytes))
                 {
                     int packetId = packet.ReadInt();
-                    ServerHandle.packetHandlers[packetId](id, packet);
+                    RoomHandle.packetHandlers[packetId](roomId, id, packet);
                 }
             });
         }
@@ -190,11 +199,11 @@ public class Client
         Server.Rooms[RoomID].RemovePlayer(Id);
         tcp.Disconnect();
         udp.Disconnect();
-        Server.Clients.Remove(Id);
+        Server.Rooms[RoomID].Clients.Remove(Id);
     }
 
     public void SetPlayer(Player _player)
     {
-        player = _player;
+        Player = _player;
     }
 }

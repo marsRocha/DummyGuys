@@ -12,6 +12,8 @@ public class RoomScene : MonoBehaviour
     [HideInInspector]
     public Vector3[] spawns;
     public Transform[] checkPoints;
+    [SerializeField]
+    private Transform[] playerObjs;
 
     public Dictionary<Guid, Player> players;
 
@@ -28,7 +30,6 @@ public class RoomScene : MonoBehaviour
 
     private void Start()
     {
-        Debug.Log("Start");
         logicTimer = new LogicTimer(() => FixedTime());
         logicTimer.Start();
     }
@@ -72,7 +73,7 @@ public class RoomScene : MonoBehaviour
         isRunning = false;
 
         qualifiedPlayers = 0;
-        totalPlayers = room.ClientsInfo.Count;
+        totalPlayers = room.Clients.Count;
         playerCheckPoint = new Dictionary<Guid, int>();
 
         players = new Dictionary<Guid, Player>();
@@ -97,12 +98,12 @@ public class RoomScene : MonoBehaviour
 
     public void SpawnPlayers(Scene scene)
     {
-        foreach(ClientInfo clientInfo in room.ClientsInfo.Values)
+        foreach(Client client in room.Clients.Values)
         {
-            Player p = SpawnPlayer(clientInfo.id, clientInfo.spawnId);
-            Server.Clients[clientInfo.id].SetPlayer(p);
-            players.Add(clientInfo.id, p);
-            playerCheckPoint.Add(clientInfo.id, 0);
+            Player p = SpawnPlayer(client.Id, client.SpawnId);
+            room.Clients[client.Id].SetPlayer(p);
+            players.Add(client.Id, p);
+            playerCheckPoint.Add(client.Id, 0);
 
             SceneManager.MoveGameObjectToScene(p.gameObject, scene);
         }
@@ -113,7 +114,7 @@ public class RoomScene : MonoBehaviour
     public Player SpawnPlayer(Guid _playerId, int _spawnId)
     {
         Player p = ((GameObject)Instantiate(Resources.Load("Player", typeof(GameObject)), spawns[_spawnId], Quaternion.identity)).GetComponent<Player>();
-        p.Initialize(_playerId);
+        p.Initialize(_playerId, room.RoomId);
 
         return p;
     }
@@ -122,7 +123,7 @@ public class RoomScene : MonoBehaviour
     //Sent from other players to respawn
     public void PlayerRespawn(Guid _playerId)
     {
-        Vector3 newPos = GetRespawnPosition(room.ClientsInfo[_playerId].spawnId, playerCheckPoint[_playerId]);
+        Vector3 newPos = GetRespawnPosition(room.Clients[_playerId].SpawnId, playerCheckPoint[_playerId]);
         players[_playerId].Respawn(newPos, Quaternion.identity);
         RoomSend.PlayerRespawn(room.RoomId, _playerId, playerCheckPoint[_playerId]);
         Debug.Log("Sent respawn");
@@ -141,9 +142,9 @@ public class RoomScene : MonoBehaviour
     public void FinishRacePlayer(Guid _clientId)
     {
         // Check if player has already finished
-        if (!room.ClientsInfo[_clientId].finished)
+        if (!room.Clients[_clientId].finished)
         {
-            room.ClientsInfo[_clientId].finished = true;
+            room.Clients[_clientId].finished = true;
             RoomSend.PlayerFinish(room.RoomId, _clientId);
             players[_clientId].gameObject.SetActive(false);
 
@@ -176,7 +177,7 @@ public class RoomScene : MonoBehaviour
         isRunning = false;
 
         qualifiedPlayers = 0;
-        totalPlayers = room.ClientsInfo.Count;
+        totalPlayers = room.Clients.Count;
     }
 
     public void Stop()

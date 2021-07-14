@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    public Guid id;
+    public Guid Id { get; private set; }
+    private Guid roomId;
 
     private PlayerController playerController;
     private RagdollController ragdollController;
@@ -60,9 +61,10 @@ public class Player : MonoBehaviour
         logicTimer.Update();
     }
 
-    public void Initialize(Guid _id)
+    public void Initialize(Guid _id, Guid _roomId)
     {
-        id = _id;
+        Id = _id;
+        roomId = _roomId;
     }
 
     public void StartPlayer()
@@ -205,7 +207,7 @@ public class Player : MonoBehaviour
 
     public void SendCorrection(SimulationState state)
     {
-        RoomSend.CorrectPlayer(Server.Clients[id].RoomID, id, state);
+        RoomSend.CorrectPlayer(Server.Rooms[roomId].Clients[Id].RoomID, Id, state);
     }
 
     public void SetSimulationState(SimulationState simulationState)

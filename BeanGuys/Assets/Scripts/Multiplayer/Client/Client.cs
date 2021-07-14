@@ -56,6 +56,8 @@ public class Client : MonoBehaviour
     /// <summary>Starts Client networking.</summary>
     public void GoOnline(string _ip, int _port)
     {
+        ClientInfo.instance.Id = Guid.NewGuid();
+
         _serverIPaddress = IPAddress.Parse(_ip);
         _serverPort = _port;
 
@@ -205,6 +207,9 @@ public class Client : MonoBehaviour
 
             receiveBuffer = new byte[dataBufferSize];
             socket.BeginConnect(_ip, _port, ConnectCallback, socket);
+
+            // Send introduction
+            ClientSend.Introduction();
         }
 
         private void ConnectCallback(IAsyncResult result)

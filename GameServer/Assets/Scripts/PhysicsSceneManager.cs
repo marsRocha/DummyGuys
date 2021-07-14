@@ -13,10 +13,6 @@ public class PhysicsSceneManager : MonoBehaviour
     private void Awake()
     {
         instance = this;
-    }
-
-    private void Start()
-    {
         physicsScenes = new Dictionary<Guid, Scene>();
     }
 

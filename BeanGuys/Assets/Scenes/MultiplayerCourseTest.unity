@@ -10543,6 +10543,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Username: Beanguy1
+  Color: 4
   SpawnId: 0
 --- !u!1 &1738180525
 GameObject:
