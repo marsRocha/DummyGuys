@@ -207,6 +207,9 @@ public class Client : MonoBehaviour
 
             receiveBuffer = new byte[dataBufferSize];
             socket.BeginConnect(_ip, _port, ConnectCallback, socket);
+
+            // Send introduction
+            ClientSend.Introduction();
         }
 
         private void ConnectCallback(IAsyncResult result)
