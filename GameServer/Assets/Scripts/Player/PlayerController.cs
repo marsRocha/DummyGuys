@@ -312,4 +312,20 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
+
+    public void Reset()
+    {
+        collisionForce = Vector3.zero;
+        collisionPoint = Vector3.zero;
+
+        grounded = false;
+        ragdolled = false;
+        getUp = false;
+        jumping = false;
+        diving = false;
+        dashing = false;
+        readyToJump = true;
+        readyToDive = true;
+        dashTriggered = false;
+    }
 }

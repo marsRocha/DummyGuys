@@ -25,7 +25,7 @@ public enum ServerPackets
 /// <summary>Sent from client to server.</summary>
 public enum ClientPackets
 {
-    welcomeReceived = 12,
+    introduction = 12,
     playerMovement,
     playerAnim,
     playerRespawn,

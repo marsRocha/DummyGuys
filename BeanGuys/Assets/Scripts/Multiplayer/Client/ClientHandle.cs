@@ -13,9 +13,9 @@ public class ClientHandle : MonoBehaviour
     public static void InitializeData()
     {
         packetHandlers = new Dictionary<int, PacketHandler>()
-        {   
+        {
             //SERVER SENT
-            { (int) ServerPackets.welcome, WelcomeServer },
+            { (int) ServerPackets.welcome, Welcome },
             { (int) ServerPackets.joinedRoom, JoinedRoom },
             { (int) ServerPackets.playerJoined, PlayerJoined },
             { (int) ServerPackets.playerLeft, PlayerLeft },
@@ -32,52 +32,40 @@ public class ClientHandle : MonoBehaviour
         };
     }
 
-
     /// <summary>Handles 'welcome' packet sent from the server.</summary>
-    /// <param name="_packet">The recieved packet.</param>
-    public static void WelcomeServer(Guid not_needed, Packet _packet)
+    /// <param name="_packet">The received packet.</param>
+    public static void Welcome(Guid not_needed, Packet _packet)
     {
-        Guid myId = _packet.ReadGuid();
-        ClientInfo.instance.Id = myId;
-        Debug.Log($"[SERVER] Welcome, your Id is {myId}");
-        Client.instance.isConnected = true;
-
-        ClientSend.WelcomeReceived();
+        Debug.Log($"Reached server, sending introduciton data.");
+        // Send client information
+        ClientSend.Introduction();
     }
-
+    
     /// <summary>Handles 'joinedRoom' packet sent from the server.</summary>
-    /// <param name="_packet">The recieved packet.</param>
-    public static void JoinedRoom(Guid not_needed, Packet _packet)
+    /// <param name="_packet">The received packet.</param>
+    public static void JoinedRoom(Guid _roomId, Packet _packet)
     {
-        Guid roomId =_packet.ReadGuid();
         string ip =_packet.ReadString();
         int port =_packet.ReadInt();
         int spawnId =_packet.ReadInt();
 
-        ClientInfo.instance.RoomId = roomId;
+        ClientInfo.instance.RoomId = _roomId;
         //Start listening to room
         Client.ListenToRoom(ip, port);
         //Add themselves to the playerCount
         GameManager.instance.UpdatePlayerCount();
+        Client.instance.isConnected = true;
 
         GameManager.instance.isOnline = true;
 
         //Add my spawnid
         ClientInfo.instance.SpawnId = spawnId;
 
-        Debug.Log($"Joined room, multicast info Ip:{ip} Port:{port}");
-    }
-
-    /// <summary>Handles 'pong' packet sent from the server.</summary>
-    /// <param name="_packet">The recieved packet.</param>
-    public static void Pong(Guid not_needed, Packet _packet)
-    {
-        // We receive the ping packet, update the stored ping variable
-        Client.instance.ping = Math.Round((DateTime.UtcNow - Client.instance.pingSent).TotalMilliseconds, 0);
+        Debug.Log($"Joined room {_roomId}, multicast info Ip:{ip} Port:{port}");
     }
 
     /// <summary>Handles 'playerJoined' packet sent from the server.</summary>
-    /// <param name="_packet">The recieved packet.</param>
+    /// <param name="_packet">The received packet.</param>
     public static void PlayerJoined(Guid _roomId, Packet _packet)
     {
         //TODO: MESSAGE CAN BE SENT BY THE SERVER(TCP) OR THE ROOM(UDP MULTICAST) FOR NOW BECAUSE TCP DDOES NOT READ ROOMID 
@@ -91,9 +79,10 @@ public class ClientHandle : MonoBehaviour
             if (ClientInfo.instance.Id != id)
             {
                 string username = _packet.ReadString();
+                int color = _packet.ReadInt();
                 int spawnId = _packet.ReadInt();
 
-                Client.peers.Add(id, new Peer(id, username, spawnId));
+                Client.peers.Add(id, new Peer(id, username, color, spawnId));
                 GameManager.instance.UpdatePlayerCount();
                 Debug.Log($"{username} has joined the game!");
             }
@@ -105,7 +94,7 @@ public class ClientHandle : MonoBehaviour
     }
 
     /// <summary>Handles 'playerLeft' packet sent from the server.</summary>
-    /// <param name="_packet">The recieved packet.</param>
+    /// <param name="_packet">The received packet.</param>
     public static void PlayerLeft(Guid _roomId, Packet _packet)
     {
         Guid clientId = _packet.ReadGuid();
@@ -114,7 +103,7 @@ public class ClientHandle : MonoBehaviour
     }
 
     /// <summary>Handles 'map' packet sent from the server.</summary>
-    /// <param name="_packet">The recieved packet.</param>
+    /// <param name="_packet">The received packet.</param>
     public static void Map(Guid _roomId, Packet _packet)
     {
         string level = _packet.ReadString();
@@ -124,7 +113,7 @@ public class ClientHandle : MonoBehaviour
     }
 
     /// <summary>Handles 'startGame' packet sent from the server.</summary>
-    /// <param name="_packet">The recieved packet.</param>
+    /// <param name="_packet">The received packet.</param>
     public static void StartGame(Guid _roomId, Packet _packet)
     {
         if (ClientInfo.instance.RoomId == _roomId)
@@ -133,12 +122,12 @@ public class ClientHandle : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Received 'StartGame' message from wrong room;");
+            Debug.LogWarning($"Received 'StartGame' message from wrong room {_roomId};");
         }
     }
 
     /// <summary>Handles 'endGame' packet sent from the server.</summary>
-    /// <param name="_packet">The recieved packet.</param>
+    /// <param name="_packet">The received packet.</param>
     public static void EndGame(Guid _roomId, Packet _packet)
     {
         if (ClientInfo.instance.RoomId == _roomId)
@@ -152,7 +141,7 @@ public class ClientHandle : MonoBehaviour
     }
 
     /// <summary>Handles 'playerMovement' packet sent from other clients.</summary>
-    /// <param name="_packet">The recieved packet.</param>
+    /// <param name="_packet">The received packet.</param>
     public static void PlayerMovement(Guid _clientId, Packet _packet)
     {
         int _tick = _packet.ReadInt();
@@ -165,7 +154,7 @@ public class ClientHandle : MonoBehaviour
     }
 
     /// <summary>Handles 'playerCorrection' packet sent from the server.</summary>
-    /// <param name="_packet">The recieved packet.</param>
+    /// <param name="_packet">The received packet.</param>
     public static void PlayerCorrection(Guid _roomId, Packet _packet)
     {
         Guid _clientId = _packet.ReadGuid();
@@ -185,7 +174,7 @@ public class ClientHandle : MonoBehaviour
     }
 
     /// <summary>Handles 'playerRespawn' packet sent from the server.</summary>
-    /// <param name="_packet">The recieved packet.</param>
+    /// <param name="_packet">The received packet.</param>
     public static void PlayerRespawn(Guid _roomId, Packet _packet)
     {
         Guid clientId = _packet.ReadGuid();
@@ -194,7 +183,7 @@ public class ClientHandle : MonoBehaviour
     }
 
     /// <summary>Handles 'playerFinish' packet sent from the server.</summary>
-    /// <param name="_packet">The recieved packet.</param>
+    /// <param name="_packet">The received packet.</param>
     public static void PlayerFinish(Guid _roomId, Packet _packet)
     {
         Guid clientId = _packet.ReadGuid();
@@ -203,7 +192,7 @@ public class ClientHandle : MonoBehaviour
     }
 
     /// <summary>Handles 'serverTick' packet sent from the server.</summary>
-    /// <param name="_packet">The recieved packet.</param>
+    /// <param name="_packet">The received packet.</param>
     public static void ServerTick(Guid _roomId, Packet _packet)
     {
         int _roomTick = _packet.ReadInt();
@@ -214,5 +203,13 @@ public class ClientHandle : MonoBehaviour
 
         if (_roomClock > GameLogic.Clock)
             GameLogic.SetClock(_roomClock);
+    }
+
+    /// <summary>Handles 'pong' packet sent from the server.</summary>
+    /// <param name="_packet">The received packet.</param>
+    public static void Pong(Guid not_needed, Packet _packet)
+    {
+        // We receive the ping packet, update the stored ping variable
+        Client.instance.ping = Math.Round((DateTime.UtcNow - Client.instance.pingSent).TotalMilliseconds, 0);
     }
 }

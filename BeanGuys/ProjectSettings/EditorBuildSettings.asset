@@ -23,13 +23,13 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/Map1.unity
     guid: db603eca6f0c5ae4fbcb7ceaab1f9b25
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/MultiplayerCourseTest.unity
     guid: 79096d09af902204f9eef9601bff39b8
   - enabled: 0
     path: Assets/Scenes/MultiplayerSandbox.unity
     guid: 59e837638717e304cb82504d65b3c4b0
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/noMultiplayerSandbox 1.unity
     guid: c55047ac0b7aead439ebaa103d03d1f3
   m_configObjects: {}

@@ -13,10 +13,6 @@ public class PhysicsSceneManager : MonoBehaviour
     private void Awake()
     {
         instance = this;
-    }
-
-    private void Start()
-    {
         physicsScenes = new Dictionary<Guid, Scene>();
     }
 
@@ -29,7 +25,7 @@ public class PhysicsSceneManager : MonoBehaviour
         // Get the scene's physics scene
         physicsScenes.Add(_roomId, scene);
 
-        instance.StartCoroutine(WaitFrame(scene, _roomId, _physicsSceneName));
+        instance.StartCoroutine(WaitFrame(scene, _roomId));
     }
 
     public static void RemoveSimulation(Guid _roomId)
@@ -37,17 +33,17 @@ public class PhysicsSceneManager : MonoBehaviour
         // Unload the scene
         LoadSceneParameters param = new LoadSceneParameters(LoadSceneMode.Additive, LocalPhysicsMode.Physics3D);
         SceneManager.UnloadSceneAsync(physicsScenes[_roomId]);
-        //Remove the scene's physics scene
+        // Remove the scene's physics scene
         physicsScenes.Remove(_roomId);
     }
 
-    //necessary because we need to 1 frame to load scene, used by physicsSceneManager ienumerator
-    private static IEnumerator WaitFrame(Scene _scene, Guid _roomId, string _mapName)
+    // Necessary because we need to 1 frame to load scene, used by physicsSceneManager ienumerator
+    private static IEnumerator WaitFrame(Scene _scene, Guid _roomId)
     {
-        //returning 0 makes it wait 1 frame (needed to load scene)
+        // returning 0 makes it wait 1 frame (needed to load scene)
         yield return 0;
 
         Server.Rooms[_roomId].roomScene = _scene.GetRootGameObjects()[0].GetComponent<RoomScene>();
-        Server.Rooms[_roomId].InitializeMap(_scene);
+        Server.Rooms[_roomId].InitializeMap();
     }
 }

@@ -1,19 +1,29 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 
 public class MenuSceneManager : MonoBehaviour
 {
-    public GameObject MainMenuCamera;
-    public GameObject LookingMenuCamera;
+    [SerializeField]
+    private GameObject MainMenuCamera;
+    [SerializeField]
+    private GameObject LookingMenuCamera;
 
-    public GameObject MainMenuObj;
-    public GameObject LookingMenuObj;
-    public GameObject ExitMenuObj;
+    [SerializeField]
+    private GameObject MainMenuObj;
+    [SerializeField]
+    private GameObject LookingMenuObj;
+    [SerializeField]
+    private GameObject ExitMenuObj;
 
-    public TMP_Text PlayerCount;
-    public TMP_Text Quit_txt;
+    [SerializeField]
+    private TMP_Text PlayerCount;
+    [SerializeField]
+    private TMP_Text Quit_txt;
+
+    [SerializeField]
+    private GameObject menuPlayer;
+    [SerializeField]
+    private GameObject lookingPlayer;
 
     private bool state; //true = menu, false = looking
 
@@ -87,5 +97,11 @@ public class MenuSceneManager : MonoBehaviour
     public void ExitCancel()
     {
         ExitMenuObj.SetActive(false);
+    }
+
+    public void SetColorPlayerObjs()
+    {
+        menuPlayer.transform.GetChild(1).GetComponent<SkinnedMeshRenderer>().material = PlayerColor.instance.materials[ClientInfo.instance.Color];
+        lookingPlayer.transform.GetChild(1).GetComponent<SkinnedMeshRenderer>().material = PlayerColor.instance.materials[ClientInfo.instance.Color];
     }
 }

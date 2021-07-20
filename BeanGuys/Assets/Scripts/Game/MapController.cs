@@ -52,7 +52,7 @@ public class MapController : MonoBehaviour
         for (int i = 0; i <= 3; i++)
         {
             for(int j = 0; j <= 14; j++)
-                spawns[(14 * i) + j] = new Vector3(-18.06f + 2.58f * j, 0,-2.58f * i);
+                spawns[(14 * i) + j] = new Vector3(-18.06f + 2.58f * j, 0, -2.58f * i);
         }
 
         players = new Dictionary<Guid, RemotePlayerManager>();
@@ -97,7 +97,7 @@ public class MapController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             camera.StopFollowMouse();
-            uiManager.OpenMenu(true);
+            uiManager.OpenMenu();
         }
 
         if (isRunning)
@@ -110,7 +110,8 @@ public class MapController : MonoBehaviour
     public void StartRace()
     {
         isRunning = true;
-        localPlayer.Running = true;
+        if(!GameManager.instance.debug)
+            localPlayer.Running = true;
     }
 
     #region Spawn Players
@@ -124,6 +125,7 @@ public class MapController : MonoBehaviour
     public void SpawnLocalPlayer()
     {
         GameObject p = Instantiate(GameManager.instance.LocalPlayerObj, spawns[ClientInfo.instance.SpawnId], Quaternion.identity);
+        p.transform.GetChild(0).GetChild(1).GetComponent<SkinnedMeshRenderer>().material = PlayerColor.instance.materials[ClientInfo.instance.Color];
 
         localPlayer = p.GetComponent<PlayerManager>();
 
@@ -131,11 +133,13 @@ public class MapController : MonoBehaviour
         camera.SetFollowTargets( p.transform, p.GetComponent<PlayerController>().pelvis);
     }
 
-    public void SpawnRemotePlayer(Guid id, string username)
+    public void SpawnRemotePlayer(Guid _id, string _username, int _color)
     {
-        GameObject p = Instantiate(GameManager.instance.RemotePlayerObj, spawns[Client.peers[id].SpawnId], Quaternion.identity);
-        players.Add(id, p.GetComponent<RemotePlayerManager>());
-        players[id].Initialize(id, username);
+        GameObject p = Instantiate(GameManager.instance.RemotePlayerObj, spawns[Client.peers[_id].SpawnId], Quaternion.identity);
+        p.transform.GetChild(0).GetChild(1).GetComponent<SkinnedMeshRenderer>().material = PlayerColor.instance.materials[_color];
+
+        players.Add(_id, p.GetComponent<RemotePlayerManager>());
+        players[_id].Initialize(_id, _username);
     }
     #endregion
 

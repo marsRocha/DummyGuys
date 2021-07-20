@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Text;
+using TMPro;
 using UnityEngine;
 
 namespace DebugStuff
@@ -9,6 +10,8 @@ namespace DebugStuff
         // Adjust via the Inspector
         public int maxLines = 8;
         private Queue<string> queue = new Queue<string>();
+        [SerializeField]
+        private TMP_Text display;
         private string currentText = "";
 
         void OnEnable()
@@ -35,20 +38,8 @@ namespace DebugStuff
             }
 
             currentText = builder.ToString();
-        }
 
-        void OnGUI()
-        {
-            GUI.Label(
-               new Rect(
-                   5,                   // x, left offset
-                   Screen.height - 150, // y, bottom offset
-                   300f,                // width
-                   150f                 // height
-               ),
-               currentText,             // the display text
-               GUI.skin.textArea        // use a multi-line text area
-            );
+            display.text = currentText;
         }
     }
 }

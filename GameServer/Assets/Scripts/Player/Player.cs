@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    public Guid id;
+    public Guid Id { get; private set; }
+    private Guid roomId;
 
     private PlayerController playerController;
     private RagdollController ragdollController;
@@ -19,7 +20,7 @@ public class Player : MonoBehaviour
     private Queue<ClientInputState> clientInputStates;
     //  The amount of distance in units that we will allow the client's prediction to drift from it's position on the server, before a correction is necessary. 
     private float tolerance = 0.0000001f;
-    public int tick = 0;
+    public int tick;
 
     [Header("Ragdoll Params")]
     public bool Ragdolled = false;
@@ -36,6 +37,7 @@ public class Player : MonoBehaviour
         rb.isKinematic = true;
 
         lastFrame = 0;
+        tick = 0;
         clientInputStates = new Queue<ClientInputState>();
         velocity = Vector3.zero;
         angularVelocity = Vector3.zero;
@@ -60,9 +62,10 @@ public class Player : MonoBehaviour
         logicTimer.Update();
     }
 
-    public void Initialize(Guid _id)
+    public void Initialize(Guid _id, Guid _roomId)
     {
-        id = _id;
+        Id = _id;
+        roomId = _roomId;
     }
 
     public void StartPlayer()
@@ -205,7 +208,7 @@ public class Player : MonoBehaviour
 
     public void SendCorrection(SimulationState state)
     {
-        RoomSend.CorrectPlayer(Server.Clients[id].RoomID, id, state);
+        RoomSend.CorrectPlayer(Server.Rooms[roomId].Clients[Id].RoomID, Id, state);
     }
 
     public void SetSimulationState(SimulationState simulationState)
@@ -234,9 +237,32 @@ public class Player : MonoBehaviour
         rb.isKinematic = false;
     }
 
-    public void Destroy()
+    public void Reset(Vector3 _position)
+    {
+        rb.freezeRotation = true;
+        rb.isKinematic = true;
+
+        lastFrame = 0;
+        tick = 0;
+        clientInputStates.Clear();
+
+        transform.position = _position;
+        transform.rotation = Quaternion.identity;
+        velocity = Vector3.zero;
+        angularVelocity = Vector3.zero;
+
+        ragdollController.Reset();
+        playerController.Reset();
+
+        Ragdolled = false;
+        Running = false;
+
+        logicTimer.Start();
+    }
+
+    public void Deactivate()
     {
         logicTimer.Stop();
-        Destroy(gameObject);
+        gameObject.SetActive(false);
     }
 }

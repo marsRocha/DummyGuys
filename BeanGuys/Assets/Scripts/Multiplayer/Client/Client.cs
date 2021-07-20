@@ -56,6 +56,8 @@ public class Client : MonoBehaviour
     /// <summary>Starts Client networking.</summary>
     public void GoOnline(string _ip, int _port)
     {
+        ClientInfo.instance.Id = Guid.NewGuid();
+
         _serverIPaddress = IPAddress.Parse(_ip);
         _serverPort = _port;
 
@@ -282,7 +284,15 @@ public class Client : MonoBehaviour
                     using (Packet packet = new Packet(packetBytes))
                     {
                         int packetId = packet.ReadInt();
-                        ClientHandle.packetHandlers[packetId](Guid.Empty, packet);
+
+                        Guid id = Guid.Empty;
+                        try
+                        {
+                            id = packet.ReadGuid();
+                        }
+                        catch { };
+
+                        ClientHandle.packetHandlers[packetId](id, packet);
                     }
                 });
 

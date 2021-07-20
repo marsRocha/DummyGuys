@@ -9,6 +9,7 @@ public class UIManager : MonoBehaviour
     // Canvas
     [SerializeField]
     private GameObject HUD, Menu;
+    private bool menuIsOpen = false;
 
     // Frames
     [SerializeField]
@@ -36,10 +37,17 @@ public class UIManager : MonoBehaviour
     }
 
     /// <summary>Activates/Deactivates the menu.</summary>
-    /// <param name="_activate">The state to which the menu will transition.</param>
-    public void OpenMenu(bool _activate)
+    public void OpenMenu()
     {
-        Menu.SetActive(_activate);
+        menuIsOpen = !menuIsOpen;
+
+        if (!menuIsOpen)
+        {
+            Menu.transform.GetChild(1).gameObject.SetActive(true);
+            Menu.transform.GetChild(2).gameObject.SetActive(false);
+        }
+
+        Menu.SetActive(menuIsOpen);
     }
 
     /// <summary>Activates the winner frame element if player qualified in the race.</summary>

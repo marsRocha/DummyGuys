@@ -67,11 +67,16 @@ public class PlayerCamera : MonoBehaviour
         }
     }
 
+    private void FixedUpdate()
+    {
+        if(player)
+            InputCalculations();
+    }
+
     void LateUpdate()
     {
         if (player && ragdoll)
         {
-            InputCalculations();
             FollowCalculations();
             RaycastCalculations();
             SwitchCalculations();

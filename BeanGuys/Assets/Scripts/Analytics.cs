@@ -1,18 +1,45 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using TMPro;
 using UnityEngine;
 
 public class Analytics : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    [SerializeField]
+    private GameObject content;
+    [SerializeField]
+    private TMP_Text pingTxt;
+
+    // States
+    [SerializeField]
+    private bool active;
+
+    private void Start()
     {
-        
+        content.SetActive(active);
     }
 
-    // Update is called once per frame
     void Update()
     {
-        
+        if (Input.GetKeyDown(KeyCode.U))
+        {
+            active = !active;
+            content.SetActive(active);
+        }
+
+        if (active)
+        {
+            UpdatePing();
+        }
+    }
+
+    private void UpdatePing()
+    {
+        if (Client.instance)
+        {
+            pingTxt.text = $"Ping: {Client.instance.ping}ms";
+        }
+        else
+        {
+            pingTxt.text = "Ping: 0ms";
+        }
     }
 }

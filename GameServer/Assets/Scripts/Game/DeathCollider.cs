@@ -15,7 +15,7 @@ public class DeathCollider : MonoBehaviour
     {
         if (other.transform.root.gameObject.layer.Equals(LayerMask.NameToLayer("Player")))
         {
-            roomScene.PlayerRespawn(other.transform.root.GetComponent<Player>().id);
+            roomScene.PlayerRespawn(other.transform.root.GetComponent<Player>().Id);
         }
     }
 }

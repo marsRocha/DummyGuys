@@ -34,6 +34,7 @@ public class PlayerManager : MonoBehaviour
     public bool Online = false;
     public bool Running = false;
     public bool Ragdolled = false;
+    public bool _Debug = false;
 
     private void Awake()
     {
@@ -64,8 +65,9 @@ public class PlayerManager : MonoBehaviour
         playerController.StartController(logicTimer);
         ragdollController.StartController();
 
-        //TODO: DEBUG
-        MapController.instance.StartRace();
+        // TODO: REMOVE ON FINAL
+        if(_Debug)
+            MapController.instance.StartRace();
     }
 
     public void Initialize(int _id, string _username)

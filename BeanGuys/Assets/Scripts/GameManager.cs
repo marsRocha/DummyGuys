@@ -55,7 +55,6 @@ public class GameManager : MonoBehaviour
                 if (pingCountdown >= pingCountdownLimit)
                 {
                     pingCountdown = 0;
-                    //Debug.Log($"{Client.instance.ping}ms");
                     ClientSend.Ping();
                 }
             }
@@ -129,11 +128,10 @@ public class GameManager : MonoBehaviour
     {
         foreach(Peer peer in Client.peers.Values)
         {
-            mapController.SpawnRemotePlayer(peer.Id, peer.Username);
+            mapController.SpawnRemotePlayer(peer.Id, peer.Username, peer.Color);
         }
     }
 
-    //TODO: REMOVE AFTERWARDS ONLY FOR P2P FUNCTIONS
     public void StartGame()
     {
         Debug.Log("Start Game");

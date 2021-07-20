@@ -97,9 +97,4 @@ public class Settings : MonoBehaviour
 
         }
     }
-
-    public void SetMouseSensitivity(int _sensitivity)
-    {
-        camera.RotationSensitivity = _sensitivity;
-    }
 }

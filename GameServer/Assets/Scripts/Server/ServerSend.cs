@@ -1,67 +1,19 @@
 ﻿using System;
-using UnityEngine;
 
 // Server only uses this class to clients that are not in a room
 public class ServerSend
 {
-    #region methods of sending info
-    private static void SendTCPData(Guid toClient, Packet packet)
+    private static void SendTCPData(NewConnection _connection, Packet _packet)
     {
-        packet.WriteLength();
-        Server.Clients[toClient].tcp.SendData(packet);
+        _packet.WriteLength();
+        _connection.SendData(_packet);
     }
 
-    private static void SendUDPData(Guid toClient, Packet packet)
-    {
-        packet.WriteLength();
-        Server.Clients[toClient].udp.SendData(packet);
-    }
-    #endregion
-
-    #region Packets
-    public static void Welcome(Guid _toClient)
+    public static void Welcome(NewConnection _toClient)
     {
         using (Packet packet = new Packet((int)ServerPackets.welcome))
         {
-            packet.Write(_toClient);
-
             SendTCPData(_toClient, packet);
         }
     }
-
-    public static void Pong(Guid _toClient)
-    {
-        using (Packet _packet = new Packet((int)ServerPackets.pong))
-        {
-            SendTCPData(_toClient, _packet);
-        }
-    }
-
-    public static void JoinedRoom(Guid _toClient, Guid _roomId, string _lobbyIP, int _lobbyPort, int _spawnPos)
-    {
-        using (Packet packet = new Packet((int)ServerPackets.joinedRoom))
-        {
-            packet.Write(_roomId);
-            packet.Write(_lobbyIP);
-            packet.Write(_lobbyPort);
-            packet.Write(_spawnPos);
-
-            SendTCPData(_toClient, packet);
-        }
-    }
-    
-    //TODO: REMOVE THIS FROM HERE? ROOM CAN USE REGULAR UDP 1-1 TO SEND THIS MESSAGES NO?
-    public static void PlayerInfo(Guid _toClient, Guid _roomId, ClientInfo _clientInfo)
-    {
-        using (Packet packet = new Packet((int)ServerPackets.playerJoined))
-        {
-            packet.Write(_roomId);
-            packet.Write(_clientInfo.id);
-            packet.Write(_clientInfo.username);
-            packet.Write(_clientInfo.spawnId);
-
-            SendTCPData(_toClient, packet);
-        }
-    }
-    #endregion
 }

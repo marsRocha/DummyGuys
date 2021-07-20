@@ -18,7 +18,7 @@ public class CheckPoint : MonoBehaviour
     {
         if (other.transform.root.gameObject.layer.Equals(LayerMask.NameToLayer("Player")))
         {
-            roomScene.SetCheckPoint(other.transform.root.GetComponent<Player>().id, checkpointIndex);
+            roomScene.SetCheckPoint(other.transform.root.GetComponent<Player>().Id, checkpointIndex);
         }
     }
 }

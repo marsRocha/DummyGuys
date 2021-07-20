@@ -15,7 +15,7 @@ public class QualifyPlayer : MonoBehaviour
     {
         if (other.gameObject.layer == LayerMask.NameToLayer("Player"))
         {
-            roomScene.FinishRacePlayer(other.gameObject.GetComponent<Player>().id);
+            roomScene.FinishRacePlayer(other.gameObject.GetComponent<Player>().Id);
         }
     }
 }

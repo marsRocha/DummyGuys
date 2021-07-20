@@ -213,6 +213,20 @@ public class RagdollController : MonoBehaviour
         ragdolledHeadPosition = animator.GetBoneTransform(HumanBodyBones.Head).position;
         ragdolledHipPosition = animator.GetBoneTransform(HumanBodyBones.Hips).position;
     }
+
+    public void Reset()
+    {
+        if(State != RagdollState.Animated)
+        {
+            rb.isKinematic = false;
+            ActivateRagdollComponents(false);
+            State = RagdollState.Animated;
+            playerController.ExitRagdoll();
+
+            animator.transform.localRotation = Quaternion.identity;
+            transform.rotation = Quaternion.identity;
+        }
+    }
 }
 
 public class BodyPart

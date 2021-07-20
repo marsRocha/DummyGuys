@@ -41,4 +41,19 @@ public class MainThread
             }
         }
     }
+
+    /// <summary>Clears all action meant to run on the main thread. NOTE: Call this ONLY from the main thread.</summary>
+    public void Clear()
+    {
+        if (actionToExecuteOnMainThread)
+        {
+            executeCopiedOnMainThread.Clear();
+            lock (executeOnMainThread)
+            {
+                executeOnMainThread.Clear();
+                executeCopiedOnMainThread.Clear();
+                actionToExecuteOnMainThread = false;
+            }
+        }
+    }
 }
