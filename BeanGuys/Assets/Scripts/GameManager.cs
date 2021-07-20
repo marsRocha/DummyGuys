@@ -11,9 +11,6 @@ public class GameManager : MonoBehaviour
 
     public int totalPlayers = 0;
 
-    //TODO: REMOVE THIS FROM HERE LATER ON
-    public GameObject RemotePlayerObj, LocalPlayerObj;
-
     // Ping stuff
     public float pingCountdown = 1f;
     public float pingCountdownLimit = 1f;
@@ -159,9 +156,6 @@ public class GameManager : MonoBehaviour
     {
         if (mapController.players.TryGetValue(_id, out RemotePlayerManager _player))
         {
-            /*if (_tick > GlobalVariables.serverTick) //TODO: CHANGE TO PLAYER LASTTICK?
-                GlobalVariables.serverTick = _tick;*/
-
             _player.NewPlayerState(_tick, _position, _rotation, _ragdoll, _animation);
         }
     }
@@ -174,16 +168,9 @@ public class GameManager : MonoBehaviour
         mapController.localPlayer.ReceivedCorrectionState(simulationState);
     }
 
-    public void PlayerRespawn(Guid _clientId, int _checkPointNum)
+    public void PlayerRespawn(int _checkPointNum)
     {
-        if (_clientId == ClientInfo.instance.Id)
-        {
-            mapController.LocalPlayerRespawn(_checkPointNum);
-        }
-        else
-        {
-            mapController.PlayerRespawn(_clientId, _checkPointNum);
-        }
+        mapController.LocalPlayerRespawn(_checkPointNum);
     }
 
     public void PlayerFinish(Guid _clientId)

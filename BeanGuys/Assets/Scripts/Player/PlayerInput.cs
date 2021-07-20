@@ -18,10 +18,10 @@ public class PlayerInput : MonoBehaviour
     private Inputs inputState;
     public void MovementInput()
     {
-        //Walk
+        // Walk
         x = Input.GetAxis(forward);
         y = Input.GetAxis(sideways);
-        //Behaviours
+        // Behaviours
         jump = Input.GetKey(jumpKey);
         dive = Input.GetKey(diveKey);
 

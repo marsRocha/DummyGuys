@@ -2,7 +2,6 @@
 
 /// <summary>
 /// Contains all methods needed information about a player in a determined moment of the simulation.
-/// If ragdolled, then it will be stored the pelvis(root) position, rotation, velocity
 /// </summary>
 public class PlayerState
 {

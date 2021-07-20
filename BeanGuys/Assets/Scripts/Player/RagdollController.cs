@@ -140,7 +140,7 @@ public class RagdollController : MonoBehaviour
                 }
             }
 
-            //if the ragdoll blend amount has decreased to zero, move to animated state
+            // if the ragdoll blend amount has decreased to zero, move to animated state
             if (ragdollBlendAmount == 0)
             {
                 State = RagdollState.Animated;
@@ -219,14 +219,14 @@ public class RagdollController : MonoBehaviour
     {
         ragdollingEndTime = Time.time;//store the state change time
 
-        //Store the ragdolled position for blending
+        // Store the ragdolled position for blending
         foreach (BodyPart b in bodyParts)
         {
             b.storedRotation = b.transform.rotation;
             b.storedPosition = b.transform.position;
         }
 
-        //KeyBone positions to calculate new position
+        // KeyBone positions to calculate new position
         ragdolledFeetPosition = 0.5f * (animator.GetBoneTransform(HumanBodyBones.LeftToes).position + animator.GetBoneTransform(HumanBodyBones.RightToes).position);
         ragdolledHeadPosition = animator.GetBoneTransform(HumanBodyBones.Head).position;
         ragdolledHipPosition = animator.GetBoneTransform(HumanBodyBones.Hips).position;

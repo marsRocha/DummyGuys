@@ -39,7 +39,7 @@ public class CountDown : MonoBehaviour
             if (currentTime <= 0)
             {
                 MapController.instance.StartRace();
-                this.gameObject.SetActive(false);
+                gameObject.SetActive(false);
             }
         }
     }

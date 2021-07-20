@@ -1,13 +1,14 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class MoveBehaviour : MonoBehaviour
 {
+    [SerializeField]
     private Rigidbody rb;
-    public float speed, offset;
+    [SerializeField]
+    private float speed, offset;
     private Vector3 initialPos;
-    public Vector3[] points;
+    [SerializeField]
+    private Vector3[] points;
 
     // Start is called before the first frame update
     void Start()
@@ -16,6 +17,7 @@ public class MoveBehaviour : MonoBehaviour
         rb = GetComponent<Rigidbody>();
     }
 
+    // Update is called once per frame
     void FixedUpdate()
     {
         transform.position = Vector3.Lerp(initialPos + points[0], initialPos + points[1], ((Mathf.Sin((GameLogic.Clock + offset) * speed) + 1.0f) / 2.0f));

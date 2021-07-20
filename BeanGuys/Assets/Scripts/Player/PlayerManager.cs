@@ -97,7 +97,6 @@ public class PlayerManager : MonoBehaviour
         };
 
         ragdollController.UpdateController();
-        //ragdollController.FixedUpdateController();
 
         logicTimer.Update();
     }
@@ -106,7 +105,7 @@ public class PlayerManager : MonoBehaviour
     {
         if (Running)
         {
-            //Update player's movement
+            // Update player's movement
             ProcessInput(currentInputState);
 
             if(Random.value > packet_loss_percent)
@@ -131,9 +130,6 @@ public class PlayerManager : MonoBehaviour
 
             // Move next frame
             ++simulationFrame;
-
-            // Add position to interpolate
-            //playerManager.interpolation.PlayerUpdate(simulationFrame, transform.position);
         }
     }
 
@@ -147,7 +143,7 @@ public class PlayerManager : MonoBehaviour
 
         playerController.UpdateController(currentInputs);
 
-        //Simulate physics
+        // Simulate physics
         SimulatePhysics();
     }
 
@@ -172,7 +168,7 @@ public class PlayerManager : MonoBehaviour
     #region Client-Server Reconciliation
     private void Reconciliate()
     {
-        // Sanity check, don't reconciliate for old states.
+        // Don't reconciliate for old states.
         if (serverSimulationState.simulationFrame <= lastCorrectedFrame) return;
 
         // Determine the cache index 
@@ -193,12 +189,10 @@ public class PlayerManager : MonoBehaviour
             return;
         }
 
-        // If the simulation time isnt equal to the serve time then return
-        // this should never happen
+        // If the simulation time isnt equal to the serve time then return, this should never happen
         if (cachedInputState.SimulationFrame != serverSimulationState.simulationFrame || cachedSimulationState.simulationFrame != serverSimulationState.simulationFrame)
             return;
 
-        // Show warning about misprediction
         Debug.LogWarning("Client misprediction at frame " + serverSimulationState.simulationFrame + ".");
 
         // Set the player's position to match the server's state. 
@@ -249,7 +243,13 @@ public class PlayerManager : MonoBehaviour
         velocity = simulationState.velocity;
         angularVelocity = simulationState.angularVelocity;
 
-        //TODO: ADD RESET TO RAGDOLL IF NEEDED 
+        /*if(Ragdolled != simulationState.ragdoll)
+        {
+            if (!simulationState.ragdoll)
+                ragdollController.RagdollOut();
+
+            Ragdolled = simulationState.ragdoll;
+        }*/
     }
     #endregion
 

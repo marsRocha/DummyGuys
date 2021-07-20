@@ -3,10 +3,14 @@ using UnityEngine;
 
 public class SwingBehaviour : MonoBehaviour
 {
-    public float speed = 5f;
-    public float angle = 30;
-    public float timeToWait = 1f;
-    public bool Left;
+    [SerializeField]
+    private float speed = 5f;
+    [SerializeField]
+    private float angle = 30;
+    [SerializeField]
+    private float timeToWait = 1f;
+    [SerializeField]
+    private bool Left;
 
     Quaternion start, end;
 

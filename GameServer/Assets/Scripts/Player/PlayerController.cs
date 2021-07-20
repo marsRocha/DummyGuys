@@ -180,7 +180,7 @@ public class PlayerController : MonoBehaviour
         if (currentInputs.Jump && !jumping && grounded && !dashing && readyToJump)
         {
             readyToJump = false;
-            rb.AddForce(Vector3.up * -rb.velocity.y, ForceMode.VelocityChange); // In case of slopes
+            rb.AddForce(Vector3.up * -rb.velocity.y, ForceMode.VelocityChange);//in case of slopes
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             jumping = true;
         }

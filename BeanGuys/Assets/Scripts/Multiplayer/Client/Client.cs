@@ -18,7 +18,7 @@ public class Client : MonoBehaviour
     private static UdpClient _udpClient;
 
     //Server Info
-    private static IPAddress _serverIPaddress;
+    private static IPAddress serverIPaddress;
     private static int _serverPort = 26950;
     public TCP Server { get; private set; }
 
@@ -32,7 +32,7 @@ public class Client : MonoBehaviour
     //Client Info
     private static IPAddress _localIPaddress;
 
-    //TODO: set private
+    // True if connected to a room
     public bool isConnected = false;
 
     // Ping
@@ -58,7 +58,7 @@ public class Client : MonoBehaviour
     {
         ClientInfo.instance.Id = Guid.NewGuid();
 
-        _serverIPaddress = IPAddress.Parse(_ip);
+        serverIPaddress = IPAddress.Parse(_ip);
         _serverPort = _port;
 
         _localIPaddress = IPAddress.Any;
@@ -72,7 +72,7 @@ public class Client : MonoBehaviour
     {
         Server = new TCP();
 
-        Server.Connect(_serverIPaddress, _serverPort);
+        Server.Connect(serverIPaddress, _serverPort);
     }
 
     /// <summary>Receives incoming UDP data.</summary>
@@ -125,11 +125,6 @@ public class Client : MonoBehaviour
                 if (id == Guid.Empty || ClientInfo.instance.Id == id)
                     return;
 
-                //TODO: to do this i need to send roomid on player movement messages inbetween clients
-                // Turn way messages that do not have the identifier of the room, if we are already in a room
-                /*if (ClientInfo.instance.RoomId != Guid.Empty && ClientInfo.instance.RoomId != id)
-                    return;*/
-
                 ClientHandle.packetHandlers[packetId](id, packet);
             }
         });
@@ -141,7 +136,7 @@ public class Client : MonoBehaviour
     {
         try
         {
-            _udpClient.Send(_packet.ToArray(), _packet.Length(), new IPEndPoint(IPAddress.Loopback, _roomPort)); //TODO: CHANGE LOOPBACK TO SERVER IP
+            _udpClient.Send(_packet.ToArray(), _packet.Length(), new IPEndPoint(serverIPaddress, _roomPort));
         }
         catch (Exception ex)
         {
@@ -188,7 +183,6 @@ public class Client : MonoBehaviour
         _udpClient.BeginReceive(new AsyncCallback(ReceivedCallback), null);
     }
 
-    //TODO: TO BE REPLACED
     public class TCP
     {
         public TcpClient socket;
@@ -207,9 +201,6 @@ public class Client : MonoBehaviour
 
             receiveBuffer = new byte[dataBufferSize];
             socket.BeginConnect(_ip, _port, ConnectCallback, socket);
-
-            // Send introduction
-            ClientSend.Introduction();
         }
 
         private void ConnectCallback(IAsyncResult result)

@@ -7,7 +7,6 @@ using UnityEngine;
 public class ClientSend : MonoBehaviour
 {
     #region Methods of sending data
-    //TODO: SUBSTITUTE THIS METHOD AND SENDUDPDATA FOR RELIABLE UDP COMMUNICATION
     /// <summary>Sends a packet to the server via TCP.</summary>
     /// <param name="_packet">The packet to send to the sever.</param>
     private static void SendTCPData(Packet _packet)
@@ -33,7 +32,7 @@ public class ClientSend : MonoBehaviour
     }
     #endregion
 
-    //TODO: Debug
+    /// <summary>Used for debug purposes.</summary>
     public static void Test()
     {
         using (Packet _packet = new Packet((int)ClientPackets.test))

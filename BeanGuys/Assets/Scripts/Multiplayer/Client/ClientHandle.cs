@@ -10,6 +10,8 @@ public class ClientHandle : MonoBehaviour
     public delegate void PacketHandler(Guid id, Packet packet);
     public static Dictionary<int, PacketHandler> packetHandlers;
 
+    /// <summary>Handles 'welcome' packet sent from the server.</summary>
+    /// <param name="_packet">The received packet.</param>
     public static void InitializeData()
     {
         packetHandlers = new Dictionary<int, PacketHandler>()
@@ -50,15 +52,15 @@ public class ClientHandle : MonoBehaviour
         int spawnId =_packet.ReadInt();
 
         ClientInfo.instance.RoomId = _roomId;
-        //Start listening to room
+        // Start listening to room
         Client.ListenToRoom(ip, port);
-        //Add themselves to the playerCount
+        // Add themselves to the playerCount
         GameManager.instance.UpdatePlayerCount();
         Client.instance.isConnected = true;
 
         GameManager.instance.isOnline = true;
 
-        //Add my spawnid
+        // Add my spawnId
         ClientInfo.instance.SpawnId = spawnId;
 
         Debug.Log($"Joined room {_roomId}, multicast info Ip:{ip} Port:{port}");
@@ -166,9 +168,6 @@ public class ClientHandle : MonoBehaviour
         Vector3 angularVelocity =_packet.ReadVector3();
         bool ragdoll =_packet.ReadBool();
 
-        //TODO: FOR NOW SERVER SEND MULTICAST, SHOULD I CHANGE IT?
-        //TODO: ALSO OTHER METHODS ARE CHECKING IF ROOM IS CORRECT, CHANGE THAT TO BEFORE COMING TO THIS FUNCTIONS
-
         if (_clientId == ClientInfo.instance.Id)
             GameManager.instance.PlayerCorrection(new SimulationState(simulationFrame, position, rotation, velocity, angularVelocity, ragdoll));
     }
@@ -179,7 +178,9 @@ public class ClientHandle : MonoBehaviour
     {
         Guid clientId = _packet.ReadGuid();
         int checkPointNum =_packet.ReadInt();
-        GameManager.instance.PlayerRespawn(clientId, checkPointNum);
+
+        if (clientId == ClientInfo.instance.Id)
+            GameManager.instance.PlayerRespawn(checkPointNum);
     }
 
     /// <summary>Handles 'playerFinish' packet sent from the server.</summary>
@@ -209,7 +210,7 @@ public class ClientHandle : MonoBehaviour
     /// <param name="_packet">The received packet.</param>
     public static void Pong(Guid not_needed, Packet _packet)
     {
-        // We receive the ping packet, update the stored ping variable
+        // We are receive the ping packet, update the stored ping variable
         Client.instance.ping = Math.Round((DateTime.UtcNow - Client.instance.pingSent).TotalMilliseconds, 0);
     }
 }

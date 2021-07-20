@@ -16,12 +16,6 @@ public class Settings : MonoBehaviour
         SetUpResolutions();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
     private void SetUpResolutions()
     {
         resolutions = Screen.resolutions;
@@ -94,7 +88,6 @@ public class Settings : MonoBehaviour
             case 8:
                 Application.targetFrameRate = -1; // Uncapped
                 break;
-
         }
     }
 }

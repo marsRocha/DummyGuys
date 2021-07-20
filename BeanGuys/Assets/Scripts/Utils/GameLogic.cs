@@ -1,6 +1,7 @@
 ﻿
 public class GameLogic
 {
+    //TODO: MAKE TICKRATE CHANGABLE
     public static int Tickrate = 30; // Ticks per second 30 - 128;
     public static int TicksPer100ms = (int)(Tickrate * .1f);
     public static float SecPerTick = 0.033333f; // ( 1 / Tickrate);

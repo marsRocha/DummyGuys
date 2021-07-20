@@ -320,24 +320,6 @@ public class PlayerController : MonoBehaviour
     }
     #endregion
 
-    public void Die()
-    {
-        playerAudio.PlayEffect(5);
-    }
-
-    public void Respawn()
-    {
-        currentAnimation = 0;
-        respawnPs.Play();
-        playerAudio.PlayEffect(6);
-    }
-
-    public void Checkpoint()
-    {
-        checkpointPs.Play();
-        playerAudio.PlayEffect(4);
-    }
-
     private void ResetBehaviours()
     {
         animator.SetBool("isRunning", false);
@@ -407,4 +389,24 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
+
+    #region Behavior EFX
+    public void Die()
+    {
+        playerAudio.PlayEffect(5);
+    }
+
+    public void Respawn()
+    {
+        currentAnimation = 0;
+        respawnPs.Play();
+        playerAudio.PlayEffect(6);
+    }
+
+    public void Checkpoint()
+    {
+        checkpointPs.Play();
+        playerAudio.PlayEffect(4);
+    }
+    #endregion
 }

@@ -110,8 +110,7 @@ public class MapController : MonoBehaviour
     public void StartRace()
     {
         isRunning = true;
-        if(!GameManager.instance.debug)
-            localPlayer.Running = true;
+        localPlayer.Running = true;
     }
 
     #region Spawn Players
@@ -124,7 +123,7 @@ public class MapController : MonoBehaviour
 
     public void SpawnLocalPlayer()
     {
-        GameObject p = Instantiate(GameManager.instance.LocalPlayerObj, spawns[ClientInfo.instance.SpawnId], Quaternion.identity);
+        GameObject p = Instantiate((GameObject)Resources.Load("LocalPlayer"), spawns[ClientInfo.instance.SpawnId], Quaternion.identity);
         p.transform.GetChild(0).GetChild(1).GetComponent<SkinnedMeshRenderer>().material = PlayerColor.instance.materials[ClientInfo.instance.Color];
 
         localPlayer = p.GetComponent<PlayerManager>();
@@ -135,7 +134,7 @@ public class MapController : MonoBehaviour
 
     public void SpawnRemotePlayer(Guid _id, string _username, int _color)
     {
-        GameObject p = Instantiate(GameManager.instance.RemotePlayerObj, spawns[Client.peers[_id].SpawnId], Quaternion.identity);
+        GameObject p = Instantiate((GameObject)Resources.Load("RemotePlayer"), spawns[Client.peers[_id].SpawnId], Quaternion.identity);
         p.transform.GetChild(0).GetChild(1).GetComponent<SkinnedMeshRenderer>().material = PlayerColor.instance.materials[_color];
 
         players.Add(_id, p.GetComponent<RemotePlayerManager>());
@@ -144,14 +143,6 @@ public class MapController : MonoBehaviour
     #endregion
 
     #region Respawn Player
-    public void PlayerRespawn(Guid id, int checkPointNum)
-    {
-        Vector3 newPos = GetRespawnPosition(Client.peers[id].SpawnId, checkPointNum);
-
-        Debug.Log("doing nothing");
-        //players[id].Respawn(newPos, Quaternion.identity); //TODO: CHECK IF THIS WORKS
-    }
-
     public void LocalPlayerRespawn(int _checkPointNum)
     {
         Vector3 newPos = GetRespawnPosition(ClientInfo.instance.SpawnId, _checkPointNum);

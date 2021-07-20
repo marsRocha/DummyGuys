@@ -1,11 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class SpinBehaviour : MonoBehaviour
 {
-    public Rigidbody rb;
-    public float rotationSpeed;
+    [SerializeField]
+    private Rigidbody rb;
+    [SerializeField]
+    private float rotationSpeed;
 
     void Update()
     {

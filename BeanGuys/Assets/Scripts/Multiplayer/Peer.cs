@@ -8,6 +8,7 @@ public class Peer
     public int Color { get; private set; }
     public int SpawnId { get; private set; }
 
+    /// <summary>Constructer to Peer class.</summary>
     public Peer(Guid _clientId, string _username, int _color, int _spawnId)
     {
         Id = _clientId;

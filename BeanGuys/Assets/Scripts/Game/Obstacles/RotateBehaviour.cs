@@ -1,12 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class RotateBehaviour : MonoBehaviour
 {
-    public Rigidbody rb;
-    public float rotationSpeed;
+    [SerializeField]
+    private Rigidbody rb;
+    [SerializeField]
+    private float rotationSpeed;
 
+    // Start is called before the first frame update
     private void Start()
     {
         rb.centerOfMass = Vector3.zero;
