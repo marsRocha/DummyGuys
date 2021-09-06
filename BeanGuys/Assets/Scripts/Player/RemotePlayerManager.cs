@@ -14,7 +14,7 @@ public class RemotePlayerManager : MonoBehaviour
     public int currentAnimation { get; private set; }
 
     private Interpolator interpolator;
-    private RagdollController ragdollController;
+    private RemoteRagdollController ragdollController;
     private PlayerAudioManager playerAudio;
     public bool Ragdolled { get; private set; }
 
@@ -31,7 +31,7 @@ public class RemotePlayerManager : MonoBehaviour
     {
         animator = transform.GetChild(0).GetComponent<Animator>();
         interpolator = GetComponent<Interpolator>();
-        ragdollController = GetComponent<RagdollController>();
+        ragdollController = GetComponent<RemoteRagdollController>();
         ragdollController.StartController();
         playerAudio = GetComponent<PlayerAudioManager>();
         Ragdolled = false;
@@ -83,6 +83,10 @@ public class RemotePlayerManager : MonoBehaviour
 
             switch (_animation)
             {
+                // blending ragdoll to anim
+                case -1:
+                    animator.enabled = true; 
+                    break;                
                 // idle
                 case 0:
                     // Do nothing, idle animation does not require a value to be set to 'true'

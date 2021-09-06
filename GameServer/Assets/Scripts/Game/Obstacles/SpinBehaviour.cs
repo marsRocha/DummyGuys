@@ -7,9 +7,17 @@ public class SpinBehaviour : MonoBehaviour
     public Rigidbody rb;
     public float rotationSpeed;
 
+    // Start is called before the first frame update
     private void Start()
     {
-        roomScene = gameObject.scene.GetRootGameObjects()[0].GetComponent<RoomScene>();
+        foreach (GameObject obj in gameObject.scene.GetRootGameObjects())
+        {
+            if (obj.GetComponent<RoomScene>())
+            {
+                roomScene = obj.GetComponent<RoomScene>();
+                break;
+            }
+        }
     }
 
     // Update is called once per frame

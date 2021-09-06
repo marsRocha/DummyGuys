@@ -30,7 +30,7 @@ public class NewConnection
         stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
 
         // Let client know connection was reached
-        ServerSend.Welcome(this);
+        ServerSend.Accept(this);
     }
 
     private void ReceiveCallback(IAsyncResult result)
@@ -114,11 +114,6 @@ public class NewConnection
 
                         // Add to room 
                         Server.AddClientToRoom(newClient, roomId);
-
-                        //Connect UDP
-                        newClient.udp.Connect((IPEndPoint)newClient.tcp.socket.Client.RemoteEndPoint);
-
-                        Debug.Log($"{newClient.tcp.socket.Client.RemoteEndPoint} connected successfully and has now joined a room.");
                     }
                     else
                     {
@@ -153,6 +148,7 @@ public class NewConnection
 
     public void Disconnect()
     {
+        ServerSend.Refuse(this);
         socket.Close();
         stream = null;
         receivedData = null;

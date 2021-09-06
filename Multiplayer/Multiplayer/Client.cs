@@ -9,22 +9,32 @@ namespace Multiplayer
 {
     public class Client
     {
-        public Guid Id { get; set; }
-        public string Username { get; set; }
+        public readonly Guid Id;
+        public readonly string Username;
+        public readonly int Color;
 
-        public Player player { get; private set; }
-        public Guid RoomID { get; set; }
+        public int SpawnId;
+        public readonly Guid RoomID;
+        public bool ready, finished;
+
+
+        public Player Player { get; private set; }
+
 
         public static int dataBufferSize = 4036;
 
         public TCP tcp;
         public UDP udp;
 
-        public Client(Guid clientId)
+        public Client(Guid _id, string _username, int _color, Guid _roomId)
         {
-            Id = clientId;
-            tcp = new TCP(Id);
-            udp = new UDP(Id);
+            Id = _id;
+            Username = _username;
+            Color = _color;
+            RoomID = _roomId;
+
+            tcp = new TCP(Id, RoomID);
+            udp = new UDP(Id, RoomID);
         }
 
         public class TCP
@@ -34,10 +44,12 @@ namespace Multiplayer
             private Packet receivedData;
             private byte[] receiveBuffer;
             private readonly Guid id;
+            private readonly Guid roomId;
 
-            public TCP(Guid clientId)
+            public TCP(Guid _clientId, Guid _roomId)
             {
-                id = clientId;
+                id = _clientId;
+                roomId = _roomId;
             }
 
             public void Connect(TcpClient clientSocket)
@@ -51,21 +63,18 @@ namespace Multiplayer
                 receiveBuffer = new byte[dataBufferSize];
 
                 stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
-
-                //Welcome message
-                ServerSend.Welcome(id);
             }
 
             public void SendData(Packet packet)
             {
                 try
                 {
-                    if(socket != null)
+                    if (socket != null)
                     {
                         stream.BeginWrite(packet.ToArray(), 0, packet.Length(), null, null);
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Console.WriteLine($"Error sending data to player {id} via TCP: {ex}");
                 }
@@ -76,9 +85,9 @@ namespace Multiplayer
                 try
                 {
                     int byteLength = stream.EndRead(result);
-                    if(byteLength <= 0)
+                    if (byteLength <= 0)
                     {
-                        Server.Clients[id].Disconnect();
+                        Server.Rooms[roomId].Clients[id].Disconnect();
                         return;
                     }
 
@@ -111,12 +120,13 @@ namespace Multiplayer
                 while (packetLength > 0 && packetLength <= receivedData.UnreadLength())
                 {
                     byte[] packetBytes = receivedData.ReadBytes(packetLength);
-                    ThreadManager.ExecuteOnMainThread(() =>
+                    Server.MainThread.ExecuteOnMainThread(() =>
                     {
                         using (Packet packet = new Packet(packetBytes))
                         {
+                            Console.WriteLine("{TCP MESSAGE]");
                             int packetId = packet.ReadInt();
-                            Server.packetHandlers[packetId](id, packet);
+                            RoomHandle.packetHandlers[packetId](roomId, id, packet);
                         }
                     });
 
@@ -148,9 +158,12 @@ namespace Multiplayer
         {
             public IPEndPoint endPoint;
             private readonly Guid id;
-            public UDP(Guid clientId)
+            private readonly Guid roomId;
+
+            public UDP(Guid _clientId, Guid _roomId)
             {
-                id = clientId;
+                id = _clientId;
+                roomId = _roomId;
             }
 
             public void Connect(IPEndPoint _endPoint)
@@ -158,9 +171,9 @@ namespace Multiplayer
                 endPoint = _endPoint;
             }
 
-            public void SendData(Packet packet)
+            public void SendData(Packet _packet)
             {
-                //Server.SendUDPData(endPoint, packet);
+                Server.Rooms[roomId].SendUDPData(endPoint, _packet);
             }
 
             public void HandleData(Packet data)
@@ -168,12 +181,13 @@ namespace Multiplayer
                 int packetLength = data.ReadInt();
                 byte[] packetBytes = data.ReadBytes(packetLength);
 
-                ThreadManager.ExecuteOnMainThread(() =>
+                Server.MainThread.ExecuteOnMainThread(() =>
                 {
                     using (Packet packet = new Packet(packetBytes))
                     {
+                        Console.WriteLine("{UDP MESSAGE]");
                         int packetId = packet.ReadInt();
-                        Server.packetHandlers[packetId](id, packet);
+                        RoomHandle.packetHandlers[packetId](roomId, id, packet);
                     }
                 });
             }
@@ -183,42 +197,18 @@ namespace Multiplayer
                 endPoint = null;
             }
         }
-    
-        /*public void SendIntoGame(string _playerName)
-        {
-            player = new Player(id, _playerName, Vector3.Zero);
-
-            foreach(Client c in Server.clients.Values)
-            {
-                if(c.player != null)
-                {
-                    if (c.id != id)
-                        ServerSend.SpawnPlayer(id, c.player);
-                }
-            }
-
-            foreach(Client c in Server.clients.Values)
-            {
-                if(c.player != null)
-                {
-                    ServerSend.SpawnPlayer(c.player.id, player);
-                }
-            }
-        }*/
 
         private void Disconnect()
         {
             Console.WriteLine($"{tcp.socket.Client.RemoteEndPoint} has disconnected.");
-            
-            Server.Rooms[RoomID].RemovePlayer(Id);
+
             tcp.Disconnect();
             udp.Disconnect();
-            Server.Clients.Remove(Id);
         }
 
         public void SetPlayer(Player _player)
         {
-            player = _player;
+            Player = _player;
         }
     }
 }

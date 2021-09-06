@@ -1,42 +1,49 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class SwingBehaviour : MonoBehaviour
 {
-    public RoomScene roomScene;
+    private RoomScene roomScene;
 
-    public float speed = 5f;
-    public float angle = 30;
-    public float timeToWait = 1f;
-    public bool Left;
+    [SerializeField]
+    private float speed = 5f;
+    [SerializeField]
+    private float angle = 30;
+    [SerializeField]
+    private float offset;
+    [SerializeField]
+    private bool left;
 
-    Quaternion start, end;
+    private Quaternion start, end;
 
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        roomScene = gameObject.scene.GetRootGameObjects()[0].GetComponent<RoomScene>();
-
         start = SwingRotation(angle);
         end = SwingRotation(-angle);
+    }
 
-        StartCoroutine(WaitFor(timeToWait));
+    // Start is called before the first frame update
+    private void Start()
+    {
+        foreach (GameObject obj in gameObject.scene.GetRootGameObjects())
+        {
+            if (obj.GetComponent<RoomScene>())
+            {
+                roomScene = obj.GetComponent<RoomScene>();
+                break;
+            }
+        }
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
-        if (Left)
-            transform.rotation = Quaternion.Lerp(start, end, ((Mathf.Sin(roomScene.Game_Clock * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
+        if (left)
+            transform.rotation = Quaternion.Lerp(start, end, ((Mathf.Sin((roomScene.Game_Clock + offset) * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
         else
-            transform.rotation = Quaternion.Lerp(end, start, ((Mathf.Sin(roomScene.Game_Clock * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
+            transform.rotation = Quaternion.Lerp(end, start, ((Mathf.Sin((roomScene.Game_Clock + offset) * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
     }
 
-    private IEnumerator WaitFor(float time)
-    {
-        yield return new WaitForSecondsRealtime(time);
-    }
-
+    // Calculate rotation needed to reach the desired max angle
     Quaternion SwingRotation(float angle)
     {
         Quaternion swingRot = transform.rotation;

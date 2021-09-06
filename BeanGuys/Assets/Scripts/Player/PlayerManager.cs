@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public class PlayerManager : MonoBehaviour
 {
@@ -26,9 +27,6 @@ public class PlayerManager : MonoBehaviour
     private int lastCorrectedFrame;
 
     private Vector3 velocity, angularVelocity;
-
-    [Range(0,1)]
-    public float packet_loss_percent;
 
     [Header("State")]
     public bool Online = false;
@@ -96,8 +94,40 @@ public class PlayerManager : MonoBehaviour
             LookingRotation = playerCamera.transform.rotation
         };
 
-        ragdollController.UpdateController();
+        // Actions
+        if (Input.GetKeyDown(KeyCode.R))
+            ClientSend.PlayerRespawn();
 
+
+        if (Input.GetKey(KeyCode.Mouse0) && !playerController.grabbing)
+        {
+            if (playerController.TryGrab())
+            {
+                ClientSend.PlayerGrab(playerController.grabbedObj.GetComponent<RemotePlayerManager>().Id, GameLogic.Tick);
+            }
+            else if(playerController.grabbing)
+            {
+                ClientSend.PlayerLetGo(playerController.grabbedObj.GetComponent<RemotePlayerManager>().Id, GameLogic.Tick);
+                playerController.StopGrab();
+            }
+        }
+        else if (Input.GetKeyUp(KeyCode.Mouse0))
+        {
+            if(playerController.grabbing)
+                ClientSend.PlayerLetGo(playerController.grabbedObj.GetComponent<RemotePlayerManager>().Id, GameLogic.Tick);
+            playerController.StopGrab();
+        }
+
+        if (Input.GetKeyUp(KeyCode.Mouse1))
+        {
+            if (playerController.TryPush())
+            {
+                ClientSend.PlayerPush(playerController.pushedObj, GameLogic.Tick);
+            }
+        }
+
+
+        ragdollController.UpdateController();
         logicTimer.Update();
     }
 
@@ -108,11 +138,8 @@ public class PlayerManager : MonoBehaviour
             // Update player's movement
             ProcessInput(currentInputState);
 
-            if(Random.value > packet_loss_percent)
-            {
-                if (Online)
-                    SendMovement();
-            }
+            if (Online)
+                SendMovement();
 
             // Reconciliate
             if (serverSimulationState != null) Reconciliate();
@@ -159,9 +186,7 @@ public class PlayerManager : MonoBehaviour
 
     private void SendMovement()
     {
-        // Send player input/state to the server
-        ClientSend.PlayerMovement(currentInputState, transform.position, transform.rotation, Ragdolled);
-        // Send player state to the peers
+        // Send player state to the network
         ClientSend.PlayerMovement(new PlayerState(currentInputState.Tick, transform.position, transform.rotation, Ragdolled, playerController.currentAnimation));
     }
 
@@ -220,7 +245,7 @@ public class PlayerManager : MonoBehaviour
                 continue;
             }
 
-            // Process the cached inputs. 
+            // Process the cached inputs. Simulate movement (and related), and physics.
             ProcessInput(rewindCachedInputState);
 
             // Replace the simulationStateCache index with the new value.
@@ -267,7 +292,7 @@ public class PlayerManager : MonoBehaviour
         velocity = Vector3.zero;
 
         // Go back to animated state if not already
-        ragdollController.BackToAnimated();
+        playerController.ExitRagdoll();
         rb.isKinematic = false;
 
         playerController.Respawn();
@@ -277,6 +302,21 @@ public class PlayerManager : MonoBehaviour
     {
         Checkpoint = _checkpointIndex;
         playerController.Checkpoint();
+    }
+
+    public void PlayerGrab(RemotePlayerManager _playerGrabbed)
+    {
+        playerController.Grabbed(true);
+    }
+
+    public void PlayerLetGo(Guid _grabber)
+    {
+        playerController.Grabbed(false);
+    }
+    
+    public void PlayerPushed(Vector3 _direction)
+    {
+        playerController.Pushed(_direction);
     }
 
     private void OnApplicationQuit()

@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class CheckPoint : MonoBehaviour
 {
@@ -9,9 +7,17 @@ public class CheckPoint : MonoBehaviour
     [SerializeField]
     private int checkpointIndex;
 
+    // Start is called before the first frame update
     private void Start()
     {
-        roomScene = gameObject.scene.GetRootGameObjects()[0].GetComponent<RoomScene>();
+        foreach (GameObject obj in gameObject.scene.GetRootGameObjects())
+        {
+            if (obj.GetComponent<RoomScene>())
+            {
+                roomScene = obj.GetComponent<RoomScene>();
+                break;
+            }
+        }
     }
 
     private void OnTriggerEnter(Collider other)

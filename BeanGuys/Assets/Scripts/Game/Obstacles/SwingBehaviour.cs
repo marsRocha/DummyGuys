@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class SwingBehaviour : MonoBehaviour
 {
@@ -8,35 +7,28 @@ public class SwingBehaviour : MonoBehaviour
     [SerializeField]
     private float angle = 30;
     [SerializeField]
-    private float timeToWait = 1f;
+    private float offset;
     [SerializeField]
-    private bool Left;
+    private bool left;
 
-    Quaternion start, end;
+    private Quaternion start, end;
 
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
         start = SwingRotation(angle);
         end = SwingRotation(-angle);
-
-        StartCoroutine(WaitFor(timeToWait));
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
-        if (Left)
-            transform.rotation = Quaternion.Lerp(start, end, ((Mathf.Sin(GameLogic.Clock * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
+        if (left)
+            transform.rotation = Quaternion.Lerp(start, end, ((Mathf.Sin((GameLogic.Clock + offset) * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
         else
-            transform.rotation = Quaternion.Lerp(end, start, ((Mathf.Sin(GameLogic.Clock * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
+            transform.rotation = Quaternion.Lerp(end, start, ((Mathf.Sin((GameLogic.Clock + offset) * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
     }
 
-    private IEnumerator WaitFor(float time)
-    {
-        yield return new WaitForSecondsRealtime(time);
-    }
-
+    // Calculate rotation needed to reach the desired max angle
     Quaternion SwingRotation(float angle)
     {
         Quaternion swingRot = transform.rotation;

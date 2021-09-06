@@ -7,7 +7,9 @@ namespace Client
 {
     public enum Packets
     {
-        test
+        test,
+        connect,
+        welcome
     }
 
     public class Packet : IDisposable

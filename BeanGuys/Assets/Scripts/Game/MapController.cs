@@ -73,7 +73,7 @@ public class MapController : MonoBehaviour
         for (int i = 0; i <= 3; i++)
         {
             for (int j = 0; j <= 14; j++)
-                spawns[(14 * i) + j] = new Vector3(-18.06f + 2.58f * j, 0.5027312f, -2.58f * i);
+                spawns[(15 * i) + j] = new Vector3(-18.06f + 2.58f * j, 0.5f, -2.58f * i);
         }
 
         players = new Dictionary<Guid, RemotePlayerManager>();
@@ -103,6 +103,15 @@ public class MapController : MonoBehaviour
         if (isRunning)
         {
             GameLogic.SetClock(GameLogic.Clock + Time.deltaTime);
+        }
+    }
+    private void FixedUpdate()
+    {
+        // Used only when player's object is deactivated due to crossing finish line,
+        // in doing this we need to run the physics on another script since Playermanager no longer exists
+        if (qualified)
+        {
+            Physics.Simulate(Time.fixedDeltaTime);
         }
     }
 

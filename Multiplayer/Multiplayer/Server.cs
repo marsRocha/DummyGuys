@@ -7,13 +7,17 @@ using System.Net.NetworkInformation;
 
 namespace Multiplayer
 {
-    class Server
+    public class Server
     {
-        public const int MaxPlayersPerLobby = 4;
+        public const int MaxPlayersPerLobby = 2;
+        public const int MaxNumberOfRooms = 1;
         public static int Port { get; private set; }
-        public static Dictionary<Guid, Client> Clients;
-        public delegate void PacketHandler(Guid ClientId, Packet packet);
-        public static Dictionary<int, PacketHandler> packetHandlers;
+
+        public static bool isActive = false;
+        public static int tickrate = 30;
+
+        public static MainThread MainThread;
+
         public static Dictionary<Guid, Room> Rooms;
 
         private static TcpListener tcpListener;
@@ -25,15 +29,24 @@ namespace Multiplayer
 
         public static void Start(int port)
         {
+            Stop();
+
             Port = port;
-            Console.WriteLine($"Server started on {Port}.");
-            
+
+            MainThread = new MainThread();
+            ThreadManager.AddThread(MainThread);
+
             InitializeData();
             GetMulticastAdresses();
+            InitializeRooms();
 
             tcpListener = new TcpListener(IPAddress.Any, Port);
             tcpListener.Start();
             tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
+
+            isActive = true;
+
+            Console.WriteLine($"Server successfuly started, listening on {Port}.");
         }
 
         /// <summary>
@@ -42,29 +55,55 @@ namespace Multiplayer
         private static void TCPConnectCallback(IAsyncResult result)
         {
             TcpClient client = tcpListener.EndAcceptTcpClient(result);
-            //Once it connects we want to still keep on listening for more clients so we call it again
+            // Once it connects we want to still keep on listening for more clients so we call it again
             tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
             Console.WriteLine($"Incoming connection from {client.Client.RemoteEndPoint}...");
 
-            //Add and Connect to Client
-            Guid pId = Guid.NewGuid();
-            Clients.Add(pId, new Client(pId));
-            Clients[pId].tcp.Connect(client);
+            // Handle new connection
+            NewConnection newConnection = new NewConnection(client);
         }
 
         private static void InitializeData()
         {
-            Clients = new Dictionary<Guid, Client>();
+            RoomHandle.InitializeData();
+            Console.WriteLine("Packets initialized.");
+        }
+
+        private static void InitializeRooms()
+        {
             Rooms = new Dictionary<Guid, Room>();
 
-            packetHandlers = new Dictionary<int, PacketHandler>()
+            for (int i = 0; i < MaxNumberOfRooms; i++)
             {
-                { (int)ClientPackets.welcomeReceived, ServerHandle.WelcomeReceived },
-                { (int)ClientPackets.startGame, ServerHandle.StarGame },
-                { (int)ClientPackets.playerMovement, ServerHandle.PlayerMovement },
-                { (int)ClientPackets.test, ServerHandle.Test },
-            };
-            Console.WriteLine("Packets initialized.");
+                Guid newGuid = Guid.NewGuid();
+                Rooms.Add(newGuid, new Room(newGuid, GetNextAdress(), multicastPort));
+            }
+            Console.WriteLine("Rooms initialized.");
+        }
+
+        // "Matchmaking"
+        public static Guid SearchForRoom()
+        {
+            Room foundRoom = null;
+
+            if (Rooms.Count > 0)
+            {
+                foreach (Room room in Rooms.Values)
+                {
+                    if (room.RoomState == RoomState.looking)
+                    {
+                        foundRoom = room;
+                        break;
+                    }
+                }
+            }
+
+            return foundRoom != null ? foundRoom.RoomId : Guid.Empty;
+        }
+
+        public static void AddClientToRoom(Client _client, Guid _roomId)
+        {
+            Rooms[_roomId].AddPlayer(_client);
         }
 
         private static void GetMulticastAdresses()
@@ -118,6 +157,22 @@ namespace Multiplayer
             //Does port need to change too?
 
             return ipAddress;
+        }
+
+        public static void Stop()
+        {
+            if (isActive)
+            {
+                tcpListener.Stop();
+
+                MainThread.ExecuteOnMainThread(() =>
+                {
+                    foreach (Room room in Rooms.Values)
+                        room.Stop();
+                });
+
+                isActive = false;
+            }
         }
     }
 }

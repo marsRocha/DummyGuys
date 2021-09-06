@@ -10,12 +10,12 @@ public class CheckPoint : MonoBehaviour
     {
         if (_other.gameObject.layer.Equals(LayerMask.NameToLayer("Player")))
         {
-            if (_other.gameObject.GetComponent<PlayerManager>().Checkpoint < checkpointIndex)
-                _other.gameObject.GetComponent<PlayerManager>().SetCheckpoint(checkpointIndex);
+            if (MapController.instance.localPlayer.Checkpoint < checkpointIndex)
+                MapController.instance.localPlayer.SetCheckpoint(checkpointIndex);
         }
         else if (_other.gameObject.layer.Equals(LayerMask.NameToLayer("RemotePlayer")))
         {
-            if(_other.gameObject.GetComponent<RemotePlayerManager>().Checkpoint < checkpointIndex)
+            if(_other.gameObject.transform.root.GetComponent<RemotePlayerManager>().Checkpoint < checkpointIndex)
             _other.gameObject.GetComponent<RemotePlayerManager>().SetCheckpoint(checkpointIndex);
         }
     }

@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class MoveBehaviour : MonoBehaviour
 {
@@ -12,10 +10,16 @@ public class MoveBehaviour : MonoBehaviour
     public Vector3[] points;
 
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
-        roomScene = gameObject.scene.GetRootGameObjects()[0].GetComponent<RoomScene>();
-
+        foreach (GameObject obj in gameObject.scene.GetRootGameObjects())
+        {
+            if (obj.GetComponent<RoomScene>())
+            {
+                roomScene = obj.GetComponent<RoomScene>();
+                break;
+            }
+        }
         initialPos = transform.position;
         rb = GetComponent<Rigidbody>();
     }

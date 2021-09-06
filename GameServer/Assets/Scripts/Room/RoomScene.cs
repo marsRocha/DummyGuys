@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class RoomScene : MonoBehaviour
 {
     private Room room;
     private LogicTimer logicTimer;
+    private PhysicsScene physicsScene;
 
     //Objects inside Scene
     [HideInInspector]
@@ -55,6 +55,8 @@ public class RoomScene : MonoBehaviour
 
         ServerTime();
         tick++;
+
+        physicsScene.Simulate(logicTimer.FixedDeltaTime);
     }
 
     private void ServerTime()
@@ -68,6 +70,8 @@ public class RoomScene : MonoBehaviour
 
     public void Initialize(Guid _roomId)
     {
+        physicsScene = gameObject.scene.GetPhysicsScene();
+
         room = Server.Rooms[_roomId];
         Game_Clock = 0;
         isRunning = false;
@@ -77,13 +81,15 @@ public class RoomScene : MonoBehaviour
         playerCheckPoint = new Dictionary<Guid, int>();
 
         players = new Dictionary<Guid, Player>();
-        //TODO: REMOVE THIS FROM HERE ONCE WE HAVE PLAYERS ALREADY INSTANTIATED ON SCENE
+
         spawns = new Vector3[60];
         for (int i = 0; i <= 3; i++)
         {
             for (int j = 0; j <= 14; j++)
-                spawns[(14 * i) + j] = new Vector3(-18.06f + 2.58f * j, 0.5f, -2.58f * i);
+                spawns[(15 * i) + j] = new Vector3(-18.06f + 2.58f * j, 0.5f, -2.58f * i);
         }
+
+        SpawnPlayers();
     }
 
     public void StartRace()
@@ -104,7 +110,7 @@ public class RoomScene : MonoBehaviour
             playerCheckPoint.Add(client.Id, 0);
         }
 
-        Debug.Log("Players ready!");
+        //Debug.Log("Players ready!");
     }
     
     public Player SpawnPlayer(Guid _playerId, int _spawnId)
@@ -123,12 +129,10 @@ public class RoomScene : MonoBehaviour
         Vector3 newPos = GetRespawnPosition(room.Clients[_playerId].SpawnId, playerCheckPoint[_playerId]);
         players[_playerId].Respawn(newPos, Quaternion.identity);
         RoomSend.PlayerRespawn(room.RoomId, _playerId, playerCheckPoint[_playerId]);
-        Debug.Log("Sent respawn");
     }
 
     private Vector3 GetRespawnPosition(int id, int checkPointNum)
     {
-        Debug.Log($"numCheck:{checkPointNum}");
         if (checkPointNum == 0)
             return spawns[id];
         else

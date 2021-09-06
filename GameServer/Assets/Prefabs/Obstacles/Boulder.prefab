@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5697591329967054395}
   - component: {fileID: 7167765891892374166}
-  m_Layer: 0
+  m_Layer: 13
   m_Name: Boulder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -46,8 +46,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 1.4
   angle: 40
-  timeToWait: 1.3
-  Left: 1
+  offset: 0
+  left: 1
 --- !u!1 &4792934930692833694
 GameObject:
   m_ObjectHideFlags: 0
@@ -60,7 +60,7 @@ GameObject:
   - component: {fileID: 281360883992496112}
   - component: {fileID: 3180345443757929875}
   - component: {fileID: 7746013459541945505}
-  m_Layer: 0
+  m_Layer: 13
   m_Name: Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -88,7 +88,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4792934930692833694}
-  m_Mesh: {fileID: 8733353601492638029, guid: 4ce5cd0df42b1fb4ead45ac1ce40801a, type: 3}
+  m_Mesh: {fileID: 6236982333847069958, guid: 128110be836899a4583f0efb58fff559, type: 3}
 --- !u!23 &3180345443757929875
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -108,11 +108,11 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 5561349426305759274, guid: 4ce5cd0df42b1fb4ead45ac1ce40801a, type: 3}
-  - {fileID: -1712723603062741913, guid: 4ce5cd0df42b1fb4ead45ac1ce40801a, type: 3}
-  - {fileID: 1207704595348700683, guid: 4ce5cd0df42b1fb4ead45ac1ce40801a, type: 3}
-  - {fileID: 6891098548243935906, guid: 4ce5cd0df42b1fb4ead45ac1ce40801a, type: 3}
-  - {fileID: 361362504859552802, guid: 4ce5cd0df42b1fb4ead45ac1ce40801a, type: 3}
+  - {fileID: 5213908220291530479, guid: 32adaf801d8abcb438d406f2b1c857f9, type: 3}
+  - {fileID: 5213908220291530479, guid: 32adaf801d8abcb438d406f2b1c857f9, type: 3}
+  - {fileID: 5213908220291530479, guid: 32adaf801d8abcb438d406f2b1c857f9, type: 3}
+  - {fileID: 5213908220291530479, guid: 32adaf801d8abcb438d406f2b1c857f9, type: 3}
+  - {fileID: 5213908220291530479, guid: 32adaf801d8abcb438d406f2b1c857f9, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

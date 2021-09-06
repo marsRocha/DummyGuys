@@ -9,11 +9,11 @@ public class Utils
 
     public static int timeToTicks(float _time)
     {
-        return Mathf.FloorToInt(_time / (1f / Server.tickrate));
+        return Mathf.FloorToInt(_time / (1f / Server.TICKRATE));
     }
 
     public static float ticksToTime(int _ticks)
     {
-        return (float)_ticks * (1f / Server.tickrate);
+        return (float)_ticks * (1f / Server.TICKRATE);
     }
 }

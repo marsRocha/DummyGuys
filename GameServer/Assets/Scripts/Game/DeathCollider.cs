@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class DeathCollider : MonoBehaviour
 {
-    private RoomScene roomScene;
+    /*private RoomScene roomScene;
 
     private void Start()
     {
@@ -13,9 +13,10 @@ public class DeathCollider : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        Debug.Log("Hello");
         if (other.transform.root.gameObject.layer.Equals(LayerMask.NameToLayer("Player")))
         {
             roomScene.PlayerRespawn(other.transform.root.GetComponent<Player>().Id);
         }
-    }
+    }*/
 }

@@ -6,9 +6,17 @@ public class QualifyPlayer : MonoBehaviour
 {
     private RoomScene roomScene;
 
+    // Start is called before the first frame update
     private void Start()
     {
-        roomScene = gameObject.scene.GetRootGameObjects()[0].GetComponent<RoomScene>();
+        foreach (GameObject obj in gameObject.scene.GetRootGameObjects())
+        {
+            if (obj.GetComponent<RoomScene>())
+            {
+                roomScene = obj.GetComponent<RoomScene>();
+                break;
+            }
+        }
     }
 
     private void OnTriggerEnter(Collider other)

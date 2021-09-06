@@ -19,28 +19,39 @@ public partial class Room
     private IPEndPoint _remoteEndPoint;
     private IPEndPoint _localEndPoint;
 
-    private MainThread _roomThread;
+    protected MainThread _roomThread;
     public RoomScene roomScene { get; set; }
 
-    public Room(Guid id, string multicastIP, int multicastPort)
+    private readonly int tickrate = 30;
+
+    public Room(Guid _id, string _multicastIP, int _multicastPort)
     {
-        RoomId = id;
-        MulticastIP = IPAddress.Parse(multicastIP);
-        MulticastPort = multicastPort + 1;
+        RoomId = _id;
+        MulticastIP = IPAddress.Parse(_multicastIP);
+        MulticastPort = _multicastPort;
 
         _roomThread = new MainThread();
         ThreadManager.AddThread(_roomThread);
 
-        RoomState = RoomState.looking;
+        RoomState = RoomState.dorment;
         Clients = new Dictionary<Guid, Client>();
         UsedSpawnIds = new List<int>();
+    }
 
+    public void Awaken()
+    {
+        ConnectUDP();
+        RoomState = RoomState.looking;
+    }
+
+    #region Communication
+    private void ConnectUDP()
+    {
         _localIPaddress = IPAddress.Any;
 
         // Create endpoints
         _remoteEndPoint = new IPEndPoint(MulticastIP, MulticastPort);
         _localEndPoint = new IPEndPoint(_localIPaddress, MulticastPort);
-
         // Create and configure UdpClient
         RoomUdp = new UdpClient();
         // The following two lines allow multiple clients on the same PC
@@ -48,25 +59,21 @@ public partial class Room
         RoomUdp.ExclusiveAddressUse = false;
         // Bind, Join
         RoomUdp.Client.Bind(_localEndPoint);
-        //RoomUdp.JoinMulticastGroup(MulticastIP);
+        RoomUdp.JoinMulticastGroup(MulticastIP);
 
         // Start listening for incoming data
-        RoomUdp.BeginReceive(new AsyncCallback(ReceivedCallback), null);
+        RoomUdp.BeginReceive(new AsyncCallback(ReceiveCallback), null);
 
-        // Initialize map scene
-        LoadMap();
-
-        Console.WriteLine($"New lobby created [{RoomId}]: listenning in {multicastIP}:{multicastPort}");
+        Console.WriteLine($"{RoomId}] now listenning on {MulticastIP}:{MulticastPort}");
     }
 
-    #region Communication
-    private void ReceivedCallback(IAsyncResult result)
+    private void ReceiveCallback(IAsyncResult _result)
     {
         // Get received data
-        IPEndPoint clientEndPoint = new IPEndPoint(0, MulticastPort);
-        byte[] data = RoomUdp.EndReceive(result, ref clientEndPoint);
+        IPEndPoint _clientEndPoint = new IPEndPoint(IPAddress.Any, MulticastPort);
+        byte[] data = RoomUdp.EndReceive(_result, ref _clientEndPoint);
         // Restart listening for udp data packages
-        RoomUdp.BeginReceive(new AsyncCallback(ReceivedCallback), null);
+        RoomUdp.BeginReceive(new AsyncCallback(ReceiveCallback), null);
 
         if (data.Length < 4)
             return;
@@ -79,6 +86,7 @@ public partial class Room
 
             _roomThread.ExecuteOnMainThread(() =>
             {
+                // Handle Message Data
                 using (Packet message = new Packet(packetBytes))
                 {
                     int packetId = message.ReadInt();
@@ -90,13 +98,20 @@ public partial class Room
                     }
                     catch { };
 
-                    if (clientId == Guid.Empty)
+                    if (clientId == Guid.Empty || clientId  == RoomId)
                         return;
+
+                    if (Clients[clientId].udp.endPoint == null)
+                    {
+                        // If this is a new connection
+                        Clients[clientId].udp.Connect(_clientEndPoint);
+                        return;
+                    }
 
                     //verify if the endpoint corresponds to the endpoint that sent the data
                     //this is for security reasons otherwise hackers could inpersonate other clients by send a clientId that does not corresponds to them
                     //without the string conversion even if the endpoint matched it returned false
-                    if (Clients[clientId] != null) //TODO: Do I really need to check for this? /////////////////////// CHECK FOR IPENPOINT ASWELL
+                    if (Clients[clientId] != null) // && Clients[clientId].udp.endPoint.ToString() == _clientEndPoint.ToString())
                     {
                         RoomHandle.packetHandlers[packetId](RoomId, clientId, message);
                     }
@@ -113,7 +128,7 @@ public partial class Room
         }
         catch (Exception ex)
         {
-            Debug.Log($"Error multicasting UDP data: {ex}");
+            Console.WriteLine($"Error multicasting UDP data: {ex}");
         }
     }
 
@@ -123,7 +138,7 @@ public partial class Room
         {
             if (_clientEndPoint != null)
             {
-                RoomUdp.BeginSend(_packet.ToArray(), _packet.Length(), _clientEndPoint, null, null);
+                RoomUdp.Send(_packet.ToArray(), _packet.Length(), _clientEndPoint);
             }
         }
         catch (Exception ex)
@@ -136,55 +151,55 @@ public partial class Room
     #region Methods
     public int AddPlayer(Client _client)
     {
-        Debug.Log($"Player[{_client.Id}] has joined the Room[{RoomId}]");
+        Console.WriteLine($"Player[{_client.Id}] has joined the Room[{RoomId}]");
         // Add player to the room clients
         Clients.Add(_client.Id, _client);
         // Get room id (user for spawning) and set it to the client
         int spawnId = GetServerPos();
-        Debug.Log($"Player[{_client.Id}] has joined the Room[{RoomId}]");
         _client.SpawnId = spawnId;
         // Add room id to the used list
         UsedSpawnIds.Add(spawnId);
 
         // Inform the client that joined the room and it's information
-        RoomSend.JoinedRoom(_client.RoomID, _client.Id, MulticastIP.ToString(), MulticastPort, spawnId);
+        RoomSend.JoinedRoom(_client.RoomID, _client.Id, MulticastIP.ToString(), MulticastPort, _client.SpawnId, tickrate);
         // Send the players already in the room, if any
         RoomSend.PlayersInRoom(RoomId, _client.Id);
 
         // Finally, tell everyone in the room that the player has joined
         RoomSend.NewPlayer(RoomId, _client.Id, _client.Username, _client.Color, _client.SpawnId);
 
-        /*
         // Check if maximum player capacity has been reached
-        if (Clients.Count >= Server.MaxPlayersPerLobby) // TODO: change this
+        if (Clients.Count >= 2) //Server.MaxPlayersPerLobby) // TODO: change this
         {
-            Thread.Sleep(2000); //TODO: CHECK FOR A BETTER WAY (USED TO GIVE TIME TO THE LATEST PLAYER CONNECTED, SO IT CAN RECEIVE LOADMAP MESSAGE
             RoomState = RoomState.full;
-        }*/
-
-        // TODO FOR NOW
-        roomScene.SpawnPlayers();
-        RoomSend.Map(RoomId, "CourseTest");
+            // Initialize map scene
+            LoadMap();
+        }
 
         return spawnId;
     }
 
     public void RemovePlayer(Guid _clientId)
     {
-        Console.WriteLine($"Player[{_clientId}] has left the Room[{RoomId}]");
-
         // Had to put on here because it's not called by a message thus not being locked, this is called by an event
         _roomThread.ExecuteOnMainThread(() =>
         {
-            roomScene.players[_clientId].Deactivate();
+            Console.WriteLine($"Player[{_clientId}] has left the Room[{RoomId}]");
+            Clients[_clientId].Disconnect();
+            UsedSpawnIds.Remove(Clients[_clientId].SpawnId);
+            Clients.Remove(_clientId);
 
-            RoomSend.RemovePlayer(RoomId, _clientId);
-
-            if (Clients.Count < Server.MaxPlayersPerLobby && RoomState == RoomState.full)
+            if (Clients.Count == 0)
+            {
+                Reset();
+                return;
+            }
+            else if(Clients.Count < Server.MAX_PLAYERS_PER_ROOM && RoomState != RoomState.playing)
+            {
                 RoomState = RoomState.looking;
+            }
 
-            // TODO: REMOVE THIS FROM HERE
-            Reset();
+            RoomSend.PlayerLeft(RoomId, _clientId);
         });
     }
 
@@ -197,6 +212,10 @@ public partial class Room
     public void InitializeMap()
     {
         roomScene.Initialize(RoomId);
+
+        // Used to give time for the players connected
+        Thread.Sleep(2000);
+        RoomSend.Map(RoomId, "CourseTest");
     }
 
     public void PlayerReady(Guid _clientId)
@@ -216,7 +235,7 @@ public partial class Room
 
     public void StartGame()
     {
-        Debug.Log($"Game has started on Room[{RoomId}]");
+        Console.WriteLine($"Game has started on Room[{RoomId}]");
         roomScene.StartRace();
         RoomState = RoomState.playing;
 
@@ -231,41 +250,67 @@ public partial class Room
         RoomSend.PlayerFinish(RoomId, _clientId);
     }
 
+    public void PlayerGrab(Guid _grabber, Guid _grabbed, int _tick)
+    {
+        //roomScene.PlayerGrab(_from, _to, _tick);
+        RoomSend.PlayerGrab(RoomId, _grabber, _grabbed);
+    }
+
+    public void PlayerLetGo(Guid _grabber, Guid _grabbed, int _tick)
+    {
+        RoomSend.PlayerLetGo(RoomId, _grabber, _grabbed);
+    }
+
+    public void PlayerPush(Guid _pusher, Guid _pushed, int _tick)
+    {
+        RoomSend.PlayerPush(RoomId, _pusher, _pushed);
+    }
+
     public void EndGame()
     {
-        Debug.Log($"Game has finished on Room[{RoomId}]. Closing room");
+        Console.WriteLine($"Game has finished on Room[{RoomId}]. Closing room");
         RoomState = RoomState.closing;
         Thread.Sleep(3000);
         RoomSend.EndGame(RoomId);
 
-        Stop();
+        Reset();
     }
 
     public void Stop()
     {
-        //TODO: does not work
-        //RoomUdp.DropMulticastGroup(MulticastIP);
+        if(RoomState != RoomState.closing)
+            RoomSend.Disconnected(RoomId);
+
+        RoomUdp.DropMulticastGroup(MulticastIP);
         RoomUdp.Close();
         RoomUdp.Dispose();
+
+        Clients.Clear();
 
         ThreadManager.RemoveThread(_roomThread);
 
         roomScene.Stop();
-        Debug.Log($"Room[{RoomId}] has been closed.");
+        Console.WriteLine($"Room[{RoomId}] has been closed.");
         Server.Rooms.Remove(RoomId);
     }
 
     public void Reset()
     {
+        RoomUdp.DropMulticastGroup(MulticastIP);
+        RoomUdp.Close();
+        RoomUdp.Dispose();
+
         _roomThread.Clear();
 
         Clients.Clear();
         UsedSpawnIds.Clear();
-        roomScene.Reset();
 
-        RoomState = RoomState.looking;
+        if(roomScene)
+            roomScene.Stop();
 
-        Debug.Log($"Room[{RoomId}] has been reset.");
+        RoomState = RoomState.dorment;
+
+        Console.WriteLine($"Room[{RoomId}] is dorment.");
     }
     #endregion
 
@@ -283,4 +328,4 @@ public partial class Room
     }
 }
 
-public enum RoomState { looking, full, playing, closing }
+public enum RoomState { dorment, looking, full, playing, closing }

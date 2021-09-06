@@ -26,20 +26,23 @@ namespace DebugStuff
 
         void HandleLog(string logString, string stackTrace, LogType type)
         {
-            // Delete oldest message
-            if (queue.Count >= maxLines) queue.Dequeue();
-
-            queue.Enqueue(logString);
-
-            var builder = new StringBuilder();
-            foreach (string st in queue)
+            ThreadManager.ExecuteOnMainThread(() =>
             {
-                builder.Append(st).Append("\n");
-            }
+                // Delete oldest message
+                if (queue.Count >= maxLines) queue.Dequeue();
 
-            currentText = builder.ToString();
+                queue.Enqueue(logString);
 
-            display.text = currentText;
+                var builder = new StringBuilder();
+                foreach (string st in queue)
+                {
+                    builder.Append(st).Append("\n");
+                }
+
+                currentText = builder.ToString();
+
+                display.text = currentText;
+            });
         }
     }
 }

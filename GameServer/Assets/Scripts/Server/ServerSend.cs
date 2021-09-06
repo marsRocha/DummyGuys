@@ -1,4 +1,5 @@
 ﻿// Server only uses this class to clients that are not in a room
+
 public class ServerSend
 {
     private static void SendTCPData(NewConnection _connection, Packet _packet)
@@ -7,9 +8,21 @@ public class ServerSend
         _connection.SendData(_packet);
     }
 
-    public static void Welcome(NewConnection _toClient)
+    /// <summary> Sends message accepting new connection. </summary>
+    /// <param name="_toClient"></param>
+    public static void Accept(NewConnection _toClient)
     {
-        using (Packet packet = new Packet((int)ServerPackets.welcome))
+        using (Packet packet = new Packet((int)ServerPackets.accept))
+        {
+            SendTCPData(_toClient, packet);
+        }
+    }
+
+    /// <summary> Sends message refusing new connection. </summary>
+    /// <param name="_toClient"></param>
+    public static void Refuse(NewConnection _toClient)
+    {
+        using (Packet packet = new Packet((int)ServerPackets.refuse))
         {
             SendTCPData(_toClient, packet);
         }

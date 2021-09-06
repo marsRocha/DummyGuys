@@ -5,34 +5,18 @@ using System.Text;
 
 namespace Multiplayer
 {
-    /// <summary>Sent from server to client.</summary>
     public enum ServerPackets
     {
         welcome = 1,
         joinedRoom,
-        playerJoined,
-        playerLeft,
-        playerFinish,
-        playerCorrection,
-        map,
-        startGame,
-        endGame
+        test,
     }
 
     /// <summary>Sent from client to server.</summary>
     public enum ClientPackets
     {
-        welcomeReceived = 10,
-        welcome,
-        introduction,
-        playerInput,
-        playerMovement,
-        playerAnim,
-        playerRespawn,
-        playerFinish,
-        map,
-        startGame,
-        test
+        introduction = 4,
+        test,
     }
 
     public class Packet : IDisposable

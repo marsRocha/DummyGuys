@@ -44,7 +44,7 @@ public class GameManager : MonoBehaviour
 
     public void FixedUpdate()
     {
-        if (!debug)
+        if (true) //!debug
         {
             if (Client.instance.isConnected)
             {
@@ -168,6 +168,32 @@ public class GameManager : MonoBehaviour
         mapController.localPlayer.ReceivedCorrectionState(simulationState);
     }
 
+    public void PlayerGrab(Guid _grabber )
+    {
+        if (!mapController.localPlayer.gameObject || !mapController.players[_grabber].gameObject)
+            return;
+
+        mapController.localPlayer.PlayerGrab(mapController.players[_grabber]);
+    }
+
+    public void PlayerLetGo(Guid _grabber)
+    {
+        if (!mapController.localPlayer.gameObject || !mapController.players[_grabber].gameObject)
+            return;
+
+        mapController.localPlayer.PlayerLetGo(_grabber);
+    }
+
+    public void PlayerPush(Guid _pusher)
+    {
+        if (!mapController.localPlayer.gameObject || !mapController.players[_pusher].gameObject)
+            return;
+
+        Vector3 pushDirection = (mapController.localPlayer.transform.position - mapController.players[_pusher].transform.position).normalized;
+
+        mapController.localPlayer.PlayerPushed(pushDirection);
+    }
+
     public void PlayerRespawn(int _checkPointNum)
     {
         mapController.LocalPlayerRespawn(_checkPointNum);
@@ -181,6 +207,12 @@ public class GameManager : MonoBehaviour
     public void EndGame()
     {
         mapController.EndRace();
+    }
+
+    public void Refused()
+    {
+        Debug.Log("Server has refused the connection.");
+        LoadMainMenu();
     }
 
     public void LeaveRoom()

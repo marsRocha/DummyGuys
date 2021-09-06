@@ -3,16 +3,18 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using UnityEngine;
 
 public class Server
 {
-    public const int MaxPlayersPerLobby = 2;
-    public const int MaxNumberOfRooms = 1;
+    public static int MAX_PLAYERS_PER_ROOM = 2;
+    public static int MAX_NUMBER_ROOMS = 1;
+    public static int TICKRATE = 30;
+    public static int ROOM_MIN_PORT = 7778;
+    public static bool PLAYER_INTERACTION = true;
+
     public static int Port { get; private set; }
 
     public static bool isActive = false;
-    public static int tickrate = 30;
 
     public static MainThread MainThread;
 
@@ -22,14 +24,16 @@ public class Server
 
     //Multicast
     private static List<IPAddress> multicastAddressesInUse;
-    public static int multicastPort = 7778;
     private static int[] currentInUse;
 
-    public static void Start(int port)
+    /// <summary>Starts the server.</summary>
+    /// <param name="_ip">The ip address to start the server on.</param>
+    /// <param name="_port">The port to start the server on.</param>
+    public static void Start(string _ip, int _port)
     {
         Stop();
 
-        Port = port;
+        Port = _port;
 
         MainThread = new MainThread();
         ThreadManager.AddThread(MainThread);
@@ -38,24 +42,22 @@ public class Server
         GetMulticastAdresses();
         InitializeRooms();
 
-        tcpListener = new TcpListener(IPAddress.Any, Port);
+        tcpListener = new TcpListener(IPAddress.Parse(_ip), Port);
         tcpListener.Start();
         tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
 
         isActive = true;
 
-        Debug.Log($"Server successfuly started, listening on {Port}.");
+        Console.WriteLine($"Server successfuly started, listening on {Port}.");
     }
 
-    /// <summary>
-    /// Listens for new connections
-    /// </summary>
-    private static void TCPConnectCallback(IAsyncResult result)
+    /// <summary>Listens for new connections.</summary>
+    private static void TCPConnectCallback(IAsyncResult _result)
     {
-        TcpClient client = tcpListener.EndAcceptTcpClient(result);
+        TcpClient client = tcpListener.EndAcceptTcpClient(_result);
         // Once it connects we want to still keep on listening for more clients so we call it again
         tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
-        Debug.Log($"Incoming connection from {client.Client.RemoteEndPoint}...");
+        Console.WriteLine($"Incoming connection from {client.Client.RemoteEndPoint}...");
 
         // Handle new connection
         NewConnection newConnection = new NewConnection(client);
@@ -64,19 +66,19 @@ public class Server
     private static void InitializeData()
     {
         RoomHandle.InitializeData();
-        Debug.Log("Packets initialized.");
+        Console.WriteLine("Packets initialized.");
     }
 
     private static void InitializeRooms()
     {
         Rooms = new Dictionary<Guid, Room>();
 
-        for(int i = 0; i < MaxNumberOfRooms; i++)
+        for(int i = 0; i < MAX_NUMBER_ROOMS; i++)
         {
             Guid newGuid = Guid.NewGuid();
-            Rooms.Add(newGuid, new Room(newGuid, GetNextAdress(), multicastPort));
+            Rooms.Add(newGuid, new Room(newGuid, GetNextAdress(), ROOM_MIN_PORT + Rooms.Count));
         }
-        Debug.Log("Rooms initialized.");
+        Console.WriteLine("Rooms initialized.");
     }
 
     // "Matchmaking"
@@ -84,16 +86,31 @@ public class Server
     {
         Room foundRoom = null;
 
-        if (Rooms.Count > 0)
+        // Check available rooms looking for players
+        foreach (Room room in Rooms.Values)
         {
-            foreach (Room room in Rooms.Values)
+            if (room.RoomState == RoomState.looking)
             {
-                if (room.RoomState == RoomState.looking)
-                {
-                    foundRoom = room;
-                    break;
-                }
+                foundRoom = room;
+                break;
             }
+        }
+        if (foundRoom != null)
+            return foundRoom.RoomId;
+
+        // Check available dorment rooms
+        foreach (Room room in Rooms.Values)
+        {
+            if (room.RoomState == RoomState.dorment)
+            {
+                foundRoom = room;
+                break;
+            }
+        }
+        if (foundRoom != null)
+        {
+            foundRoom.Awaken();
+            return foundRoom.RoomId;
         }
 
         return foundRoom != null ? foundRoom.RoomId : Guid.Empty;
@@ -112,7 +129,7 @@ public class Server
         currentInUse[2] = 0;
         currentInUse[3] = 0;
         multicastAddressesInUse = new List<IPAddress>();
-        Debug.Log("Multicast addresses in use:");
+        Console.WriteLine("Multicast addresses in use:");
         foreach (NetworkInterface adapter in NetworkInterface.GetAllNetworkInterfaces())
         {
             if (adapter.Supports(NetworkInterfaceComponent.IPv4))
@@ -121,7 +138,7 @@ public class Server
                 {
                     if (multi.Address.AddressFamily != AddressFamily.InterNetworkV6)
                     {
-                        Debug.Log("    " + multi.Address);
+                        Console.WriteLine("    " + multi.Address);
                         multicastAddressesInUse.Add(multi.Address);
                     }
                 }

@@ -13,9 +13,7 @@ public class Client
     public readonly Guid RoomID;
     public bool ready, finished;
 
-
     public Player Player { get; private set; }
-
 
     public static int dataBufferSize = 4036;
 
@@ -30,7 +28,7 @@ public class Client
         RoomID = _roomId;
 
         tcp = new TCP(Id, RoomID);
-        udp = new UDP(Id, RoomID);
+        udp = new UDP(RoomID);
     }
 
     public class TCP
@@ -83,7 +81,7 @@ public class Client
                 int byteLength = stream.EndRead(result);
                 if (byteLength <= 0)
                 {
-                    //Server.Rooms[roomId].Clients[id].Disconnect();
+                    Server.Rooms[roomId].RemovePlayer(id);
                     return;
                 }
 
@@ -152,54 +150,47 @@ public class Client
     public class UDP
     {
         public IPEndPoint endPoint;
-        private readonly Guid id;
         private readonly Guid roomId;
 
-        public UDP(Guid _clientId, Guid _roomId)
+        public UDP(Guid _roomId)
         {
-            id = _clientId;
             roomId = _roomId;
         }
 
+        /// <summary>Initializes the newly connected client's UDP-related info.</summary>
+        /// <param name="_endPoint">The IPEndPoint instance of the newly connected client.</param>
         public void Connect(IPEndPoint _endPoint)
         {
             endPoint = _endPoint;
         }
 
+        /// <summary>Sends data to the client via UDP.</summary>
+        /// <param name="_packet">The packet to send.</param>
         public void SendData(Packet _packet)
         {
-            //Server.Rooms[roomId].SendUDPData(endPoint, _packet);
+            Server.Rooms[roomId].SendUDPData(endPoint, _packet);
         }
 
-        public void HandleData(Packet data)
-        {
-            int packetLength = data.ReadInt();
-            byte[] packetBytes = data.ReadBytes(packetLength);
-
-            Server.MainThread.ExecuteOnMainThread(() =>
-            {
-                using (Packet packet = new Packet(packetBytes))
-                {
-                    int packetId = packet.ReadInt();
-                    RoomHandle.packetHandlers[packetId](roomId, id, packet);
-                }
-            });
-        }
-
+        /// <summary>Cleans up the UDP connection.</summary>
         public void Disconnect()
         {
             endPoint = null;
         }
     }
 
-    private void Disconnect()
+    public void Pong()
     {
-        Debug.Log($"{tcp.socket.Client.RemoteEndPoint} has disconnected.");
+        if(Player != null)
+            Player.Pong();
+    }
 
+    public void Disconnect()
+    {
         tcp.Disconnect();
         udp.Disconnect();
 
-        Server.Rooms[RoomID].RemovePlayer(Id);
+        if (Player)
+            Player.Deactivate();
     }
 
     public void SetPlayer(Player _player)

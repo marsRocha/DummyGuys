@@ -1777,8 +1777,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tick: 0
+  collision:
+    serializedVersion: 2
+    m_Bits: 2304
   Ragdolled: 0
-  isRunning: 0
+  Running: 0
 --- !u!114 &1594371345341518424
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1811,6 +1814,5 @@ MonoBehaviour:
   collisionMask:
     serializedVersion: 2
     m_Bits: 256
-  recoverTime: 3
   ragdollToMecanimBlendTime: 0.5
   mecanimToGetUpTransitionTime: 0.05

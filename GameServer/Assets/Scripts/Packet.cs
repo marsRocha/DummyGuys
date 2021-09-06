@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
@@ -7,13 +6,19 @@ using UnityEngine;
 /// <summary>Sent from server to client.</summary>
 public enum ServerPackets
 {
-    welcome = 1,
+    accept = 1,
+    refuse,
     joinedRoom,
+    disconnected,
     playerJoined,
     playerLeft,
     playerRespawn,
     playerFinish,
     playerCorrection,
+    playerMovement,
+    playerGrab,
+    playerLetGo,
+    playerPush,
     map,
     startGame,
     endGame,
@@ -25,18 +30,24 @@ public enum ServerPackets
 /// <summary>Sent from client to server.</summary>
 public enum ClientPackets
 {
-    introduction = 12,
+    introduction = 19,
     playerMovement,
     playerAnim,
     playerRespawn,
     playerFinish,
     playerReady,
+    playerGrab,
+    playerLetGo,
+    playerPush,
     map,
     startGame,
-    test,
     ping
 }
 
+
+/// <summary>
+/// Contains all methods for performing basic packet functions.
+/// </summary>
 public class Packet : IDisposable
 {
     private List<byte> buffer;

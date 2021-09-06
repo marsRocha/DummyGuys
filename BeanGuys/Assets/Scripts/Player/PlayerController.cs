@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
@@ -16,8 +17,8 @@ public class PlayerController : MonoBehaviour
 
     [Header("Movement Variables")]
     private float gravityForce = 15f;
-    private float moveSpeed = 300f, turnSpeed = 10f;
-    private float jumpForce = 12f, jumpCooldown = 0.1f;
+    private float moveSpeed = 250f, turnSpeed = 10f;
+    private float jumpForce = 10.6f, jumpCooldown = 0.1f;
     private float diveForwardForce = 7f, diveUpForce = 7f, diveCooldown = 0.5f;
     private float dashforce = 10f, dashTime = 0.5f;
     private Vector3 move;
@@ -42,6 +43,20 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     private ParticleSystem checkpointPs;
 
+    // Collision
+    private Vector3 bounceDir;
+    private Vector3 bouncePos;
+
+    // Grab varuables
+    public GameObject grabbedObj { get; private set; }
+    public LayerMask interactionMask;
+
+    // Pushed variables
+    private bool push;
+    private Vector3 push_direction;
+    public Guid pushedObj { get; private set; }
+    private float pushCooldown = 3.5f, pushTime;
+
     // States
     private bool grounded;
     private bool ragdolled, getUp;
@@ -50,6 +65,8 @@ public class PlayerController : MonoBehaviour
     private bool dashing;
     private bool readyToJump = true, readyToDive = true;
     private bool dashTriggered;
+    private bool grabbed;
+    public bool grabbing { get; private set; }
 
     public void StartController(LogicTimer _logicTimer)
     {
@@ -75,11 +92,26 @@ public class PlayerController : MonoBehaviour
         // Check if there as been an impact last frame
         if (collisionForce != Vector3.zero && collisionPoint != Vector3.zero)
         {
+            //rb.AddExplosionForce(1000, collisionPoint, 10);
+
+            rb.isKinematic = true;
+            rb.isKinematic = false;
+
             rb.AddForceAtPosition(collisionForce, collisionPoint, ForceMode.Impulse);
             // Reset values
             collisionForce = Vector3.zero; collisionPoint = Vector3.zero;
             // Play hit audio
             playerAudio.PlayImpact(2);
+        }
+
+        if (push)
+        {
+            EnterRagdoll(transform.position);
+
+            rb.AddForceAtPosition( push_direction * 60f, transform.position + Vector3.up, ForceMode.Impulse);
+
+            playerAudio.PlayImpact(2);
+            push = false;
         }
 
         GroundChecking();
@@ -94,7 +126,7 @@ public class PlayerController : MonoBehaviour
         if (!ragdolled && !getUp)
         {
             Movement();
-        }        
+        }
     }
 
     #region Movement
@@ -165,7 +197,7 @@ public class PlayerController : MonoBehaviour
     //MOVEMENT TYPES
     private void Walk()
     {
-        if (!diving && !dashing)
+        if (!diving && !dashing && !grabbing)
         {
             move = new Vector3(currentInputs.HorizontalAxis, 0f, currentInputs.VerticalAxis);
 
@@ -208,8 +240,9 @@ public class PlayerController : MonoBehaviour
         if (currentInputs.Jump && !jumping && grounded && !dashing && readyToJump)
         {
             readyToJump = false;
+            groundNormal = Vector3.zero;
             rb.AddForce(Vector3.up * -rb.velocity.y, ForceMode.VelocityChange);//in case of slopes
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.VelocityChange);
             jumping = true;
             animator.SetBool("isJumping", true);
             jumpPs.Play();
@@ -259,12 +292,6 @@ public class PlayerController : MonoBehaviour
 
             Invoke(nameof(ResetDash), dashTime);
         }
-    }
-
-    public void ActivateDash(Vector3 _direction)
-    {
-        dashTriggered = true;
-        collisionForce = _direction;
     }
 
     private void ResetDash()
@@ -320,6 +347,78 @@ public class PlayerController : MonoBehaviour
     }
     #endregion
 
+    #region Actions
+
+    public bool TryGrab()
+    {
+        if (ragdolled || diving || jumping)
+            return false;
+
+        if (!grabbing)
+            animator.SetBool("isGrabbing", true);
+
+        RaycastHit hit;
+        Physics.Raycast(pelvis.position, transform.forward, out hit, 1, interactionMask);
+        if (hit.collider)
+        {
+            grabbing = true;
+            grabbedObj = hit.collider.transform.root.gameObject;
+            return true;
+        }
+
+        return false;
+    }
+
+    public void StopGrab()
+    {
+        animator.SetBool("isGrabbing", false);
+        grabbing = false;
+        grabbedObj = null;
+    }
+
+    // Action confirmed by the server
+    public void Grab(bool _isgrabbing)
+    {
+        grabbing = _isgrabbing;
+        animator.SetBool("isGrabbing", _isgrabbing);
+    }
+
+    public void Grabbed(bool _isbeingGrabbed)
+    {
+        grabbed = _isbeingGrabbed;
+    }
+
+    public bool TryPush()
+    {
+        if (ragdolled || diving || jumping || Time.time < pushTime)
+            return false;
+
+        animator.SetTrigger("Push");
+
+        RaycastHit hit;
+        Physics.Raycast(pelvis.position, transform.forward, out hit, 2, interactionMask);
+        if (hit.collider)
+        {
+            pushTime = Time.time + pushCooldown;
+            pushedObj = hit.collider.transform.root.GetComponent<RemotePlayerManager>().Id;
+            return true;
+        }
+        return false;
+    }
+
+    public void Push()
+    {
+        animator.SetBool("isGrabbing", true);
+        animator.SetBool("isGrabbing", false);
+    }
+
+    public void Pushed(Vector3 _direction)
+    {
+        push = true;
+        push_direction = _direction;
+    }
+    #endregion
+
     private void ResetBehaviours()
     {
         animator.SetBool("isRunning", false);
@@ -330,6 +429,12 @@ public class PlayerController : MonoBehaviour
         currentAnimation = 0;
     }
 
+    public void SetCurrentionAnimation(int animationNum)
+    {
+        currentAnimation = animationNum;
+    }
+
+    #region Ragdoll
     public void EnterRagdoll(Vector3 _point)
     {
         ragdolled = true;
@@ -346,48 +451,60 @@ public class PlayerController : MonoBehaviour
     {
         ragdolled = false;
         cp.direction = 1;
+        ragdollController.RagdollOut();
+        GetComponent<PlayerManager>().Ragdolled = false;
     }
+    #endregion
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (ragdollController.State == RagdollState.Animated)
+        Vector3 collisionDirection = -(collision.contacts[0].point - transform.position).normalized;
+
+        // Determine what has been and operate accordingly
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
         {
-            Vector3 collisionDirection = collision.contacts[0].normal;
+            // Add obstacle extra force
+            collisionForce = collisionDirection * ragdollController.ObstacleModifier;
+            collisionPoint = collision.contacts[0].point;
 
-            // Determine what has been and operate accordingly
-            if (collision.gameObject.layer == LayerMask.NameToLayer("Obstacle"))
-            {
-                // Add obstacle extra force
-                collisionForce = collisionDirection * ragdollController.ObstacleModifier;
-                collisionPoint = collision.contacts[0].point;
+            EnterRagdoll(collisionPoint);
+        }
+        else if (collision.gameObject.layer == LayerMask.NameToLayer("Bounce"))
+        {
+            // Add bounce extra force
+            collisionForce = collisionDirection * ragdollController.BounceModifier;
+            collisionForce.y = Mathf.Clamp(collisionForce.y, 0, 15);
+            collisionPoint = collision.contacts[0].point;
 
-                EnterRagdoll(collisionPoint);
-            }
-            else if (collision.gameObject.layer == LayerMask.NameToLayer("Bounce"))
-            {
-                // Add bounce extra force
-                collisionForce = collisionDirection * ragdollController.BounceModifier;
-                collisionPoint = collision.contacts[0].point;
+            bounceDir = collisionForce;
+            bouncePos = collisionPoint;
 
-                // Play jump effect
-                jumpPs.Play();
-            }
-            else if (collision.gameObject.layer == LayerMask.NameToLayer("Floor"))
+            // Play jump effect
+            Bump(collisionPoint);
+        }
+        else if (collision.gameObject.layer == LayerMask.NameToLayer("Floor"))
+        {
+            if (collision.impulse.magnitude >= 20)
             {
-                if (collision.impulse.magnitude >= 20)
-                {
-                    EnterRagdoll(collision.contacts[0].point);
-                }
-            }
-            else if (collision.impulse.magnitude >= ragdollController.MinForce || (jumping || diving))
-            {
-                // Add extra force
-                collisionForce = collisionDirection * ragdollController.Modifier;
-                collisionPoint = collision.contacts[0].point;
-
                 EnterRagdoll(collision.contacts[0].point);
             }
         }
+        else if (collision.impulse.magnitude >= ragdollController.MinForce || (jumping || diving))
+        {
+            // Add extra force
+            collisionForce = collisionDirection * ragdollController.Modifier;
+            collisionPoint = collision.contacts[0].point;
+
+            EnterRagdoll(collision.contacts[0].point);
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.black;
+
+        Gizmos.DrawLine(pelvis.position, pelvis.position + (transform.forward.normalized * 2));
+
     }
 
     #region Behavior EFX

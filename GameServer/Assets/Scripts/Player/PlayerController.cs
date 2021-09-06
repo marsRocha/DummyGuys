@@ -275,7 +275,7 @@ public class PlayerController : MonoBehaviour
     }
 
     private void OnCollisionEnter(Collision collision)
-    {
+    {/*
         if (ragdollController.State == RagdollState.Animated)
         {
             Vector3 collisionDirection = collision.contacts[0].normal;
@@ -310,7 +310,7 @@ public class PlayerController : MonoBehaviour
 
                 EnterRagdoll();
             }
-        }
+        }*/
     }
 
     public void Reset()

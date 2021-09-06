@@ -6,6 +6,7 @@ namespace Multiplayer
     class Program
     {
         private static bool isRunning = false;
+
         static void Main(string[] args)
         {
             Console.Title = "Game Server";
@@ -15,6 +16,16 @@ namespace Multiplayer
             mainThread.Start();
 
             Server.Start(26950);
+
+            while (true)
+            {
+                if (Console.ReadKey(true).Key == ConsoleKey.Enter)
+                {
+                    Console.WriteLine("Sending test message");
+                    //Send to server
+                    RoomSend.Test();
+                }
+            }
         }
 
         private static void MainThread()

@@ -12,9 +12,10 @@ public class MessageCaster : MonoBehaviour
         //SEND ROOM'S STARTGAME
         if (Input.GetKeyDown(KeyCode.O))
         {
-            //Create new room
-            Guid newGuid = Guid.NewGuid();
-            Server.Rooms.Add(newGuid, new Room(newGuid, Server.GetNextAdress(), Server.multicastPort));
+            foreach (Room r in Server.Rooms.Values)
+            {
+                RoomSend.StartGameDebug(r.RoomId);
+            }
         }
     }
 }

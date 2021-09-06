@@ -35,10 +35,25 @@ public class RoomSend
         }
     }
 
-    public static void MulticastUDPData(Guid _roomId, Packet _packet)
+    private static void SendUDPDataToAll(Guid _roomId, Guid _clientId, Packet _packet)
     {
         _packet.WriteLength();
-        Server.Rooms[_roomId].MulticastUDPData(_packet);
+
+        foreach (Client client in Server.Rooms[_roomId].Clients.Values)
+        {
+            if (client.Id == _clientId)
+                continue;
+
+            client.udp.SendData(_packet);
+        }
+    }
+
+    public static void MulticastUDPData(Guid _roomId, Packet _packet)
+    {
+        //_packet.WriteLength();
+        //Server.Rooms[_roomId].MulticastUDPData(_packet);
+
+        SendUDPDataToAll(_roomId, _packet);
     }
     #endregion
 
@@ -51,7 +66,17 @@ public class RoomSend
             SendTCPDataToAll(_roomId, _packet);
         }
     }
-    
+
+    public static void StartGameDebug(Guid _roomId)
+    {
+        using (Packet _packet = new Packet((int)ServerPackets.startGame))
+        {
+            _packet.Write(_roomId);
+
+            MulticastUDPData(_roomId, _packet);
+        }
+    }
+
     public static void EndGame(Guid _roomId)
     {
         using (Packet _packet = new Packet((int)ServerPackets.endGame))
@@ -74,7 +99,7 @@ public class RoomSend
         }
     }
 
-    public static void JoinedRoom(Guid _roomId, Guid _toClient, string _lobbyIP, int _lobbyPort, int _spawnId)
+    public static void JoinedRoom(Guid _roomId, Guid _toClient, string _lobbyIP, int _lobbyPort, int _spawnId, int _tickrate)
     {
         using (Packet _packet = new Packet((int)ServerPackets.joinedRoom))
         {
@@ -83,6 +108,9 @@ public class RoomSend
             _packet.Write(_lobbyIP);
             _packet.Write(_lobbyPort);
             _packet.Write(_spawnId);
+
+            // Room configurations
+            _packet.Write(_tickrate);
 
             SendTCPData(_roomId, _toClient, _packet);
         }
@@ -113,18 +141,18 @@ public class RoomSend
     {
         using (Packet _packet = new Packet((int)ServerPackets.playerJoined))
         {
-            _packet.Write(_roomId);
+            _packet.Write(_roomId); // 16
 
-            _packet.Write(_id);
-            _packet.Write(_username);
-            _packet.Write(_color);
-            _packet.Write(_spawnId);
+            _packet.Write(_id); // 16
+            _packet.Write(_username); // 9
+            _packet.Write(_color); // 4
+            _packet.Write(_spawnId); // 4
 
             SendTCPDataToAll(_roomId, _packet);
         }
     }
     
-    public static void RemovePlayer(Guid _roomId, Guid _clientId)
+    public static void PlayerLeft(Guid _roomId, Guid _clientId)
     {
         using (Packet _packet = new Packet((int)ServerPackets.playerLeft))
         {
@@ -151,7 +179,23 @@ public class RoomSend
             _packet.Write(_simulationState.angularVelocity);
             _packet.Write(_simulationState.ragdoll);
 
-            SendTCPData(_roomId, _clientId, _packet);
+            SendUDPData(_roomId, _clientId, _packet);
+        }
+    }
+
+    public static void PlayerMovement(Guid _roomId, Guid _clientId, PlayerState _playerState)
+    {
+        using (Packet _packet = new Packet((int)ServerPackets.playerMovement))
+        {
+            _packet.Write(_clientId);
+
+            _packet.Write(_playerState.tick);
+            _packet.Write(_playerState.position);
+            _packet.Write(_playerState.rotation);
+            _packet.Write(_playerState.ragdoll);
+            _packet.Write(_playerState.animation);
+
+            SendUDPDataToAll(_roomId, _clientId, _packet);
         }
     }
 
@@ -164,7 +208,7 @@ public class RoomSend
             _packet.Write(_clientId);
             _packet.Write(_checkPointNum);
 
-            SendUDPData(_roomId, _clientId, _packet);
+            SendTCPData(_roomId, _clientId, _packet);
         }
     }
 
@@ -177,6 +221,42 @@ public class RoomSend
             _packet.Write(_clientId);
 
             SendTCPDataToAll(_roomId, _packet);
+        }
+    }
+
+    public static void PlayerGrab(Guid _roomId, Guid _grabber, Guid _grabbed)
+    {
+        using (Packet _packet = new Packet((int)ServerPackets.playerGrab))
+        {
+            _packet.Write(_roomId);
+
+            _packet.Write(_grabber);
+
+            SendUDPData(_roomId, _grabbed, _packet);
+        }
+    }
+
+    public static void PlayerLetGo(Guid _roomId, Guid _grabber, Guid _grabbed)
+    {
+        using (Packet _packet = new Packet((int)ServerPackets.playerLetGo))
+        {
+            _packet.Write(_roomId);
+
+            _packet.Write(_grabber);
+
+            SendUDPData(_roomId, _grabbed, _packet);
+        }
+    }
+
+    public static void PlayerPush(Guid _roomId, Guid _pusher, Guid _pushed)
+    {
+        using (Packet _packet = new Packet((int)ServerPackets.playerPush))
+        {
+            _packet.Write(_roomId);
+
+            _packet.Write(_pusher);
+
+            SendUDPData(_roomId, _pushed, _packet);
         }
     }
 
@@ -193,10 +273,22 @@ public class RoomSend
         }
     }
 
+    public static void Disconnected(Guid _roomId)
+    {
+        using (Packet _packet = new Packet((int)ServerPackets.disconnected))
+        {
+            _packet.Write(_roomId);
+
+            SendTCPDataToAll(_roomId, _packet);
+        }
+    }
+
     public static void Pong(Guid _roomId, Guid _toClient)
     {
         using (Packet _packet = new Packet((int)ServerPackets.pong))
         {
+            _packet.Write(_roomId);
+
             SendUDPData( _roomId, _toClient, _packet);
         }
     }

@@ -6,7 +6,8 @@ public class DeathCollider : MonoBehaviour
     {
         if (_other.gameObject.layer.Equals(LayerMask.NameToLayer("Player")))
         {
-            _other.gameObject.GetComponent<PlayerController>().Die();
+            ClientSend.PlayerRespawn();
+            _other.gameObject.transform.root.GetComponent<PlayerController>().Die();
         }
         else if (_other.gameObject.layer.Equals(LayerMask.NameToLayer("RemotePlayer")))
         {

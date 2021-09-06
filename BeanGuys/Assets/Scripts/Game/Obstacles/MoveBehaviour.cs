@@ -3,8 +3,6 @@
 public class MoveBehaviour : MonoBehaviour
 {
     [SerializeField]
-    private Rigidbody rb;
-    [SerializeField]
     private float speed, offset;
     private Vector3 initialPos;
     [SerializeField]
@@ -14,7 +12,6 @@ public class MoveBehaviour : MonoBehaviour
     void Start()
     {
         initialPos = transform.position;
-        rb = GetComponent<Rigidbody>();
     }
 
     // Update is called once per frame

@@ -43,7 +43,26 @@ public class PhysicsSceneManager : MonoBehaviour
         // returning 0 makes it wait 1 frame (needed to load scene)
         yield return 0;
 
-        Server.Rooms[_roomId].roomScene = _scene.GetRootGameObjects()[0].GetComponent<RoomScene>();
-        Server.Rooms[_roomId].InitializeMap();
+        RoomScene roomScene = null;
+
+        foreach (GameObject obj in _scene.GetRootGameObjects())
+        {
+            if (obj.GetComponent<RoomScene>())
+            {
+                roomScene = obj.GetComponent<RoomScene>();
+                break;
+            }
+        }
+
+        if(roomScene != null)
+        {
+            Server.Rooms[_roomId].roomScene = roomScene;
+            Server.Rooms[_roomId].InitializeMap();
+        }
+        else
+        {
+            Debug.LogWarning("Roomscene has not loaded, deleting room");
+            Server.Rooms[_roomId].Stop();
+        }
     }
 }

@@ -12,7 +12,7 @@ public class Interpolator : MonoBehaviour
     private PlayerState previous;
 
     [SerializeField] private float timeElapsed = 0f;
-    [SerializeField] private float timeToReachTarget = 0.1f;
+    [SerializeField] private float timeToReachTarget = 0.01f;
 
     public void StartInterpolator(RemotePlayerManager _remotePlayer)
     {

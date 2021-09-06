@@ -7,58 +7,55 @@ public class Player : MonoBehaviour
     public Guid Id { get; private set; }
     private Guid roomId;
 
-    private PlayerController playerController;
-    private RagdollController ragdollController;
     private Rigidbody rb;
     private LogicTimer logicTimer;
-    private PhysicsScene physicsScene;
 
-    private ClientInputState currentInputState;
+    private PlayerState currentPlayerState;
     private Vector3 velocity, angularVelocity;
 
     private int lastFrame;
-    private Queue<ClientInputState> clientInputStates;
-    //  The amount of distance in units that we will allow the client's prediction to drift from it's position on the server, before a correction is necessary. 
-    private float tolerance = 0.0000001f;
+    private Queue<PlayerState> playerStates;
+    private SimulationState lastState;
     public int tick;
 
+    private const float AFK_TIMEOUT = 20f;
+    private float _afkTimer;
+    private bool _inputThisFrame;
+    //-----
+    private const float HEARTBEAT_TIMEOUT = 7f;
+    private float _heartbeat;
+
     [Header("Ragdoll Params")]
+    [SerializeField]
+    private LayerMask collision;
     public bool Ragdolled = false;
     [SerializeField]
     private bool Running;
 
     private void Awake()
     {
-        playerController = GetComponent<PlayerController>();
-        ragdollController = GetComponent<RagdollController>();
-
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
         rb.isKinematic = true;
 
+        _afkTimer = 0;
         lastFrame = 0;
         tick = 0;
-        clientInputStates = new Queue<ClientInputState>();
+        playerStates = new Queue<PlayerState>();
         velocity = Vector3.zero;
         angularVelocity = Vector3.zero;
+
+        lastState = new SimulationState(0, transform.position, transform.rotation, velocity, angularVelocity, Ragdolled);
     }
 
     private void Start()
     {
-        physicsScene = gameObject.scene.GetPhysicsScene();
-
         logicTimer = new LogicTimer(() => FixedTime());
         logicTimer.Start();
-
-        playerController.StartController(logicTimer);
-        ragdollController.StartController();
     }
 
     private void Update()
     {
-        ragdollController.UpdateController();
-        //ragdollController.FixedUpdateController();
-
         logicTimer.Update();
     }
 
@@ -77,133 +74,81 @@ public class Player : MonoBehaviour
     {
         if (Running)
         {
-            currentInputState = null;
+            currentPlayerState = null;
 
             // Obtain CharacterInputState's from the queue. 
-            while (clientInputStates.Count > 0 && (currentInputState = clientInputStates.Dequeue()) != null)
+            while (playerStates.Count > 0 && (currentPlayerState = playerStates.Dequeue()) != null)
             {
+                _inputThisFrame = true;
+
                 // Player is sending simulation frames that are in the past, dont process them
-                if (currentInputState.SimulationFrame <= lastFrame)
+                if (currentPlayerState.tick <= lastFrame)
                     continue;
 
-                lastFrame = currentInputState.SimulationFrame;
-
-                // Process the input.
-                ProcessInput(currentInputState);
+                lastFrame = currentPlayerState.tick;
 
                 // Obtain the current SimulationState.
-                SimulationState state = new SimulationState(currentInputState.SimulationFrame, transform.position, transform.rotation, velocity, angularVelocity, ragdollController);
+                SimulationState serverSimulationState = new SimulationState(currentPlayerState.tick, transform.position, transform.rotation, velocity, angularVelocity, Ragdolled);
 
-                // Send the state back to the client.
-                CheckSimulationState(state);
+                // Check if the state received is inside certain params
+                CheckSimulationState(serverSimulationState);
+
+                // Update latest received state
+                lastState = serverSimulationState;
             }
+
+            AFK_Check();
+
+            Pong_Check();
         }
     }
 
-    /*
-    public void FixedTime()
+    private bool ProcessState(SimulationState serverSimulationState)
     {
-        if (isRunning)
+        if(currentPlayerState.position != serverSimulationState.position)
         {
-            bool simulated = false;
-            currentInputState = null;
-
-            // Obtain CharacterInputState's from the queue. 
-            while (clientInputStates.Count > 0 && (currentInputState = clientInputStates.Dequeue()) != null)
-            {
-                // Player is sending simulation frames that are in the past, dont process them
-                if (currentInputState.SimulationFrame <= lastFrame)
-                    continue;
-
-                 // Re-run frame now that message has reached the server
-                 // This is in case the server simulated a frame without a message due to delay in receiving them
-                 if(simulationFrame >= currentInputState.SimulationFrame && lastState != null)
-                 {
-                     SetSimulationState(lastState);
-                 }
-
-                // Process the input.
-                ProcessInput(currentInputState);
-
-                // Update last computed frame based on inputs from client
-                lastFrame = currentInputState.SimulationFrame;
-
-                // Obtain the current SimulationState.
-                SimulationState state = new SimulationState(transform.position, transform.rotation, velocity, currentInputState.SimulationFrame, Ragdolled);
-                // Save latest frame
-                lastState = state;
-
-                // Send the state back to the client.
-                CheckSimulationState(state);
-
-                simulationFrame++;
-                //simulated = true;
-            }
-
-             if(simulated) return;
-
-             currentInputState = new ClientInputState();
-             currentInputState.HorizontalAxis = 0;
-             currentInputState.VerticalAxis = 0;
-             currentInputState.Jump = false;
-             currentInputState.Dive = false;
-
-             // Process the input.
-             ProcessInput(currentInputState);
-
-             simulationFrame++;
+            Vector3 direction = currentPlayerState.position - transform.position;
+            // Check if player is inside or went through a wall/floor
+            RaycastHit hitTest;
+            Physics.Raycast(transform.position, direction, out hitTest, direction.magnitude, collision);
+            if (hitTest.collider != null)
+                return false;
         }
-    }
-    */
 
-    private void ProcessInput(ClientInputState inputs)
-    {
-        if (Ragdolled)
-            rb.freezeRotation = false;
-        rb.isKinematic = false;
-        rb.velocity = velocity;
-        rb.angularVelocity = angularVelocity;
 
-        playerController.UpdateController(inputs);
-
-        //Simulate physics
-        SimulatePhysics();
+        return true;
     }
 
-    //Due to physicsSimULATE simulating all objects inside the scene, we store the velocity of this rb and use it from there, because other players maybe change it
-    private void SimulatePhysics()
-    {
-        physicsScene.Simulate(logicTimer.FixedDeltaTime);
-
-        velocity = rb.velocity;
-        angularVelocity = rb.angularVelocity;
-        rb.isKinematic = true;
-        rb.freezeRotation = true;
-    }
-
-
-    #region Client-Server Reconciliation
+    #region Client-Server State Validation
     public void CheckSimulationState(SimulationState serverSimulationState)
     {
         // If there's missing cache data for either input or simulation 
         // snap the player's position to match the server.
-        if (currentInputState.position == null || currentInputState.rotation == null)
+        if (currentPlayerState.position == null || currentPlayerState.rotation == null)
         {
-            SendCorrection(serverSimulationState);
+            SendCorrection(lastState);
             return;
         }
 
-        //CHECK POSITION
-        // Find the difference between the vector's values. 
-        Vector3 positionOffset = currentInputState.position - serverSimulationState.position;
-
-        // A correction is necessary.
-        if (positionOffset.sqrMagnitude > tolerance)
+        // If players game tick is ahead
+        // snap the player's position to match the server.
+        if (currentPlayerState.tick > tick)
         {
-            Debug.LogWarning("Client misprediction of position with a difference of " + positionOffset + " at frame " + serverSimulationState.simulationFrame + ".");
-            // Set the player's atributes(pos, rot, vel) to match the server's state. 
-            SendCorrection(serverSimulationState);
+            SendCorrection(lastState);
+            return;
         }
+
+        // Validate new position/rotation
+        // Else snap the player's position to match the server.
+        if (!ProcessState(serverSimulationState))
+        {
+            Debug.Log("Not valid.");
+            SendCorrection(lastState);
+            return;
+        }
+
+        // If everything is inside the norms than update server's simulationState
+        SetSimulationState(currentPlayerState);
     }
 
     public void SendCorrection(SimulationState state)
@@ -211,18 +156,17 @@ public class Player : MonoBehaviour
         RoomSend.CorrectPlayer(Server.Rooms[roomId].Clients[Id].RoomID, Id, state);
     }
 
-    public void SetSimulationState(SimulationState simulationState)
+    public void SetSimulationState(PlayerState simulationState)
     {
         transform.position = simulationState.position;
         transform.rotation = simulationState.rotation;
-        velocity = simulationState.velocity;
+        Ragdolled = simulationState.ragdoll;
     }
-
     #endregion
 
-    public void ReceivedClientState(ClientInputState _inputState)
+    public void ReceivedClientState(PlayerState _playerState)
     {
-        clientInputStates.Enqueue(_inputState);
+        playerStates.Enqueue(_playerState);
     }
 
     public void Respawn(Vector3 _position, Quaternion _rotation)
@@ -231,10 +175,46 @@ public class Player : MonoBehaviour
         transform.position = _position;
         transform.rotation = _rotation;
         velocity = Vector3.zero;
+        Ragdolled = false;
+    }
 
-        // Go back to animated state if not already
-        ragdollController.BackToAnimated();
-        rb.isKinematic = false;
+    public void Pong()
+    {
+        _heartbeat = 0.0f;
+    }
+
+    public void Pong_Check()
+    {
+        _heartbeat += logicTimer.FixedDeltaTime;
+        if (_heartbeat > HEARTBEAT_TIMEOUT)
+        {
+            Console.WriteLine("HEARTBEAT_TIMEOUT");
+            // Disconnect player
+            Server.Rooms[roomId].RemovePlayer(Id);
+            Deactivate();
+        }
+    }
+
+    public void AFK_Check()
+    {
+        if (_inputThisFrame)
+        {
+            _afkTimer = 0.0f;
+        }
+        else
+        {
+            _afkTimer += logicTimer.FixedDeltaTime;
+            if (_afkTimer > AFK_TIMEOUT)
+            {
+                Console.WriteLine("AFK_TIMEOUT");
+                // Disconnect player
+                Server.Rooms[roomId].RemovePlayer(Id);
+                Deactivate();
+            }
+        }
+
+        // Reset bool
+        _inputThisFrame = false;
     }
 
     public void Reset(Vector3 _position)
@@ -244,15 +224,12 @@ public class Player : MonoBehaviour
 
         lastFrame = 0;
         tick = 0;
-        clientInputStates.Clear();
+        playerStates.Clear();
 
         transform.position = _position;
         transform.rotation = Quaternion.identity;
         velocity = Vector3.zero;
         angularVelocity = Vector3.zero;
-
-        ragdollController.Reset();
-        playerController.Reset();
 
         Ragdolled = false;
         Running = false;
