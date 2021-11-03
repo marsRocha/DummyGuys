@@ -42,9 +42,11 @@ public class PlayerCamera : MonoBehaviour
     private bool rotateCamera = true;
     private RaycastHit sightObstacleHit;
 
+#pragma warning disable 0649
     // LayerMask to check obstacles in sight ray
     [SerializeField]
     private LayerMask SightLayerMask;
+#pragma warning restore 0649
     // How far forward-raycast should check collision for camera
     [SerializeField]
     private float CollisionOffset = 1f;

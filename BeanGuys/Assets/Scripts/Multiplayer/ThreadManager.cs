@@ -10,7 +10,7 @@ public class ThreadManager : MonoBehaviour
 
     private void Update()
     {
-        UpdateMain();
+        UpdateMainThread();
     }
 
     /// <summary>Sets an action to be executed on the main thread.</summary>
@@ -31,7 +31,7 @@ public class ThreadManager : MonoBehaviour
     }
 
     /// <summary>Executes all code meant to run on the main thread. NOTE: Call this ONLY from the main thread.</summary>
-    public static void UpdateMain()
+    private static void UpdateMainThread()
     {
         if (actionToExecuteOnMainThread)
         {

@@ -16,7 +16,6 @@ public class GameManager : MonoBehaviour
     public float pingCountdownLimit = 1f;
 
     [Header("States")]
-    public bool isRunning;
     public bool isOnline;
     public bool debug;
 
@@ -36,38 +35,29 @@ public class GameManager : MonoBehaviour
     }
     #endregion
 
-    // Start is called before the first frame update
-    private void Start()
-    {
-        isRunning = false;
-    }
-
     public void FixedUpdate()
     {
-        if (true) //!debug
+        if (isOnline)
         {
-            if (Client.instance.isConnected)
+            pingCountdown += Time.fixedDeltaTime;
+            if (pingCountdown >= pingCountdownLimit)
             {
-                pingCountdown += Time.fixedDeltaTime;
-                if (pingCountdown >= pingCountdownLimit)
-                {
-                    pingCountdown = 0;
-                    ClientSend.Ping();
-                }
+                pingCountdown = 0;
+                ClientSend.Ping();
             }
         }
     }
 
     #region Scene Loading related
-
-    public void LoadGameScene(string levelId)
+    public void LoadGameScene(int _mapIndex)
     {
-        if(!debug)
-            SceneManager.LoadScene(levelId);
-        else
+        if (!debug)
         {
-            Debug.Log("DEBUG: GameWorld Loaded");
-            GameObject.Find("Canvas").SetActive(false);
+            SceneManager.LoadScene(_mapIndex);
+        }
+        else
+        {   // If debug, fake scene loading and send 'ready' message
+            GameObject.Find("PlayersCount_UI").SetActive(false);
             mapController.InitializeDebug();
 
             if (isOnline)
@@ -96,9 +86,9 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (SceneManager.GetActiveScene().name == "MainMenu")
+        if (SceneManager.GetActiveScene().name == "MainMenu_M")
         {
-            
+            return;
         }
         else //Game world
         {
@@ -107,18 +97,33 @@ public class GameManager : MonoBehaviour
                 Debug.Log("GameWorld Loaded");
                 mapController = GameObject.Find("MapController").GetComponent<MapController>();
                 mapController.Initialize();
+
+                ClientSend.PlayerReady();
             }
         }
     }
     #endregion
 
+    // Only called before game has started
     public void UpdatePlayerCount()
     {
-        totalPlayers++;
+        totalPlayers = Client.peers.Count + 1;
         if (!debug)
+        {
             GameObject.Find("SceneManager").GetComponent<MenuSceneManager>().UpdatePlayerCountUI(totalPlayers);
+        }
         else
-            GameObject.Find("Canvas").transform.GetChild(1).GetComponent<TMP_Text>().text = $"{totalPlayers}/60 Players";
+            GameObject.Find("PlayersCount_UI").transform.GetChild(1).GetComponent<TMP_Text>().text = $"{totalPlayers}/60 Players";
+    }
+
+    public void JoinedRoom()
+    {
+        isOnline = true;
+        if (!debug)
+        {
+            GameObject.Find("SceneManager").GetComponent<MenuSceneManager>().LookingMenu();
+        }
+        UpdatePlayerCount();
     }
 
     public void SpawnRemotePlayers()
@@ -132,22 +137,23 @@ public class GameManager : MonoBehaviour
     public void StartGame()
     {
         Debug.Log("Start Game");
-        if (debug)
+        if (!debug)
+        {
+            mapController.StartCountDown();
+        }
+        else
         {
             mapController.StartRace();
         }
-        else mapController.StartCountDown();
     }
 
-    public void RemovePlayer(Guid peerID)
+    public void RemovePlayer(Guid _clientId)
     {
         if (mapController != null && mapController.isRunning)
         {
             ThreadManager.ExecuteOnMainThread(() =>
             {
-                GameObject p = mapController.players[peerID].gameObject;
-                mapController.players.Remove(peerID);
-                Destroy(p);
+                mapController.PlayerLeft(_clientId);
             });
         }
     }
@@ -156,42 +162,57 @@ public class GameManager : MonoBehaviour
     {
         if (mapController.players.TryGetValue(_id, out RemotePlayerManager _player))
         {
-            _player.NewPlayerState(_tick, _position, _rotation, _ragdoll, _animation);
+            _player.ReceivedPlayerState(_tick, _position, _rotation, _ragdoll, _animation);
         }
     }
 
-    public void PlayerCorrection(SimulationState simulationState)
+    public void PlayerCorrection(PlayerState _playerState)
     {
         if (!mapController.localPlayer.gameObject)
             return;
 
-        mapController.localPlayer.ReceivedCorrectionState(simulationState);
+        mapController.localPlayer.ReceivedCorrectionState(_playerState);
     }
 
-    public void PlayerGrab(Guid _grabber )
+    public void PlayerGrab(Guid _grabber, Guid _grabbed)
     {
-        if (!mapController.localPlayer.gameObject || !mapController.players[_grabber].gameObject)
+        if (!mapController.localPlayer.gameObject) // || !mapController.players[_grabber].gameObject || !mapController.players[_grabbed].gameObject)
             return;
 
-        mapController.localPlayer.PlayerGrab(mapController.players[_grabber]);
+        // If the local player was grabbed apply grab behavior, otherwise the local player is the one who is grabbing
+        if (_grabbed == ClientInfo.instance.Id)
+            mapController.localPlayer.ReceivedGrabbed();
+        else
+            mapController.localPlayer.ReceivedGrabbing(_grabbed);
     }
 
-    public void PlayerLetGo(Guid _grabber)
+    public void PlayerLetGo(Guid _grabber, Guid _grabbed)
     {
-        if (!mapController.localPlayer.gameObject || !mapController.players[_grabber].gameObject)
+        if (!mapController.localPlayer.gameObject) // || !mapController.players[_grabber].gameObject || !mapController.players[_grabbed].gameObject)
             return;
 
-        mapController.localPlayer.PlayerLetGo(_grabber);
+        // If the local player was grabbed apply grab behavior, otherwise the local player is the one who is grabbing
+        if (_grabbed == ClientInfo.instance.Id)
+            mapController.localPlayer.ReceivedFreed();
+        else
+            mapController.localPlayer.ReceivedLetGo();
     }
 
-    public void PlayerPush(Guid _pusher)
+    public void PlayerPush(Guid _pusher, Guid _pushed)
     {
-        if (!mapController.localPlayer.gameObject || !mapController.players[_pusher].gameObject)
+        if (!mapController.localPlayer.gameObject) // || !mapController.players[_pusher].gameObject || !mapController.players[_pushed].gameObject)
             return;
 
-        Vector3 pushDirection = (mapController.localPlayer.transform.position - mapController.players[_pusher].transform.position).normalized;
-
-        mapController.localPlayer.PlayerPushed(pushDirection);
+        // If the local player was pushed apply push force, otherwise the local player is the one who pushed someone
+        if(_pushed == ClientInfo.instance.Id)
+        {
+            Vector3 pushDirection = (mapController.localPlayer.transform.position - mapController.players[_pusher].transform.position).normalized;
+            mapController.localPlayer.ReceivedPushed(pushDirection);
+        }
+        else
+        {
+            mapController.localPlayer.ReceivedPushing();
+        }
     }
 
     public void PlayerRespawn(int _checkPointNum)
@@ -204,6 +225,15 @@ public class GameManager : MonoBehaviour
         mapController.PlayerFinish(_clientId);
     }
 
+    public void ServerTick(int _roomTick, float _roomClock)
+    {
+        if (_roomTick > mapController.gameLogic.Tick)
+            mapController.gameLogic.SetTick(_roomTick);
+
+        if (_roomClock > mapController.gameLogic.Clock)
+            mapController.gameLogic.SetClock(_roomClock);
+    }
+
     public void EndGame()
     {
         mapController.EndRace();
@@ -212,13 +242,30 @@ public class GameManager : MonoBehaviour
     public void Refused()
     {
         Debug.Log("Server has refused the connection.");
-        LoadMainMenu();
+
+        if (!debug)
+        {
+            LoadMainMenu();
+        }
+    }
+
+    public void Disconnected()
+    {
+        Client.instance.Disconnect();
+        isOnline = false;
+        mapController.StopRace();
     }
 
     public void LeaveRoom()
     {
-        Debug.Log("Game has ended");
+        Debug.Log("Leave Room");
+
         Client.instance.Disconnect();
-        LoadMainMenu();
+        
+        isOnline = false;
+        if (!debug)
+        {
+            LoadMainMenu();
+        }
     }
 }

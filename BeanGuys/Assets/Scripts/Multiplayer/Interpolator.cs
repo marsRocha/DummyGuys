@@ -12,7 +12,7 @@ public class Interpolator : MonoBehaviour
     private PlayerState previous;
 
     [SerializeField] private float timeElapsed = 0f;
-    [SerializeField] private float timeToReachTarget = 0.01f;
+    [SerializeField] private float timeToReachTarget = 0.1f;
 
     public void StartInterpolator(RemotePlayerManager _remotePlayer)
     {
@@ -20,33 +20,28 @@ public class Interpolator : MonoBehaviour
 
         futureTransformUpdates = new List<PlayerState>();
 
-        to = new PlayerState(GameLogic.Tick, transform.position, transform.rotation, remotePlayer.Ragdolled, remotePlayer.currentAnimation);
-        from = new PlayerState(GameLogic.InterpolationTick, transform.position, transform.rotation, remotePlayer.Ragdolled, remotePlayer.currentAnimation);
-        previous = new PlayerState(GameLogic.InterpolationTick, transform.position, transform.rotation, remotePlayer.Ragdolled, remotePlayer.currentAnimation);
+        to = new PlayerState(MapController.instance.gameLogic.Tick, transform.position, transform.rotation, remotePlayer.Ragdolled, remotePlayer.currentAnimation);
+        from = new PlayerState(MapController.instance.gameLogic.InterpolationTick, transform.position, transform.rotation, remotePlayer.Ragdolled, remotePlayer.currentAnimation);
+        previous = new PlayerState(MapController.instance.gameLogic.InterpolationTick, transform.position, transform.rotation, remotePlayer.Ragdolled, remotePlayer.currentAnimation);
     }
 
     private void Update()
     {
         for (int i = 0; i < futureTransformUpdates.Count; i++)
         {
-            if (GameLogic.Tick >= futureTransformUpdates[i].tick)
+            if (MapController.instance.gameLogic.Tick >= futureTransformUpdates[i].tick)
             {
                 previous = to;
                 to = futureTransformUpdates[i];
-                from = new PlayerState(GameLogic.InterpolationTick, transform.position, transform.rotation, remotePlayer.Ragdolled, remotePlayer.currentAnimation);
+                from = new PlayerState(MapController.instance.gameLogic.InterpolationTick, 
+                    transform.position, transform.rotation, remotePlayer.Ragdolled, remotePlayer.currentAnimation);
                 futureTransformUpdates.RemoveAt(i);
                 timeElapsed = 0;
-                timeToReachTarget = (to.tick - from.tick) * GameLogic.SecPerTick;
+                //timeToReachTarget = (to.tick - from.tick) * MapController.instance.gameLogic.SecPerTick;
 
-                // Ragdoll state
-                // If not in the correct ragdoll state then transition to it
-                if(from.ragdoll != to.ragdoll)
-                {
-                    if (to.ragdoll)
-                        remotePlayer.EnterRagdoll();
-                    else
-                        remotePlayer.ExitRagdoll();
-                }
+                // Ragdoll state, if not in the correct ragdoll state then transition to it
+                if (from.ragdoll != to.ragdoll)
+                    remotePlayer.SetRagdoll(to.ragdoll);
 
                 // Animations
                 remotePlayer.SetAnimation(to.animation);
@@ -55,6 +50,30 @@ public class Interpolator : MonoBehaviour
 
         timeElapsed += Time.deltaTime;
         Interpolate(timeElapsed / timeToReachTarget);
+    }
+
+    internal void NewPlayerState(int _tick, Vector3 _position, Quaternion _rotation, bool _ragdoll, int _animation)
+    {
+        /*if (_tick <= GameLogic.InterpolationTick)
+        {
+            return;
+        }*/
+
+        if (futureTransformUpdates.Count == 0)
+        {
+            futureTransformUpdates.Add(new PlayerState(_tick, _position, _rotation, _ragdoll, _animation));
+            return;
+        }
+
+        for (int i = 0; i < futureTransformUpdates.Count; i++)
+        {
+            if (_tick < futureTransformUpdates[i].tick)
+            {
+                // Transform update is older
+                futureTransformUpdates.Insert(i, new PlayerState(_tick, _position, _rotation, _ragdoll, _animation));
+                break;
+            }
+        }
     }
 
     #region Interpolate
@@ -96,28 +115,4 @@ public class Interpolator : MonoBehaviour
         transform.rotation = Quaternion.SlerpUnclamped(from.rotation, to.rotation, _lerpAmount); // Interpolate with the _lerpAmount unclamped so it can extrapolate
     }
     #endregion
-
-    internal void NewPlayerState(int _tick, Vector3 _position, Quaternion _rotation, bool _ragdoll, int _animation)
-    {
-        if (_tick <= GameLogic.InterpolationTick)
-        {
-            return;
-        }
-
-        if (futureTransformUpdates.Count == 0)
-        {
-            futureTransformUpdates.Add(new PlayerState(_tick, _position, _rotation, _ragdoll, _animation));
-            return;
-        }
-
-        for (int i = 0; i < futureTransformUpdates.Count; i++)
-        {
-            if (_tick < futureTransformUpdates[i].tick)
-            {
-                // Transform update is older
-                futureTransformUpdates.Insert(i, new PlayerState(_tick, _position, _rotation, _ragdoll, _animation));
-                break;
-            }
-        }
-    }
 }

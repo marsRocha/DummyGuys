@@ -16,6 +16,9 @@ public class ClientSend : MonoBehaviour
 
         _packet.WriteLength();
         Client.instance.tcp.SendData(_packet);
+
+        Analytics.bandwidthUp += _packet.GetByteLength();
+        Analytics.packetsUp++;
     }
 
     /// <summary>Sends a packet to the Room via UDP.</summary>
@@ -27,6 +30,9 @@ public class ClientSend : MonoBehaviour
 
         _packet.WriteLength();
         Client.instance.udp.SendData(_packet);
+
+        Analytics.bandwidthUp += _packet.GetByteLength();
+        Analytics.packetsUp++;
     }
 
     /// <summary>Sends a packet to everyone in the Room via UDP Multicast.</summary>
@@ -36,9 +42,11 @@ public class ClientSend : MonoBehaviour
         if (Client.instance.multicast.socket == null)
             return;
 
-        //_packet.WriteLength();
-        //Client.instance.multicast.SendData(_packet);
-        SendUDPData(_packet);
+        _packet.WriteLength();
+        Client.instance.multicast.SendData(_packet);
+
+        Analytics.bandwidthUp += _packet.GetByteLength();
+        Analytics.packetsUp++;
     }
     #endregion
 
@@ -53,9 +61,6 @@ public class ClientSend : MonoBehaviour
 
             SendTCPData(_packet);
         }
-
-        Analytics.bandwidthUp += 37;
-        Analytics.packetsUp++;
     }
 
     public static void Ping()
@@ -68,9 +73,6 @@ public class ClientSend : MonoBehaviour
         }
         // We send the client ping packet and set pingSent to now
         Client.instance.pingSent = DateTime.UtcNow;
-
-        Analytics.bandwidthUp += 8;
-        Analytics.packetsUp++;
     }
 
     /// <summary>Lets the Room know that the player is ready to start the game.</summary>
@@ -83,12 +85,9 @@ public class ClientSend : MonoBehaviour
 
             SendTCPData(_packet);
         }
-
-        Analytics.bandwidthUp += 24;
-        Analytics.packetsUp++;
     }
 
-    /// <summary>Sends player state to the server.</summary>
+    /// <summary>Create & Send player state to the server.</summary>
     /// <param name="_state">State of the player, namely position, rotation and tick.</param>
     public static void PlayerMovement(PlayerState _state)
     {
@@ -104,9 +103,6 @@ public class ClientSend : MonoBehaviour
 
             MulticastUDPData(_packet);
         }
-
-        Analytics.bandwidthUp += 45;
-        Analytics.packetsUp++;
     }
 
     /// <summary>Sends player respawn resquest to the server.</summary>
@@ -118,56 +114,41 @@ public class ClientSend : MonoBehaviour
 
             SendTCPData(_packet);
         }
-
-        Analytics.bandwidthUp += 24;
-        Analytics.packetsUp++;
     }
 
     /// <summary>Sends player grab resquest to the server.</summary>
-    public static void PlayerGrab(Guid _playerGrabbed, int _tick)
+    public static void PlayerGrab( int _tick)
     {
         using (Packet _packet = new Packet((int)ClientPackets.playerGrab))
         {
             _packet.Write(ClientInfo.instance.Id);
-            _packet.Write(_playerGrabbed);
             _packet.Write(_tick);
 
-            MulticastUDPData(_packet);
+            SendUDPData(_packet);
         }
-
-        Analytics.bandwidthUp += 24;
-        Analytics.packetsUp++;
     }
 
     /// <summary>Sends player let go of grab resquest to the server.</summary>
-    public static void PlayerLetGo(Guid _playerFreed, int _tick)
+    public static void PlayerLetGo(Guid _playerFreed)
     {
         using (Packet _packet = new Packet((int)ClientPackets.playerLetGo))
         {
             _packet.Write(ClientInfo.instance.Id);
             _packet.Write(_playerFreed);
-            _packet.Write(_tick);
 
-            MulticastUDPData(_packet);
+            SendUDPData(_packet);
         }
-
-        Analytics.bandwidthUp += 24;
-        Analytics.packetsUp++;
     }
 
     /// <summary>Sends player grab resquest to the server.</summary>
-    public static void PlayerPush(Guid _playerPushed, int _tick)
+    public static void PlayerPush(int _tick)
     {
         using (Packet _packet = new Packet((int)ClientPackets.playerPush))
         {
             _packet.Write(ClientInfo.instance.Id);
-            _packet.Write(_playerPushed);
             _packet.Write(_tick);
 
-            MulticastUDPData(_packet);
+            SendUDPData(_packet);
         }
-
-        Analytics.bandwidthUp += 24;
-        Analytics.packetsUp++;
     }
 }

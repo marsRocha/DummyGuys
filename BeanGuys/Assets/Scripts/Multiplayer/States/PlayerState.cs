@@ -21,4 +21,8 @@ public class PlayerState
         ragdoll = _ragdoll;
         animation = _animation;
     }
+
+    public PlayerState()
+    {
+    }
 }

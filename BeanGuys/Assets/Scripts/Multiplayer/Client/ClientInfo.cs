@@ -23,13 +23,11 @@ public class ClientInfo : MonoBehaviour
 
     public void SetClientName(string name)
     {
-        Debug.Log("Username changed!");
         instance.Username = name;
     }
 
     public void SetClientColor(int _color)
     {
-        Debug.Log("Color changed!");
         instance.Color = _color;
         GameObject.Find("SceneManager").GetComponent<MenuSceneManager>().SetColorPlayerObjs();
     }

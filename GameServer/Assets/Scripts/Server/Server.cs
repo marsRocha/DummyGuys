@@ -6,12 +6,7 @@ using System.Net.Sockets;
 
 public class Server
 {
-    public static int MAX_PLAYERS_PER_ROOM = 2;
-    public static int MAX_NUMBER_ROOMS = 1;
-    public static int TICKRATE = 30;
-    public static int ROOM_MIN_PORT = 7778;
-    public static bool PLAYER_INTERACTION = true;
-
+    public static string Address { get; private set; }
     public static int Port { get; private set; }
 
     public static bool isActive = false;
@@ -20,7 +15,7 @@ public class Server
 
     public static Dictionary<Guid, Room> Rooms;
 
-    private static TcpListener tcpListener;
+    private static TCP tcp;
 
     //Multicast
     private static List<IPAddress> multicastAddressesInUse;
@@ -29,11 +24,12 @@ public class Server
     /// <summary>Starts the server.</summary>
     /// <param name="_ip">The ip address to start the server on.</param>
     /// <param name="_port">The port to start the server on.</param>
-    public static void Start(string _ip, int _port)
+    public static void Start()
     {
         Stop();
 
-        Port = _port;
+        Address = ServerData.IP;
+        Port = ServerData.PORT;
 
         MainThread = new MainThread();
         ThreadManager.AddThread(MainThread);
@@ -42,25 +38,10 @@ public class Server
         GetMulticastAdresses();
         InitializeRooms();
 
-        tcpListener = new TcpListener(IPAddress.Parse(_ip), Port);
-        tcpListener.Start();
-        tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
+        tcp = new TCP();
+        tcp.Connect(Address, Port);
 
         isActive = true;
-
-        Console.WriteLine($"Server successfuly started, listening on {Port}.");
-    }
-
-    /// <summary>Listens for new connections.</summary>
-    private static void TCPConnectCallback(IAsyncResult _result)
-    {
-        TcpClient client = tcpListener.EndAcceptTcpClient(_result);
-        // Once it connects we want to still keep on listening for more clients so we call it again
-        tcpListener.BeginAcceptTcpClient(new AsyncCallback(TCPConnectCallback), null);
-        Console.WriteLine($"Incoming connection from {client.Client.RemoteEndPoint}...");
-
-        // Handle new connection
-        NewConnection newConnection = new NewConnection(client);
     }
 
     private static void InitializeData()
@@ -73,10 +54,10 @@ public class Server
     {
         Rooms = new Dictionary<Guid, Room>();
 
-        for(int i = 0; i < MAX_NUMBER_ROOMS; i++)
+        for(int i = 0; i < ServerData.MAX_ROOMS; i++)
         {
             Guid newGuid = Guid.NewGuid();
-            Rooms.Add(newGuid, new Room(newGuid, GetNextAdress(), ROOM_MIN_PORT + Rooms.Count));
+            Rooms.Add(newGuid, new Room(newGuid, GetNextAdress(), ServerData.ROOM_MIN_PORT + Rooms.Count));
         }
         Console.WriteLine("Rooms initialized.");
     }
@@ -101,7 +82,7 @@ public class Server
         // Check available dorment rooms
         foreach (Room room in Rooms.Values)
         {
-            if (room.RoomState == RoomState.dorment)
+            if (room.RoomState == RoomState.dormant)
             {
                 foundRoom = room;
                 break;
@@ -178,7 +159,7 @@ public class Server
     {
         if (isActive)
         {
-            tcpListener.Stop();
+            tcp.Stop();
 
             MainThread.ExecuteOnMainThread(() =>
             {
@@ -186,7 +167,43 @@ public class Server
                     room.Stop();
             });
 
+            Rooms.Clear();
+
             isActive = false;
+        }
+    }
+
+    private class TCP
+    {
+        private TcpListener tcpListener;
+
+        public void Connect(string _ip, int _port)
+        {
+            Stop();
+
+            tcpListener = new TcpListener(IPAddress.Parse(_ip), Port);
+            tcpListener.Start();
+            tcpListener.BeginAcceptTcpClient(new AsyncCallback(ConnectCallback), null);
+
+            Console.WriteLine($"Server successfuly started, listening on {Port}.");
+        }
+
+        /// <summary>Listens for new connections.</summary>
+        private void ConnectCallback(IAsyncResult _result)
+        {
+            TcpClient client = tcpListener.EndAcceptTcpClient(_result);
+            // Once it connects we want to still keep on listening for more clients so we call it again
+            tcpListener.BeginAcceptTcpClient(new AsyncCallback(ConnectCallback), null);
+            Console.WriteLine($"Incoming connection from {client.Client.RemoteEndPoint}...");
+
+            // Handle new connection
+            NewConnection newConnection = new NewConnection(client);
+        }
+
+        public void Stop()
+        {
+            if(tcpListener != null)
+                tcpListener.Stop();
         }
     }
 }

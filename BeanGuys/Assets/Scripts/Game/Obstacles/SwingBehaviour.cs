@@ -1,15 +1,17 @@
 ﻿using UnityEngine;
 
-public class SwingBehaviour : MonoBehaviour
+public class SwingBehaviour : Obstacle
 {
     [SerializeField]
     private float speed = 5f;
     [SerializeField]
     private float angle = 30;
+#pragma warning disable 0649
     [SerializeField]
     private float offset;
     [SerializeField]
     private bool left;
+#pragma warning restore 0649
 
     private Quaternion start, end;
 
@@ -22,10 +24,13 @@ public class SwingBehaviour : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        if (left)
-            transform.rotation = Quaternion.Lerp(start, end, ((Mathf.Sin((GameLogic.Clock + offset) * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
-        else
-            transform.rotation = Quaternion.Lerp(end, start, ((Mathf.Sin((GameLogic.Clock + offset) * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
+        if (mapController.isRunning)
+        {
+            if (left)
+                transform.rotation = Quaternion.Lerp(start, end, ((Mathf.Sin((mapController.gameLogic.Clock + offset) * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
+            else
+                transform.rotation = Quaternion.Lerp(end, start, ((Mathf.Sin((mapController.gameLogic.Clock + offset) * speed + Mathf.PI / 2) + 1.0f) / 2.0f));
+        }
     }
 
     // Calculate rotation needed to reach the desired max angle

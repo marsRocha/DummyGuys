@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class Analytics : MonoBehaviour
 {
+#pragma warning disable 0649
     [SerializeField]
     private GameObject content;
     private float nextTime;
@@ -26,6 +27,7 @@ public class Analytics : MonoBehaviour
     [SerializeField]
     private TMP_Text bandwidthDownTxt;
     public static int bandwidthDown;
+#pragma warning restore 0649
 
     // States
     [SerializeField]

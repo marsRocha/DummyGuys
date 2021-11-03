@@ -11,12 +11,10 @@ public class Client : MonoBehaviour
 {
     public static Client instance;
 
-    public static int dataBufferSize = 4096;
-
     public static Dictionary<Guid, Peer> peers = new Dictionary<Guid, Peer>();
 
     //Server Info
-    public IPAddress serverIPaddress { get; private set; }
+    public IPAddress serverIp { get; private set; }
     public int serverPort { get; private set; }
 
     public TCP tcp { get; private set; }
@@ -24,7 +22,7 @@ public class Client : MonoBehaviour
     public Multicast multicast { get; private set; }
 
     //Room Info
-    public IPAddress roomIPaddress { get; private set; }
+    public IPAddress roomIp { get; private set; }
     public int roomPort { get; private set; }
     private static IPEndPoint _localEndPoint; // Client IP, Client Port
     private static IPEndPoint _roomMulticastEndPoint; // Room IP, Room Port - to send multicast messages
@@ -54,11 +52,11 @@ public class Client : MonoBehaviour
     #endregion
 
     /// <summary>Starts Client networking.</summary>
-    public void GoOnline(string _ip, int _port)
+    public void Connect(string _ip, int _port)
     {
         ClientInfo.instance.Id = Guid.NewGuid();
 
-        serverIPaddress = IPAddress.Parse(_ip);
+        serverIp = IPAddress.Parse(_ip);
         serverPort = _port;
 
         tcp = new TCP();
@@ -67,14 +65,14 @@ public class Client : MonoBehaviour
 
         InitializeData();
 
-        isConnected = true;
         tcp.Connect();
     }
 
     public class TCP
     {
         public TcpClient socket;
-
+        
+        public int dataBufferSize;
         private NetworkStream stream;
         private Packet receivedData;
         private byte[] receiveBuffer;
@@ -82,6 +80,7 @@ public class Client : MonoBehaviour
         /// <summary>Attempts to connect to the server via TCP.</summary>
         public void Connect()
         {
+            dataBufferSize = 4096;
             socket = new TcpClient
             {
                 ReceiveBufferSize = dataBufferSize,
@@ -89,7 +88,7 @@ public class Client : MonoBehaviour
             };
 
             receiveBuffer = new byte[dataBufferSize];
-            socket.BeginConnect(instance.serverIPaddress, instance.serverPort, ConnectCallback, socket);
+            socket.BeginConnect(instance.serverIp, instance.serverPort, ConnectCallback, socket);
         }
 
         /// <summary>Initializes the newly connected client's TCP-related info.</summary>
@@ -119,6 +118,7 @@ public class Client : MonoBehaviour
             catch (Exception _ex)
             {
                 Debug.Log($"Error sending data to server via TCP: {_ex}");
+                Disconnect();
             }
         }
 
@@ -130,7 +130,7 @@ public class Client : MonoBehaviour
                 int byteLength = stream.EndRead(result);
                 if (byteLength <= 0)
                 {
-                    instance.Disconnect();
+                    GameManager.instance.Disconnected();
                     return;
                 }
 
@@ -217,7 +217,7 @@ public class Client : MonoBehaviour
         /// <param name="_localPort">The port number to bind the UDP socket to.</param>
         public void Connect(int _localPort)
         {
-            endPoint = new IPEndPoint(instance.serverIPaddress, instance.roomPort);
+            endPoint = new IPEndPoint(instance.serverIp, instance.roomPort);
 
             socket = new UdpClient(_localPort);
 
@@ -285,9 +285,16 @@ public class Client : MonoBehaviour
 
             ThreadManager.ExecuteOnMainThread(() =>
             {
+                // Translate received data into packet and treat it
                 using (Packet packet = new Packet(_data))
                 {
                     int packetId = packet.ReadInt();
+
+                    if (packetId == (int)ServerPackets.pong)
+                    {
+                        ClientHandle.Pong(Guid.Empty, packet);
+                        return;
+                    }
 
                     Guid id = Guid.Empty;
                     try
@@ -322,7 +329,7 @@ public class Client : MonoBehaviour
             _localIPaddress = IPAddress.Any;
 
             // Create endpoints
-            _roomMulticastEndPoint = new IPEndPoint(instance.roomIPaddress, instance.roomPort);
+            _roomMulticastEndPoint = new IPEndPoint(instance.roomIp, instance.roomPort);
             _remoteEndPoint = new IPEndPoint(_localIPaddress, instance.roomPort);
 
             // Create and configure UdpClient
@@ -332,7 +339,7 @@ public class Client : MonoBehaviour
             socket.ExclusiveAddressUse = false;
             // Bind, Join
             socket.Client.Bind(_remoteEndPoint);
-            socket.JoinMulticastGroup(instance.roomIPaddress);
+            socket.JoinMulticastGroup(instance.roomIp);
 
             // Start listening for incoming data
             socket.BeginReceive(new AsyncCallback(ReceiveCallback), null);
@@ -422,9 +429,9 @@ public class Client : MonoBehaviour
     }
 
     /// <summary>Connects udp and multicast to server's room.</summary>
-    public static void ConnectUdp(string _address, int _port)
+    public static void ConnectToRoom(string _address, int _port)
     {
-        instance.roomIPaddress = IPAddress.Parse(_address);
+        instance.roomIp = IPAddress.Parse(_address);
         instance.roomPort = _port;
 
         instance.udp.Connect(((IPEndPoint)instance.tcp.socket.Client.LocalEndPoint).Port);
@@ -445,7 +452,7 @@ public class Client : MonoBehaviour
             isConnected = false;
             // Close connection to room
             udp.socket.Close();
-            multicast.socket.DropMulticastGroup(roomIPaddress);
+            multicast.socket.DropMulticastGroup(roomIp);
             multicast.socket.Close();
             // Close connection to server
             tcp.socket.Close();

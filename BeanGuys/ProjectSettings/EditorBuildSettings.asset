@@ -12,27 +12,18 @@ EditorBuildSettings:
     path: Assets/Scenes/No Network/Map1.unity
     guid: 56ff4d1990d43a443bdd6bb547a247cc
   - enabled: 0
-    path: Assets/Scenes/Map2.unity
-    guid: 6b9d0c494f6fed94ab0f0de06f2e1fa6
-  - enabled: 0
-    path: Assets/Scenes/TestMap.unity
-    guid: 9fc0d4010bbf28b4594072e72b8655ab
-  - enabled: 0
-    path: Assets/Scenes/MainMenu.unity
-    guid: 5057cd9881d3ddb43ad1b606bb49abbc
-  - enabled: 0
-    path: Assets/Scenes/Map1.unity
-    guid: db603eca6f0c5ae4fbcb7ceaab1f9b25
-  - enabled: 1
-    path: Assets/Scenes/MultiplayerCourseTest.unity
-    guid: 79096d09af902204f9eef9601bff39b8
-  - enabled: 0
-    path: Assets/Scenes/MultiplayerSandbox.unity
-    guid: 59e837638717e304cb82504d65b3c4b0
-  - enabled: 0
-    path: Assets/Scenes/noMultiplayerSandbox 1.unity
+    path: Assets/Scenes/Sandbox.unity
     guid: c55047ac0b7aead439ebaa103d03d1f3
   - enabled: 0
-    path: Assets/Scenes/NewMap1.unity
+    path: Assets/Scenes/Sandbox_M.unity
+    guid: 59e837638717e304cb82504d65b3c4b0
+  - enabled: 0
+    path: Assets/Scenes/MainMenu_M.unity
+    guid: 5057cd9881d3ddb43ad1b606bb49abbc
+  - enabled: 1
+    path: Assets/Scenes/TestMap_M.unity
+    guid: 79096d09af902204f9eef9601bff39b8
+  - enabled: 1
+    path: Assets/Scenes/Map1_M.unity
     guid: c3ef3e889dfae8b41a2aef6a67cc1b75
   m_configObjects: {}

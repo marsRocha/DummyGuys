@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class Settings : MonoBehaviour
 {
-    [SerializeField]
-    private PlayerCamera camera;
+#pragma warning disable 0649
+    //[SerializeField]
+    //private PlayerCamera cam;
     [SerializeField]
     private TMP_Dropdown resolutionDropdown;
+#pragma warning restore 0649
     Resolution[] resolutions;
 
     // Start is called before the first frame update

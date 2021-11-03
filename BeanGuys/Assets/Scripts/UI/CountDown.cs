@@ -1,30 +1,23 @@
 ﻿using TMPro;
 using UnityEngine;
 
-public class CountDown : MonoBehaviour
+public class Countdown : MonoBehaviour
 {
+#pragma warning disable 0649
+    [SerializeField]
     private float startTime;
     private float currentTime;
+    [SerializeField]
+    private Transform countdownUI;
+#pragma warning restore 0649
     private TextMeshProUGUI countdownText;
     public bool startCountdown = false;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        startTime = 3;
-        currentTime = startTime;
-        countdownText = this.GetComponent<TextMeshProUGUI>();
-        countdownText.enabled = false;
-    }
-
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
         if (startCountdown)
         {
-            if (!countdownText.enabled)
-                countdownText.enabled = true;
-
             currentTime -= 1 * Time.deltaTime;
 
             if (currentTime >= 1)
@@ -39,8 +32,25 @@ public class CountDown : MonoBehaviour
             if (currentTime <= 0)
             {
                 MapController.instance.StartRace();
-                gameObject.SetActive(false);
+                StopCountdown();
             }
         }
+    }
+
+    public void StartCountdown()
+    {
+        startTime = 3;
+        currentTime = startTime;
+
+        countdownUI.gameObject.SetActive(true);
+        countdownText = countdownUI.GetChild(0).GetComponent<TextMeshProUGUI>();
+        countdownText.enabled = true;
+        startCountdown = true;
+    }
+
+    public void StopCountdown()
+    {
+        countdownUI.gameObject.SetActive(false);
+        this.enabled = false;
     }
 }

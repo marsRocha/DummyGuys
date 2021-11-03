@@ -9,25 +9,22 @@ public class Player : MonoBehaviour
 
     private Rigidbody rb;
     private LogicTimer logicTimer;
+    private PlayerController playerController;
 
     private PlayerState currentPlayerState;
-    private Vector3 velocity, angularVelocity;
 
     private int lastFrame;
     private Queue<PlayerState> playerStates;
-    private SimulationState lastState;
+    private PlayerState lastState;
     public int tick;
 
     private const float AFK_TIMEOUT = 20f;
     private float _afkTimer;
     private bool _inputThisFrame;
     //-----
-    private const float HEARTBEAT_TIMEOUT = 7f;
+    private const float HEARTBEAT_TIMEOUT = 5f;
     private float _heartbeat;
 
-    [Header("Ragdoll Params")]
-    [SerializeField]
-    private LayerMask collision;
     public bool Ragdolled = false;
     [SerializeField]
     private bool Running;
@@ -37,19 +34,20 @@ public class Player : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
         rb.isKinematic = true;
+        playerController = GetComponent<PlayerController>();
 
         _afkTimer = 0;
         lastFrame = 0;
         tick = 0;
         playerStates = new Queue<PlayerState>();
-        velocity = Vector3.zero;
-        angularVelocity = Vector3.zero;
 
-        lastState = new SimulationState(0, transform.position, transform.rotation, velocity, angularVelocity, Ragdolled);
+        lastState = new PlayerState(0, transform.position, transform.rotation, Ragdolled, 0);
     }
 
     private void Start()
     {
+        playerController.Initialize(logicTimer);
+
         logicTimer = new LogicTimer(() => FixedTime());
         logicTimer.Start();
     }
@@ -65,9 +63,9 @@ public class Player : MonoBehaviour
         roomId = _roomId;
     }
 
-    public void StartPlayer()
+    public void StartPlayer(bool _activate)
     {
-        Running = true;
+        Running = _activate;
     }
 
     public void FixedTime()
@@ -87,45 +85,24 @@ public class Player : MonoBehaviour
 
                 lastFrame = currentPlayerState.tick;
 
-                // Obtain the current SimulationState.
-                SimulationState serverSimulationState = new SimulationState(currentPlayerState.tick, transform.position, transform.rotation, velocity, angularVelocity, Ragdolled);
-
                 // Check if the state received is inside certain params
-                CheckSimulationState(serverSimulationState);
-
-                // Update latest received state
-                lastState = serverSimulationState;
+                CheckSimulationState();
             }
 
             AFK_Check();
-
-            Pong_Check();
-        }
-    }
-
-    private bool ProcessState(SimulationState serverSimulationState)
-    {
-        if(currentPlayerState.position != serverSimulationState.position)
-        {
-            Vector3 direction = currentPlayerState.position - transform.position;
-            // Check if player is inside or went through a wall/floor
-            RaycastHit hitTest;
-            Physics.Raycast(transform.position, direction, out hitTest, direction.magnitude, collision);
-            if (hitTest.collider != null)
-                return false;
         }
 
-
-        return true;
+        Pong_Check();
     }
 
     #region Client-Server State Validation
-    public void CheckSimulationState(SimulationState serverSimulationState)
+    public void CheckSimulationState()
     {
         // If there's missing cache data for either input or simulation 
         // snap the player's position to match the server.
         if (currentPlayerState.position == null || currentPlayerState.rotation == null)
         {
+            lastState.tick = currentPlayerState.tick;
             SendCorrection(lastState);
             return;
         }
@@ -134,33 +111,39 @@ public class Player : MonoBehaviour
         // snap the player's position to match the server.
         if (currentPlayerState.tick > tick)
         {
+            lastState.tick = currentPlayerState.tick;
             SendCorrection(lastState);
             return;
         }
 
         // Validate new position/rotation
         // Else snap the player's position to match the server.
-        if (!ProcessState(serverSimulationState))
+        if (!ProcessState())
         {
-            Debug.Log("Not valid.");
+            /*lastState.tick = currentPlayerState.tick;
             SendCorrection(lastState);
-            return;
+            return;*/
         }
 
         // If everything is inside the norms than update server's simulationState
-        SetSimulationState(currentPlayerState);
+        lastState = currentPlayerState;
+        SetSimulationState(lastState);
+    }
+    private bool ProcessState()
+    {
+        return playerController.ProcessState(currentPlayerState, lastState);
     }
 
-    public void SendCorrection(SimulationState state)
+    public void SendCorrection(PlayerState _state)
     {
-        RoomSend.CorrectPlayer(Server.Rooms[roomId].Clients[Id].RoomID, Id, state);
+        RoomSend.CorrectPlayer(Server.Rooms[roomId].Clients[Id].RoomID, Id, _state);
     }
 
-    public void SetSimulationState(PlayerState simulationState)
+    public void SetSimulationState(PlayerState _playerState)
     {
-        transform.position = simulationState.position;
-        transform.rotation = simulationState.rotation;
-        Ragdolled = simulationState.ragdoll;
+        transform.position = _playerState.position;
+        transform.rotation = _playerState.rotation;
+        Ragdolled = _playerState.ragdoll;
     }
     #endregion
 
@@ -169,14 +152,40 @@ public class Player : MonoBehaviour
         playerStates.Enqueue(_playerState);
     }
 
-    public void Respawn(Vector3 _position, Quaternion _rotation)
+    public void ReceivedRespawn(Vector3 _position, Quaternion _rotation)
     {
         rb.isKinematic = true;
         transform.position = _position;
         transform.rotation = _rotation;
-        velocity = Vector3.zero;
         Ragdolled = false;
     }
+
+    #region Actions
+    public Guid TryGrab()
+    {
+        return playerController.TryGrab();
+    }
+
+    public void Grab()
+    {
+        playerController.Grab();
+    }
+
+    public bool GetGrab()
+    {
+        return playerController.GetGrab();
+    }
+
+    public void LetGo()
+    {
+        playerController.LetGo();
+    }
+
+    public Guid TryPush()
+    {
+        return playerController.TryPush();
+    }
+    #endregion
 
     public void Pong()
     {
@@ -188,7 +197,7 @@ public class Player : MonoBehaviour
         _heartbeat += logicTimer.FixedDeltaTime;
         if (_heartbeat > HEARTBEAT_TIMEOUT)
         {
-            Console.WriteLine("HEARTBEAT_TIMEOUT");
+            //Console.WriteLine("HEARTBEAT_TIMEOUT from player[" + Id + "]");
             // Disconnect player
             Server.Rooms[roomId].RemovePlayer(Id);
             Deactivate();
@@ -206,7 +215,7 @@ public class Player : MonoBehaviour
             _afkTimer += logicTimer.FixedDeltaTime;
             if (_afkTimer > AFK_TIMEOUT)
             {
-                Console.WriteLine("AFK_TIMEOUT");
+                //Console.WriteLine("AFK_TIMEOUT from player[" + Id + "]");
                 // Disconnect player
                 Server.Rooms[roomId].RemovePlayer(Id);
                 Deactivate();
@@ -228,8 +237,6 @@ public class Player : MonoBehaviour
 
         transform.position = _position;
         transform.rotation = Quaternion.identity;
-        velocity = Vector3.zero;
-        angularVelocity = Vector3.zero;
 
         Ragdolled = false;
         Running = false;

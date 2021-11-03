@@ -4,8 +4,10 @@ public class RingRadiusController : MonoBehaviour
 {
     Material material;
     private float time;
+#pragma warning disable 0649
     [SerializeField]
     private float speed;
+#pragma warning restore 0649
     private float radius = 0;
     private float randomValue;
 

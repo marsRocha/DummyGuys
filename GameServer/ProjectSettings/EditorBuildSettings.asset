@@ -9,9 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/main.unity
     guid: 0e4d423c8358e674d898ebbf558dea78
   - enabled: 1
-    path: Assets/Scenes/SandboxTest.unity
-    guid: 9fc0d4010bbf28b4594072e72b8655ab
-  - enabled: 1
-    path: Assets/Scenes/CourseTest.unity
+    path: Assets/Scenes/TestMap.unity
     guid: 961a710d91d85c84385c1fa5bd110502
+  - enabled: 1
+    path: Assets/Scenes/Map1.unity
+    guid: 336c4ba231a304d40a2e8213e3b6408d
   m_configObjects: {}

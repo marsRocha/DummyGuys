@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class MenuSceneManager : MonoBehaviour
 {
+#pragma warning disable 0649
     [SerializeField]
     private GameObject MainMenuCamera;
     [SerializeField]
@@ -17,6 +18,7 @@ public class MenuSceneManager : MonoBehaviour
 
     [SerializeField]
     private TMP_Text PlayerCount;
+
     [SerializeField]
     private TMP_Text Quit_txt;
 
@@ -24,6 +26,7 @@ public class MenuSceneManager : MonoBehaviour
     private GameObject menuPlayer;
     [SerializeField]
     private GameObject lookingPlayer;
+#pragma warning restore 0649
 
     private bool state; //true = menu, false = looking
 
@@ -81,9 +84,9 @@ public class MenuSceneManager : MonoBehaviour
         state = true;
     }
 
-    public void UpdatePlayerCountUI(int count)
+    public void UpdatePlayerCountUI(int _playerCount)
     {
-        PlayerCount.text = $"{count}/60 players";
+        PlayerCount.text = $"{_playerCount}/60 players";
     }
 
     public void ExitYes()
@@ -91,7 +94,7 @@ public class MenuSceneManager : MonoBehaviour
         if (state)
             Application.Quit();
         else
-            NetworkManager.instance.GoOffline();
+            Client.instance.Disconnect();
     }
 
     public void ExitCancel()
@@ -103,5 +106,10 @@ public class MenuSceneManager : MonoBehaviour
     {
         menuPlayer.transform.GetChild(1).GetComponent<SkinnedMeshRenderer>().material = PlayerColor.instance.materials[ClientInfo.instance.Color];
         lookingPlayer.transform.GetChild(1).GetComponent<SkinnedMeshRenderer>().material = PlayerColor.instance.materials[ClientInfo.instance.Color];
+    }
+
+    public void ConnectBtn()
+    {
+        NetworkManager.instance.Connect();
     }
 }

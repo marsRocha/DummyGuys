@@ -1,15 +1,20 @@
 ﻿using UnityEngine;
 
-public class SpinBehaviour : MonoBehaviour
+public class SpinBehaviour : Obstacle
 {
+#pragma warning disable 0649
     [SerializeField]
     private Rigidbody rb;
     [SerializeField]
     private float rotationSpeed;
+#pragma warning restore 0649
 
     void Update()
     {
-        rb.rotation = Quaternion.Euler(GameLogic.Clock * rotationSpeed, -90, -90);
-        rb.angularVelocity = Vector3.right * (GameLogic.Clock > 0 ? 2f : 0f);
+        if (mapController.isRunning)
+        {
+            rb.rotation = Quaternion.Euler(mapController.gameLogic.Clock * rotationSpeed, -90, -90);
+            rb.angularVelocity = Vector3.right * (mapController.gameLogic.Clock > 0 ? 2f : 0f);
+        }
     }
 }

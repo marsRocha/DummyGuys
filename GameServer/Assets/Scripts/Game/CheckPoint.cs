@@ -4,8 +4,10 @@ public class CheckPoint : MonoBehaviour
 {
     private RoomScene roomScene;
 
+#pragma warning disable 0649
     [SerializeField]
     private int checkpointIndex;
+#pragma warning restore 0649
 
     // Start is called before the first frame update
     private void Start()

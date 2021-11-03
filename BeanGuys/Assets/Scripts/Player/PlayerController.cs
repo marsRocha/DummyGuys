@@ -5,6 +5,7 @@ public class PlayerController : MonoBehaviour
 {
     // Components
     private Rigidbody rb;
+    public Rigidbody pelvisrb;
     public Transform pelvis;
     private CapsuleCollider cp;
     private Animator animator;
@@ -17,7 +18,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Movement Variables")]
     private float gravityForce = 15f;
-    private float moveSpeed = 250f, turnSpeed = 10f;
+    private float moveSpeed = 250f, turnSpeed = 8f;
     private float jumpForce = 10.6f, jumpCooldown = 0.1f;
     private float diveForwardForce = 7f, diveUpForce = 7f, diveCooldown = 0.5f;
     private float dashforce = 10f, dashTime = 0.5f;
@@ -33,6 +34,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 groundNormal;
     private Vector3 collisionForce, collisionPoint;
 
+#pragma warning disable 0649
     [Header("Particle Systems")]
     [SerializeField]
     private ParticleSystem jumpPs;
@@ -42,24 +44,26 @@ public class PlayerController : MonoBehaviour
     private ParticleSystem respawnPs;
     [SerializeField]
     private ParticleSystem checkpointPs;
+#pragma warning restore 0649
 
     // Collision
     private Vector3 bounceDir;
     private Vector3 bouncePos;
 
     // Grab varuables
-    public GameObject grabbedObj { get; private set; }
+    public Guid grabbedObj { get; private set; }
     public LayerMask interactionMask;
 
     // Pushed variables
     private bool push;
     private Vector3 push_direction;
-    public Guid pushedObj { get; private set; }
     private float pushCooldown = 3.5f, pushTime;
 
     // States
     private bool grounded;
-    private bool ragdolled, getUp;
+    [HideInInspector]
+    public bool ragdolled { get; private set; }
+    private bool getUp;
     private bool jumping;
     private bool diving;
     private bool dashing;
@@ -107,7 +111,6 @@ public class PlayerController : MonoBehaviour
         if (push)
         {
             EnterRagdoll(transform.position);
-
             rb.AddForceAtPosition( push_direction * 60f, transform.position + Vector3.up, ForceMode.Impulse);
 
             playerAudio.PlayImpact(2);
@@ -199,7 +202,7 @@ public class PlayerController : MonoBehaviour
     {
         if (!diving && !dashing && !grabbing)
         {
-            move = new Vector3(currentInputs.HorizontalAxis, 0f, currentInputs.VerticalAxis);
+            move = new Vector3(currentInputs.ForwardAxis, 0f, currentInputs.LateralAxis);
 
             if (move.sqrMagnitude > 0.1f)
             {
@@ -225,7 +228,7 @@ public class PlayerController : MonoBehaviour
                     animator.SetBool("isRunning", true);
                 }
             }
-            else if ((move.x == 0f || move.z == 0f) && (currentInputs.HorizontalAxis == 0 && currentInputs.VerticalAxis == 0))
+            else if ((move.x == 0f || move.z == 0f) && (currentInputs.ForwardAxis == 0 && currentInputs.LateralAxis == 0))
             {
                 animator.SetBool("isRunning", false);
             }
@@ -361,31 +364,29 @@ public class PlayerController : MonoBehaviour
         Physics.Raycast(pelvis.position, transform.forward, out hit, 1, interactionMask);
         if (hit.collider)
         {
-            grabbing = true;
-            grabbedObj = hit.collider.transform.root.gameObject;
             return true;
         }
 
         return false;
     }
 
-    public void StopGrab()
+    public void Grab(Guid _playerGrabbed)
     {
-        animator.SetBool("isGrabbing", false);
-        grabbing = false;
-        grabbedObj = null;
-    }
-
-    // Action confirmed by the server
-    public void Grab(bool _isgrabbing)
-    {
-        grabbing = _isgrabbing;
-        animator.SetBool("isGrabbing", _isgrabbing);
+        grabbing = true;
+        grabbedObj = _playerGrabbed;
+        animator.SetBool("isGrabbing", true);
     }
 
     public void Grabbed(bool _isbeingGrabbed)
     {
         grabbed = _isbeingGrabbed;
+    }
+
+    public void LetGo()
+    {
+        animator.SetBool("isGrabbing", false);
+        grabbing = false;
+        grabbedObj = Guid.Empty;
     }
 
     public bool TryPush()
@@ -399,17 +400,14 @@ public class PlayerController : MonoBehaviour
         Physics.Raycast(pelvis.position, transform.forward, out hit, 2, interactionMask);
         if (hit.collider)
         {
-            pushTime = Time.time + pushCooldown;
-            pushedObj = hit.collider.transform.root.GetComponent<RemotePlayerManager>().Id;
             return true;
         }
         return false;
     }
 
-    public void Push()
+    public void Pushing()
     {
-        animator.SetBool("isGrabbing", true);
-        animator.SetBool("isGrabbing", false);
+        pushTime = Time.time + pushCooldown;
     }
 
     public void Pushed(Vector3 _direction)
@@ -440,7 +438,6 @@ public class PlayerController : MonoBehaviour
         ragdolled = true;
         ResetBehaviours();
 
-        GetComponent<PlayerManager>().Ragdolled = true;
         ragdollController.RagdollIn();
 
         // Player collision effect
@@ -452,7 +449,6 @@ public class PlayerController : MonoBehaviour
         ragdolled = false;
         cp.direction = 1;
         ragdollController.RagdollOut();
-        GetComponent<PlayerManager>().Ragdolled = false;
     }
     #endregion
 
@@ -497,14 +493,6 @@ public class PlayerController : MonoBehaviour
 
             EnterRagdoll(collision.contacts[0].point);
         }
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.black;
-
-        Gizmos.DrawLine(pelvis.position, pelvis.position + (transform.forward.normalized * 2));
-
     }
 
     #region Behavior EFX

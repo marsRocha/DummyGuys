@@ -16,11 +16,4 @@ public class Peer
         Color = _color;
         SpawnId = _spawnId;
     }
-
-    /// <summary>Disconnects player from client's game.</summary>
-    public void Disconnect()
-    {
-        Debug.Log($"Player {Id} has disconnected.");
-        GameManager.instance.RemovePlayer(Id);
-    }
 }

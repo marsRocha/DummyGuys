@@ -18,6 +18,7 @@ public class RemotePlayerManager : MonoBehaviour
     private PlayerAudioManager playerAudio;
     public bool Ragdolled { get; private set; }
 
+#pragma warning disable 0649
     // Effects
     [SerializeField]
     private ParticleSystem jumpPs;
@@ -25,6 +26,7 @@ public class RemotePlayerManager : MonoBehaviour
     private ParticleSystem ckeckpointPs;
     [SerializeField]
     private ParticleSystem respawnPs;
+#pragma warning restore 0649
 
     // Start is called before the first frame update
     void Start()
@@ -53,21 +55,30 @@ public class RemotePlayerManager : MonoBehaviour
     /// <param name="_position">Position of the player state.</param>
     /// <param name="_rotation">Rotation of the player state.</param>
     /// <param name="_ragdoll">If player is ragdolled or not.</param>
-    public void NewPlayerState(int _tick, Vector3 _position, Quaternion _rotation, bool _ragdoll, int _animation)
+    public void ReceivedPlayerState(int _tick, Vector3 _position, Quaternion _rotation, bool _ragdoll, int _animation)
     {
         interpolator.NewPlayerState(_tick, _position, _rotation, _ragdoll, _animation);
     }
 
     /// <summary>Activates ragdoll.</summary>
-    public void EnterRagdoll()
+    public void SetRagdoll(bool activate)
+    {
+        if (activate)
+            EnterRagdoll();
+        else
+            ExitRagdoll();
+    }
+    
+    /// <summary>Activates ragdoll.</summary>
+    private void EnterRagdoll()
     {
         ragdollController.RagdollIn();
         Ragdolled = true;
         playerAudio.PlayImpact(2);
     }
-    
+
     /// <summary>Deactivates ragdoll.</summary>
-    public void ExitRagdoll()
+    private void ExitRagdoll()
     {
         ragdollController.RagdollOut();
         Ragdolled = false;
@@ -151,7 +162,5 @@ public class RemotePlayerManager : MonoBehaviour
         respawnPs.Play();
         playerAudio.PlayEffect(6);
     }
-
-
     #endregion
 }

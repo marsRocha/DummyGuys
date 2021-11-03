@@ -92,10 +92,9 @@ public class Client
                 //handle data
                 stream.BeginRead(receiveBuffer, 0, dataBufferSize, ReceiveCallback, null);
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.Log($"Error receiving TCP data: {ex}");
-                // TODO: disconnect
+                Disconnect();
             }
         }
 
@@ -168,7 +167,7 @@ public class Client
         /// <param name="_packet">The packet to send.</param>
         public void SendData(Packet _packet)
         {
-            Server.Rooms[roomId].SendUDPData(endPoint, _packet);
+            Server.Rooms[roomId].multicastUDP.SendUDPData(endPoint, _packet);
         }
 
         /// <summary>Cleans up the UDP connection.</summary>

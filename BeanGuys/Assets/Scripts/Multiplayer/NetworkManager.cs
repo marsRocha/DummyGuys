@@ -4,48 +4,48 @@ using UnityEngine;
 public class NetworkManager : MonoBehaviour
 {
     public static NetworkManager instance;
+#pragma warning disable 0649
+    [SerializeField]
+    private bool clientTest;
 
-    public TMP_InputField ipText;
-    public TMP_InputField portText;
+    [SerializeField]
+    private TMP_InputField ipText;
+    [SerializeField]
+    private TMP_InputField portText;
 
     [Header("States")]
-    public bool isOnline;
-    public string ip;
-    public int port;
+    [SerializeField]
+    private string ip;
+    [SerializeField]
+    private int port;
+#pragma warning restore 0649
 
     private void Awake()
     {
         instance = this;
     }
-    void Start()
+
+    private void Start()
     {
-        /*isOnline = false;
-        if (GameManager.instance.debug)
-            GoOnline();*/
+        if (clientTest)
+            ConnectTest();
     }
 
     public void Connect()
     {
         ip = ipText.text;
         port = int.Parse(portText.text);
-        GoOnline();
+
+        Client.instance.Connect(ip, port);
     }
 
-    public void SetServer(string _ip)
+    private void ConnectTest()
     {
-        Debug.Log("Server ip changed!");
-        ip = _ip;
-    }
+        TestData.GetData();
 
-    public void GoOnline()
-    {
-        Client.instance.GoOnline(ip, port);
-        isOnline = true;
-    }
-    
-    public void GoOffline()
-    {
-        Client.instance.Disconnect();
-        isOnline = false;
+        ip = TestData.IP;
+        port = TestData.PORT;
+
+        Client.instance.Connect(ip, port);
     }
 }

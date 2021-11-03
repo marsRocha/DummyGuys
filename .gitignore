@@ -33,9 +33,6 @@ sysinfo.txt
 # Builds
 *.apk
 *.unitypackage
-BuildGame_Multiplayer/
-BuildGame_SinglePlayer/
-BuildServer/
 
 .vscode/
 

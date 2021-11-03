@@ -6,25 +6,30 @@ public class MapController : MonoBehaviour
 {
     public static MapController instance;
 
+#pragma warning disable 0649
     // Components
     [SerializeField]
-    private new PlayerCamera camera;
+    private PlayerCamera cam;
     [SerializeField]
     private ParticleSystem confetti;
     [SerializeField]
     private UIManager uiManager;
     [SerializeField]
-    private CountDown startCountDown;
+    private Countdown startCountDown;
     [SerializeField]
     private Timer returnCountDown;
     [SerializeField]
     private Transform[] checkPoints;
     private Vector3[] spawns;
+    [SerializeField]
+    public GameLogic gameLogic;
+#pragma warning restore 0649
 
     public Dictionary<Guid, RemotePlayerManager> players { get; private set; }
-    public PlayerManager localPlayer { get; private set; }
+    public Player localPlayer { get; private set; }
 
     public bool isRunning { get; private set; } = false;
+    private bool disconnected;
 
     private int qualifiedPlayers;
     private int totalPlayers;
@@ -42,12 +47,13 @@ public class MapController : MonoBehaviour
         {
             instance = this;
         }
-        DontDestroyOnLoad(this.gameObject);
     }
     #endregion
 
     public void Initialize()
     {
+        gameLogic = new GameLogic();
+
         spawns = new Vector3[60];
         for (int i = 0; i <= 3; i++)
         {
@@ -69,6 +75,8 @@ public class MapController : MonoBehaviour
 
     public void InitializeDebug()
     {
+        gameLogic = new GameLogic();
+
         spawns = new Vector3[60];
         for (int i = 0; i <= 3; i++)
         {
@@ -88,7 +96,7 @@ public class MapController : MonoBehaviour
 
     public void StartCountDown()
     {
-        startCountDown.startCountdown = true;
+        startCountDown.StartCountdown();
     }
 
     // Update is called once per frame
@@ -96,15 +104,25 @@ public class MapController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            camera.StopFollowMouse();
+            cam.StopFollowMouse();
             uiManager.OpenMenu();
         }
 
         if (isRunning)
         {
-            GameLogic.SetClock(GameLogic.Clock + Time.deltaTime);
+            gameLogic.SetClock(gameLogic.Clock + Time.deltaTime);
+        }
+        else
+        {
+            if(disconnected == true)
+            {
+                cam.StopFollowMouse();
+                uiManager.DisconnectedMenu();
+                disconnected = false;
+            }
         }
     }
+
     private void FixedUpdate()
     {
         // Used only when player's object is deactivated due to crossing finish line,
@@ -119,7 +137,14 @@ public class MapController : MonoBehaviour
     public void StartRace()
     {
         isRunning = true;
-        localPlayer.Running = true;
+        localPlayer.StartPlayer();
+    }
+
+    public void StopRace()
+    {
+        isRunning = false;
+        localPlayer.StopPlayer();
+        disconnected = true;
     }
 
     #region Spawn Players
@@ -135,10 +160,11 @@ public class MapController : MonoBehaviour
         GameObject p = Instantiate((GameObject)Resources.Load("LocalPlayer"), spawns[ClientInfo.instance.SpawnId], Quaternion.identity);
         p.transform.GetChild(0).GetChild(1).GetComponent<SkinnedMeshRenderer>().material = PlayerColor.instance.materials[ClientInfo.instance.Color];
 
-        localPlayer = p.GetComponent<PlayerManager>();
+        localPlayer = p.GetComponent<Player>();
+        localPlayer.Initialize(ClientInfo.instance.Username, gameLogic.playerInteraction);
 
-        camera.enabled = true;
-        camera.SetFollowTargets( p.transform, p.GetComponent<PlayerController>().pelvis);
+        cam.enabled = true;
+        cam.SetFollowTargets( p.transform, p.GetComponent<PlayerController>().pelvis);
     }
 
     public void SpawnRemotePlayer(Guid _id, string _username, int _color)
@@ -155,18 +181,28 @@ public class MapController : MonoBehaviour
     public void LocalPlayerRespawn(int _checkPointNum)
     {
         Vector3 newPos = GetRespawnPosition(ClientInfo.instance.SpawnId, _checkPointNum);
-        localPlayer.Respawn(newPos, Quaternion.identity);
+        localPlayer.ReceivedRespawn(newPos, Quaternion.identity);
     }
 
     private Vector3 GetRespawnPosition(int id, int checkPointNum)
     {
-        Debug.Log($"numCheck:{checkPointNum}");
         if (checkPointNum == 0)
             return spawns[id];
         else
             return checkPoints[checkPointNum - 1].position;
     }
     #endregion
+
+    public void PlayerLeft(Guid _clientId)
+    {
+        GameObject pObj = players[_clientId].gameObject;
+        players.Remove(_clientId);
+        Destroy(pObj);
+
+        totalPlayers = players.Count; // update number of players remaining
+
+        uiManager.UpdateQualifiedNum(qualifiedPlayers, totalPlayers); // updates ui
+    }
 
     public void PlayerFinish(Guid _clientId)
     {
@@ -179,7 +215,7 @@ public class MapController : MonoBehaviour
             uiManager.OnQualified(qualifiedPlayers, totalPlayers, ClientInfo.instance.Username);
 
             // Enter spectate mode
-            camera.StartSpectating();
+            cam.StartSpectating();
         }
         else
         {
@@ -196,15 +232,17 @@ public class MapController : MonoBehaviour
 
     public void EndRace()
     {
-        Debug.Log("Race finished. Go to main menu.");
-        camera.StopFollowMouse();
+        Debug.Log("Race finished.");
+        cam.StopFollowMouse();
         if (!qualified)
             uiManager.UnQualified();
         else 
             uiManager.Qualified();
 
-        returnCountDown.gameObject.SetActive(true);
-        returnCountDown.startCountdown = true;
+        if (!GameManager.instance.debug)
+        {
+            returnCountDown.StartCountdown();
+        }
     }
 
     public Transform GetPlayerTransform(int _index)

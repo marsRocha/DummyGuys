@@ -1,25 +1,40 @@
 ﻿
 public class GameLogic
 {
-    //TODO: MAKE TICKRATE CHANGABLE
-    public static int Tickrate = 30; // Ticks per second 30 - 128;
-    public static int TicksPer100ms = (int)(Tickrate * .1f);
-    public static float SecPerTick = 0.033333f; // ( 1 / Tickrate);
+    public int Tickrate; // Ticks per second 30 - 128;
+    public int lerpPeriod; // in milliseconds
+    public bool playerInteraction;
 
-    public static int Tick { get; private set; } = 0;
-    public static int PredictionTick { get; private set; } = 0;
-    public static int InterpolationTick { get; private set; } = 0;
+    public int DelayedTick;
+    public float SecPerTick; // ( 1 / Tickrate);
 
-    public static float Clock { get; private set; } = 0;
+    public int Tick { get; private set; } = 0;
+    public int InterpolationTick { get; private set; } = 0;
 
-    public static void SetTick(int _serverTick)
+    public float Clock { get; private set; } = 0;
+
+    public GameLogic()
     {
-        Tick = _serverTick;
-        PredictionTick = _serverTick + TicksPer100ms;
-        InterpolationTick = _serverTick - TicksPer100ms;
+        Tickrate = RoomSettings.TICKRATE;
+        lerpPeriod = RoomSettings.INTERPOLATION;
+        playerInteraction = RoomSettings.PLAYER_INTERACTION;
+
+
+        DelayedTick = (int)(Tickrate * (lerpPeriod * 0.001f));
+        SecPerTick = 1 / Tickrate;
+
+        Tick = 0;
+        InterpolationTick = 0;
+        Clock = 0;
     }
 
-    public static void SetClock(float _serverClock)
+    public void SetTick(int _serverTick)
+    {
+        Tick = _serverTick;
+        InterpolationTick = _serverTick - DelayedTick;
+    }
+
+    public void SetClock(float _serverClock)
     {
         Clock = _serverClock;
     }

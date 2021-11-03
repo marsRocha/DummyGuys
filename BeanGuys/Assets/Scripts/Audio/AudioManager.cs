@@ -6,7 +6,7 @@ public class AudioManager : MonoBehaviour
 {
     public static AudioManager instance;
 
-    public new AudioMixer audio;
+    public AudioMixer audioMixer;
     public Sound[] sounds;
 
     private void Awake()
@@ -21,7 +21,7 @@ public class AudioManager : MonoBehaviour
             s.source.volume = s.volume;
             s.source.pitch = s.pitch; // Minimum pitch must be 1
             s.source.loop = s.loop;
-            s.source.outputAudioMixerGroup = audio.FindMatchingGroups("Master")[0];
+            s.source.outputAudioMixerGroup = audioMixer.FindMatchingGroups("Master")[0];
         }
     }
 
@@ -44,6 +44,6 @@ public class AudioManager : MonoBehaviour
 
     public void SetVolume(float volume)
     {
-        audio.SetFloat("volume", volume);
+        audioMixer.SetFloat("volume", volume);
     }
 }

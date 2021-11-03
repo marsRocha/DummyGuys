@@ -10,17 +10,20 @@ public class RagdollController : MonoBehaviour
     private PlayerController playerController;
     private Animator animator;
     private CapsuleCollider cp;
+    private Rigidbody rb;
+#pragma warning disable 0649
     [SerializeField]
     private ConfigurableJoint cj;
-    private Rigidbody rb;
     [SerializeField]
     private Rigidbody pelvis;
+#pragma warning restore 0649
 
     // Ragdoll components
     private Rigidbody[] ragdollRbs;
     private Collider[] ragdollCols;
     private List<BodyPart> bodyParts;
 
+#pragma warning disable 0649
     // Ragdoll Params
     [SerializeField]
     public RagdollState State { get; private set; }
@@ -29,22 +32,23 @@ public class RagdollController : MonoBehaviour
     private float canRecover;
     [SerializeField]
     private float recoverTime;
+#pragma warning restore 0649
 
     // Collision Params
     [SerializeField]
     public float Modifier { get; private set; } = 2;
     [SerializeField]
-    public float ObstacleModifier { get; private set; } = 8;
+    public float ObstacleModifier { get; private set; } = 12;
     [SerializeField]
     public float BounceModifier { get; private set; } = 60;
     [SerializeField]
     public float MinForce { get; private set; } = 15;
 
+#pragma warning disable 0649
     [Header("Transition Params")]
     [SerializeField]
     public float ragdollToMecanimBlendTime = 1f; // Transitioning time from ragdolled to animated
-    [SerializeField]
-    private float mecanimToGetUpTransitionTime = 0.05f;
+#pragma warning restore 0649
     private float ragdollingEndTime = -100; // A helper variable to store the time when we transitioned from ragdolled to blendToAnim state
 
     // Additional vectores for storing the pose the ragdoll ended up in.

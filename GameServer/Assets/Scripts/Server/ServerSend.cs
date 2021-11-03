@@ -10,7 +10,7 @@ public class ServerSend
 
     /// <summary> Sends message accepting new connection. </summary>
     /// <param name="_toClient"></param>
-    public static void Accept(NewConnection _toClient)
+    public static void AcceptConnection(NewConnection _toClient)
     {
         using (Packet packet = new Packet((int)ServerPackets.accept))
         {
@@ -20,7 +20,7 @@ public class ServerSend
 
     /// <summary> Sends message refusing new connection. </summary>
     /// <param name="_toClient"></param>
-    public static void Refuse(NewConnection _toClient)
+    public static void RefuseConnection(NewConnection _toClient)
     {
         using (Packet packet = new Packet((int)ServerPackets.refuse))
         {

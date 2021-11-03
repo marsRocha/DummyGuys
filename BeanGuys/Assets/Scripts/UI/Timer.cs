@@ -5,26 +5,18 @@ public class Timer : MonoBehaviour
 {
     private float startTime;
     private float currentTime;
+#pragma warning disable 0649
+    [SerializeField]
+    private Transform countdownUI;
+#pragma warning restore 0649
     private TextMeshProUGUI countdownText;
     public bool startCountdown = false;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        startTime = 5;
-        currentTime = startTime;
-        countdownText = this.GetComponent<TextMeshProUGUI>();
-        countdownText.enabled = false;
-    }
-
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
         if (startCountdown)
         {
-            if (!countdownText.enabled)
-                countdownText.enabled = true;
-
             currentTime -= 1 * Time.deltaTime;
 
             if (currentTime >= 1)
@@ -34,8 +26,24 @@ public class Timer : MonoBehaviour
 
             if (currentTime <= 0)
             {
-                GameManager.instance.LeaveRoom();
+                StopCountdown();
             }
         }
+    }
+
+    public void StartCountdown()
+    {
+        startTime = 5;
+        currentTime = startTime;
+
+        countdownText = countdownUI.GetComponent<TextMeshProUGUI>();
+        countdownText.enabled = true;
+        startCountdown = true;
+    }
+
+    public void StopCountdown()
+    {
+        GameManager.instance.LeaveRoom();
+        this.enabled = false;
     }
 }

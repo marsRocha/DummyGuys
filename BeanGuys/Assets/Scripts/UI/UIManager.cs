@@ -6,6 +6,7 @@ using UnityEngine;
 /// </summary>
 public class UIManager : MonoBehaviour
 {
+#pragma warning disable 0649
     // Canvas
     [SerializeField]
     private GameObject HUD, Menu;
@@ -24,6 +25,11 @@ public class UIManager : MonoBehaviour
     private Transform qualifiedFeedParent;
     [SerializeField]
     private GameObject qualifiedItem;
+
+    // Disconnected Window
+    [SerializeField]
+    private GameObject disconMenuParent;
+#pragma warning restore 0649
 
     /// <summary>Setup all ui elements.</summary>
     public void Initialize()
@@ -50,6 +56,13 @@ public class UIManager : MonoBehaviour
         Menu.SetActive(menuIsOpen);
     }
 
+    /// <summary> Used for updating the qualified number of players and the total of them </summary>
+    public void UpdateQualifiedNum(int _qualified, int _total)
+    {
+        // Update qualified number text
+        qualifedNum.text = $"{_qualified}/{_total}";
+    }
+
     /// <summary>Activates the winner frame element if player qualified in the race.</summary>
     public void Qualified()
     {
@@ -68,8 +81,7 @@ public class UIManager : MonoBehaviour
     /// <param name="_username">The player's username that qualified.</param>
     public void OnQualified(int _qualified, int _total, string _username)
     {
-        // Update qualified number text
-        qualifedNum.text = $"{_qualified}/{_total}";
+        UpdateQualifiedNum(_qualified, _total);
 
         // Add event to qualified feed
         GameObject item = Instantiate(qualifiedItem, qualifiedFeedParent);
@@ -77,5 +89,15 @@ public class UIManager : MonoBehaviour
         item.transform.GetChild(0).GetComponent<TMP_Text>().text = _username;
         // Destroy object after x seconds
         Destroy(item, 4f);
+    }
+
+    public void DisconnectedMenu()
+    {
+        disconMenuParent.SetActive(true);
+    }
+
+    public void ExitGame()
+    {
+        GameManager.instance.LeaveRoom();
     }
 }

@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 public class LogicTimer
 {
-    public float FramesPerSecond = GameLogic.Tickrate;
+    public float FramesPerSecond = MapController.instance.gameLogic.Tickrate;
     public float FixedDeltaTime = Utils.TickInterval();
 
     private double _accumulator;

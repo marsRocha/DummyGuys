@@ -124,6 +124,12 @@ public class Packet : IDisposable
         return buffer.Count; // Return the length of buffer
     }
 
+    /// <summary>Gets the byte length of the packet's content.</summary>
+    public int GetByteLength()
+    {
+        return Buffer.ByteLength(buffer.ToArray()); // Return the length of buffer
+    }
+
     /// <summary>Gets the length of the unread data contained in the packet.</summary>
     public int UnreadLength()
     {

@@ -10,19 +10,23 @@ public class RagdollController : MonoBehaviour
     private PlayerController playerController;
     private Animator animator;
     private Rigidbody rb;
+#pragma warning disable 0649
     [SerializeField]
     private Rigidbody pelvis;
+#pragma warning restore 0649
 
     // Ragdoll components
     private Rigidbody[] ragdollRbs;
     private Collider[] ragdollCols;
     private List<BodyPart> bodyParts;
 
+#pragma warning disable 0649
     // Ragdoll Params
     [SerializeField]
     public RagdollState State { get; private set; }
     [SerializeField]
     private LayerMask collisionMask;
+#pragma warning restore 0649
     private float canRecover;
     private float recoverTime = 3;
 
@@ -133,7 +137,7 @@ public class RagdollController : MonoBehaviour
             if (ragdollBlendAmount == 0)
             {
                 State = RagdollState.Animated;
-                playerController.ExitRagdoll();
+                //playerController.ExitRagdoll();
                 GetComponent<Player>().Ragdolled = false;
                 animator.transform.localRotation = Quaternion.identity;
             }
@@ -178,7 +182,7 @@ public class RagdollController : MonoBehaviour
         //TODOD: FOR NOW
         State = RagdollState.Animated;
         GetComponent<Player>().Ragdolled = false;
-        playerController.ExitRagdoll();
+        //playerController.ExitRagdoll();
         
         animator.transform.localRotation = Quaternion.identity;
         transform.rotation = Quaternion.identity;
@@ -191,7 +195,7 @@ public class RagdollController : MonoBehaviour
         ActivateRagdollComponents(false);
         State = RagdollState.Animated;
         GetComponent<Player>().Ragdolled = false;
-        playerController.ExitRagdoll();
+        //playerController.ExitRagdoll();
 
         animator.transform.localRotation = Quaternion.identity;
         transform.rotation = Quaternion.identity;
@@ -221,7 +225,7 @@ public class RagdollController : MonoBehaviour
             rb.isKinematic = false;
             ActivateRagdollComponents(false);
             State = RagdollState.Animated;
-            playerController.ExitRagdoll();
+            //playerController.ExitRagdoll();
 
             animator.transform.localRotation = Quaternion.identity;
             transform.rotation = Quaternion.identity;

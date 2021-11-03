@@ -50,10 +50,10 @@ public class RoomSend
 
     public static void MulticastUDPData(Guid _roomId, Packet _packet)
     {
-        //_packet.WriteLength();
-        //Server.Rooms[_roomId].MulticastUDPData(_packet);
+        _packet.WriteLength();
+        Server.Rooms[_roomId].multicastUDP.MulticastUDPData(_packet);
 
-        SendUDPDataToAll(_roomId, _packet);
+        //SendUDPDataToAll(_roomId, _packet);
     }
     #endregion
 
@@ -87,13 +87,13 @@ public class RoomSend
         }
     }
     
-    public static void Map(Guid _roomId, string _mapName)
+    public static void Map(Guid _roomId, int _mapIndex)
     {
         using (Packet _packet = new Packet((int)ServerPackets.map))
         {
             _packet.Write(_roomId);
 
-            _packet.Write(_mapName);
+            _packet.Write(_mapIndex);
 
             SendTCPDataToAll(_roomId, _packet);
         }
@@ -111,6 +111,7 @@ public class RoomSend
 
             // Room configurations
             _packet.Write(_tickrate);
+            _packet.Write(ServerData.PLAYER_INTERACTION);
 
             SendTCPData(_roomId, _toClient, _packet);
         }
@@ -164,7 +165,7 @@ public class RoomSend
         }
     }
     
-    public static void CorrectPlayer(Guid _roomId, Guid _clientId, SimulationState _simulationState)
+    public static void CorrectPlayer(Guid _roomId, Guid _clientId, PlayerState _playerState)
     {
         using (Packet _packet = new Packet((int)ServerPackets.playerCorrection))
         {
@@ -172,12 +173,11 @@ public class RoomSend
 
             _packet.Write(_clientId);
 
-            _packet.Write(_simulationState.simulationFrame);
-            _packet.Write(_simulationState.position);
-            _packet.Write(_simulationState.rotation);
-            _packet.Write(_simulationState.velocity);
-            _packet.Write(_simulationState.angularVelocity);
-            _packet.Write(_simulationState.ragdoll);
+            _packet.Write(_playerState.tick);
+            _packet.Write(_playerState.position);
+            _packet.Write(_playerState.rotation);
+            _packet.Write(_playerState.ragdoll);
+            _packet.Write(_playerState.animation);
 
             SendUDPData(_roomId, _clientId, _packet);
         }
@@ -226,11 +226,24 @@ public class RoomSend
 
     public static void PlayerGrab(Guid _roomId, Guid _grabber, Guid _grabbed)
     {
+        // Send message to the grabber
         using (Packet _packet = new Packet((int)ServerPackets.playerGrab))
         {
             _packet.Write(_roomId);
 
             _packet.Write(_grabber);
+            _packet.Write(_grabbed);
+
+            SendUDPData(_roomId, _grabber, _packet);
+        }
+
+        // Send message to the grabbed
+        using (Packet _packet = new Packet((int)ServerPackets.playerGrab))
+        {
+            _packet.Write(_roomId);
+
+            _packet.Write(_grabber);
+            _packet.Write(_grabbed);
 
             SendUDPData(_roomId, _grabbed, _packet);
         }
@@ -238,11 +251,24 @@ public class RoomSend
 
     public static void PlayerLetGo(Guid _roomId, Guid _grabber, Guid _grabbed)
     {
+        // Send message to the grabber
         using (Packet _packet = new Packet((int)ServerPackets.playerLetGo))
         {
             _packet.Write(_roomId);
 
             _packet.Write(_grabber);
+            _packet.Write(_grabbed);
+
+            SendUDPData(_roomId, _grabber, _packet);
+        }
+
+        // Send message to the grabbed
+        using (Packet _packet = new Packet((int)ServerPackets.playerLetGo))
+        {
+            _packet.Write(_roomId);
+
+            _packet.Write(_grabber);
+            _packet.Write(_grabbed);
 
             SendUDPData(_roomId, _grabbed, _packet);
         }
@@ -250,11 +276,24 @@ public class RoomSend
 
     public static void PlayerPush(Guid _roomId, Guid _pusher, Guid _pushed)
     {
+        // Send message to the pusher
         using (Packet _packet = new Packet((int)ServerPackets.playerPush))
         {
             _packet.Write(_roomId);
 
             _packet.Write(_pusher);
+            _packet.Write(_pushed);
+
+            SendUDPData(_roomId, _pusher, _packet);
+        }
+
+        // Send message to the pushed
+        using (Packet _packet = new Packet((int)ServerPackets.playerPush))
+        {
+            _packet.Write(_roomId);
+
+            _packet.Write(_pusher);
+            _packet.Write(_pushed);
 
             SendUDPData(_roomId, _pushed, _packet);
         }
@@ -287,8 +326,6 @@ public class RoomSend
     {
         using (Packet _packet = new Packet((int)ServerPackets.pong))
         {
-            _packet.Write(_roomId);
-
             SendUDPData( _roomId, _toClient, _packet);
         }
     }
