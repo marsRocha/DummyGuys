@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-/// <summary>Sent from server to client.</summary>
+// Sent from server 
 public enum ServerPackets
 {
     accept = 1,
@@ -15,32 +15,26 @@ public enum ServerPackets
     playerRespawn,
     playerFinish,
     playerCorrection,
-    playerMovement,
     playerGrab,
     playerLetGo,
     playerPush,
     map,
     startGame,
     endGame,
-
     serverTick,
     pong
 }
 
-/// <summary>Sent from client to server.</summary>
+// Sent from client
 public enum ClientPackets
 {
-    introduction = 19,
+    introduction = 18,
     playerMovement,
-    playerAnim,
     playerRespawn,
-    playerFinish,
     playerReady,
     playerGrab,
     playerLetGo,
     playerPush,
-    map,
-    startGame,
     ping
 }
 

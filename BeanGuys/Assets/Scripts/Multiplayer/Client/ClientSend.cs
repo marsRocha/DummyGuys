@@ -45,6 +45,8 @@ public class ClientSend : MonoBehaviour
         _packet.WriteLength();
         Client.instance.multicast.SendData(_packet);
 
+        Debug.Log(_packet.GetByteLength());
+
         Analytics.bandwidthUp += _packet.GetByteLength();
         Analytics.packetsUp++;
     }
@@ -55,7 +57,7 @@ public class ClientSend : MonoBehaviour
     {
         using (Packet _packet = new Packet((int)ClientPackets.introduction))
         {
-            _packet.Write(ClientInfo.instance.Id);
+            _packet.Write(ClientInfo.instance.Id.ToString("N"));
             _packet.Write(ClientInfo.instance.Username);
             _packet.Write(ClientInfo.instance.Color);
 
@@ -67,7 +69,7 @@ public class ClientSend : MonoBehaviour
     {
         using (Packet _packet = new Packet((int)ClientPackets.ping))
         {
-            _packet.Write(ClientInfo.instance.Id);
+            _packet.Write(ClientInfo.instance.Id.ToString("N"));
 
             SendUDPData(_packet);
         }
@@ -81,7 +83,7 @@ public class ClientSend : MonoBehaviour
         Debug.Log("Player sent ready");
         using (Packet _packet = new Packet((int)ClientPackets.playerReady))
         {
-            _packet.Write(ClientInfo.instance.Id);
+            _packet.Write(ClientInfo.instance.Id.ToString("N"));
 
             SendTCPData(_packet);
         }
@@ -93,7 +95,7 @@ public class ClientSend : MonoBehaviour
     {
         using (Packet _packet = new Packet((int)ClientPackets.playerMovement))
         {
-            _packet.Write(ClientInfo.instance.Id); // GUID
+            _packet.Write(ClientInfo.instance.Id.ToString("N")); // GUID
 
             _packet.Write(_state.tick); // int
             _packet.Write(_state.position); // Vector3
@@ -110,7 +112,7 @@ public class ClientSend : MonoBehaviour
     {
         using (Packet _packet = new Packet((int)ClientPackets.playerRespawn))
         {
-            _packet.Write(ClientInfo.instance.Id);
+            _packet.Write(ClientInfo.instance.Id.ToString("N"));
 
             SendTCPData(_packet);
         }
@@ -121,10 +123,10 @@ public class ClientSend : MonoBehaviour
     {
         using (Packet _packet = new Packet((int)ClientPackets.playerGrab))
         {
-            _packet.Write(ClientInfo.instance.Id);
+            _packet.Write(ClientInfo.instance.Id.ToString("N"));
             _packet.Write(_tick);
 
-            SendUDPData(_packet);
+            SendTCPData(_packet);
         }
     }
 
@@ -133,10 +135,10 @@ public class ClientSend : MonoBehaviour
     {
         using (Packet _packet = new Packet((int)ClientPackets.playerLetGo))
         {
-            _packet.Write(ClientInfo.instance.Id);
+            _packet.Write(ClientInfo.instance.Id.ToString("N"));
             _packet.Write(_playerFreed);
 
-            SendUDPData(_packet);
+            SendTCPData(_packet);
         }
     }
 
@@ -145,10 +147,10 @@ public class ClientSend : MonoBehaviour
     {
         using (Packet _packet = new Packet((int)ClientPackets.playerPush))
         {
-            _packet.Write(ClientInfo.instance.Id);
+            _packet.Write(ClientInfo.instance.Id.ToString("N"));
             _packet.Write(_tick);
 
-            SendUDPData(_packet);
+            SendTCPData(_packet);
         }
     }
 }

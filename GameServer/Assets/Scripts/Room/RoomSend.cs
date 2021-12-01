@@ -61,7 +61,7 @@ public class RoomSend
     {
         using (Packet _packet = new Packet((int)ServerPackets.startGame))
         {
-            _packet.Write(_roomId);
+            _packet.Write(_roomId.ToString("N"));
 
             SendTCPDataToAll(_roomId, _packet);
         }
@@ -71,7 +71,7 @@ public class RoomSend
     {
         using (Packet _packet = new Packet((int)ServerPackets.startGame))
         {
-            _packet.Write(_roomId);
+            _packet.Write(_roomId.ToString("N"));
 
             MulticastUDPData(_roomId, _packet);
         }
@@ -81,7 +81,7 @@ public class RoomSend
     {
         using (Packet _packet = new Packet((int)ServerPackets.endGame))
         {
-            _packet.Write(_roomId);
+            _packet.Write(_roomId.ToString("N"));
 
             SendTCPDataToAll(_roomId, _packet);
         }
@@ -91,7 +91,7 @@ public class RoomSend
     {
         using (Packet _packet = new Packet((int)ServerPackets.map))
         {
-            _packet.Write(_roomId);
+            _packet.Write(_roomId.ToString("N"));
 
             _packet.Write(_mapIndex);
 
@@ -103,7 +103,7 @@ public class RoomSend
     {
         using (Packet _packet = new Packet((int)ServerPackets.joinedRoom))
         {
-            _packet.Write(_roomId);
+            _packet.Write(_roomId.ToString("N"));
 
             _packet.Write(_lobbyIP);
             _packet.Write(_lobbyPort);
@@ -126,9 +126,9 @@ public class RoomSend
 
             using (Packet _packet = new Packet((int)ServerPackets.playerJoined))
             {
-                _packet.Write(_roomId);
+                _packet.Write(_roomId.ToString("N"));
 
-                _packet.Write(c.Id);
+                _packet.Write(c.Id.ToString("N"));
                 _packet.Write(c.Username);
                 _packet.Write(c.Color);
                 _packet.Write(c.SpawnId);
@@ -142,9 +142,9 @@ public class RoomSend
     {
         using (Packet _packet = new Packet((int)ServerPackets.playerJoined))
         {
-            _packet.Write(_roomId); // 16
+            _packet.Write(_roomId.ToString("N")); // 16
 
-            _packet.Write(_id); // 16
+            _packet.Write(_id.ToString("N")); // 16
             _packet.Write(_username); // 9
             _packet.Write(_color); // 4
             _packet.Write(_spawnId); // 4
@@ -157,9 +157,9 @@ public class RoomSend
     {
         using (Packet _packet = new Packet((int)ServerPackets.playerLeft))
         {
-            _packet.Write(_roomId);
+            _packet.Write(_roomId.ToString("N"));
 
-            _packet.Write(_clientId);
+            _packet.Write(_clientId.ToString("N"));
 
             SendTCPDataToAll(_roomId, _packet);
         }
@@ -169,9 +169,9 @@ public class RoomSend
     {
         using (Packet _packet = new Packet((int)ServerPackets.playerCorrection))
         {
-            _packet.Write(_roomId);
+            _packet.Write(_roomId.ToString("N"));
 
-            _packet.Write(_clientId);
+            _packet.Write(_clientId.ToString("N"));
 
             _packet.Write(_playerState.tick);
             _packet.Write(_playerState.position);
@@ -183,7 +183,7 @@ public class RoomSend
         }
     }
 
-    public static void PlayerMovement(Guid _roomId, Guid _clientId, PlayerState _playerState)
+    /*public static void PlayerMovement(Guid _roomId, Guid _clientId, PlayerState _playerState)
     {
         using (Packet _packet = new Packet((int)ServerPackets.playerMovement))
         {
@@ -197,15 +197,15 @@ public class RoomSend
 
             SendUDPDataToAll(_roomId, _clientId, _packet);
         }
-    }
+    }*/
 
     public static void PlayerRespawn(Guid _roomId, Guid _clientId, int _checkPointNum)
     {
         using (Packet _packet = new Packet((int)ServerPackets.playerRespawn))
         {
-            _packet.Write(_roomId);
+            _packet.Write(_roomId.ToString("N"));
 
-            _packet.Write(_clientId);
+            _packet.Write(_clientId.ToString("N"));
             _packet.Write(_checkPointNum);
 
             SendTCPData(_roomId, _clientId, _packet);
@@ -216,9 +216,9 @@ public class RoomSend
     {
         using (Packet _packet = new Packet((int)ServerPackets.playerFinish))
         {
-            _packet.Write(_roomId);
+            _packet.Write(_roomId.ToString("N"));
 
-            _packet.Write(_clientId);
+            _packet.Write(_clientId.ToString("N"));
 
             SendTCPDataToAll(_roomId, _packet);
         }
@@ -229,12 +229,12 @@ public class RoomSend
         // Send message to the grabber
         using (Packet _packet = new Packet((int)ServerPackets.playerGrab))
         {
-            _packet.Write(_roomId);
+            _packet.Write(_roomId.ToString("N"));
 
-            _packet.Write(_grabber);
-            _packet.Write(_grabbed);
+            _packet.Write(_grabber.ToString("N"));
+            _packet.Write(_grabbed.ToString("N"));
 
-            SendUDPData(_roomId, _grabber, _packet);
+            SendTCPData(_roomId, _grabber, _packet);
         }
 
         // Send message to the grabbed
@@ -245,7 +245,7 @@ public class RoomSend
             _packet.Write(_grabber);
             _packet.Write(_grabbed);
 
-            SendUDPData(_roomId, _grabbed, _packet);
+            SendTCPData(_roomId, _grabbed, _packet);
         }
     }
 
@@ -254,12 +254,12 @@ public class RoomSend
         // Send message to the grabber
         using (Packet _packet = new Packet((int)ServerPackets.playerLetGo))
         {
-            _packet.Write(_roomId);
+            _packet.Write(_roomId.ToString("N"));
 
-            _packet.Write(_grabber);
-            _packet.Write(_grabbed);
+            _packet.Write(_grabber.ToString("N"));
+            _packet.Write(_grabbed.ToString("N"));
 
-            SendUDPData(_roomId, _grabber, _packet);
+            SendTCPData(_roomId, _grabber, _packet);
         }
 
         // Send message to the grabbed
@@ -270,7 +270,7 @@ public class RoomSend
             _packet.Write(_grabber);
             _packet.Write(_grabbed);
 
-            SendUDPData(_roomId, _grabbed, _packet);
+            SendTCPData(_roomId, _grabbed, _packet);
         }
     }
 
@@ -279,12 +279,12 @@ public class RoomSend
         // Send message to the pusher
         using (Packet _packet = new Packet((int)ServerPackets.playerPush))
         {
-            _packet.Write(_roomId);
+            _packet.Write(_roomId.ToString("N"));
 
-            _packet.Write(_pusher);
-            _packet.Write(_pushed);
+            _packet.Write(_pusher.ToString("N"));
+            _packet.Write(_pushed.ToString("N"));
 
-            SendUDPData(_roomId, _pusher, _packet);
+            SendTCPData(_roomId, _pusher, _packet);
         }
 
         // Send message to the pushed
@@ -295,7 +295,7 @@ public class RoomSend
             _packet.Write(_pusher);
             _packet.Write(_pushed);
 
-            SendUDPData(_roomId, _pushed, _packet);
+            SendTCPData(_roomId, _pushed, _packet);
         }
     }
 
@@ -303,7 +303,7 @@ public class RoomSend
     {
         using (Packet _packet = new Packet((int)ServerPackets.serverTick))
         {
-            _packet.Write(_roomId);
+            _packet.Write(_roomId.ToString("N"));
 
             _packet.Write(_tick);
             _packet.Write(_clock);
@@ -316,7 +316,7 @@ public class RoomSend
     {
         using (Packet _packet = new Packet((int)ServerPackets.disconnected))
         {
-            _packet.Write(_roomId);
+            _packet.Write(_roomId.ToString("N"));
 
             SendTCPDataToAll(_roomId, _packet);
         }

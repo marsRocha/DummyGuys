@@ -13,7 +13,6 @@ public class RoomHandle
                 { (int)ClientPackets.playerReady, PlayerReady },
                 { (int)ClientPackets.playerMovement, PlayerMovement },
                 { (int)ClientPackets.playerRespawn, PlayerRespawn },
-                { (int)ClientPackets.playerFinish, PlayerFinish },
                 { (int)ClientPackets.playerGrab, PlayerGrab },
                 { (int)ClientPackets.playerLetGo, PlayerLetGo },
                 { (int)ClientPackets.playerPush, PlayerPush },
@@ -70,13 +69,6 @@ public class RoomHandle
         int _tick = _packet.ReadInt();
 
         Server.Rooms[_roomId].PlayerPush(_clientId, _tick);
-    }
-
-    public static void PlayerFinish(Guid _roomId, Guid _clientId, Packet _packet)
-    {
-        int _simulationFrame = _packet.ReadInt();
-
-        Server.Rooms[_roomId].PlayerFinish(_clientId, _simulationFrame);
     }
 
     public static void Ping(Guid _roomId, Guid _clientId, Packet _packet)

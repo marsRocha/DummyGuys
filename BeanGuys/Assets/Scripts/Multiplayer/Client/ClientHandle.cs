@@ -28,7 +28,6 @@ public class ClientHandle : MonoBehaviour
             { (int) ServerPackets.endGame, EndGame },
             { (int) ServerPackets.playerRespawn, PlayerRespawn },
             { (int) ServerPackets.playerCorrection, PlayerCorrection },
-            { (int) ServerPackets.playerMovement, PlayerMovement },
             { (int) ServerPackets.playerFinish, PlayerFinish },
             { (int) ServerPackets.playerGrab, PlayerGrab },
             { (int) ServerPackets.playerLetGo, PlayerLetGo },

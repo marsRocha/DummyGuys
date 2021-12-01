@@ -30,6 +30,10 @@ public class RoomScene : MonoBehaviour
 
     private int qualifiedPlayers;
 
+    // Tick state
+    public float tickCountdown = 1f;
+    public float tickCountdownLimit = 1f;
+
     private void Start()
     {
         logicTimer = new LogicTimer(() => FixedTime());
@@ -68,7 +72,13 @@ public class RoomScene : MonoBehaviour
         {
             p.tick = gameLogic.Tick;
         }
-        RoomSend.ServerTick(room.RoomId, gameLogic.Tick, gameLogic.Clock);
+
+        tickCountdown += Time.fixedDeltaTime;
+        if (tickCountdown >= tickCountdownLimit)
+        {
+            tickCountdown = 0;
+            RoomSend.ServerTick(room.RoomId, gameLogic.Tick, gameLogic.Clock);
+        }
     }
 
     public void Initialize(Guid _roomId)

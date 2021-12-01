@@ -3310,7 +3310,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8839415127675817185, guid: ab82005eee36f7a4e86dc2242abdc560, type: 3}
       propertyPath: clientTest
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8839415128699659080, guid: ab82005eee36f7a4e86dc2242abdc560, type: 3}
       propertyPath: audioMixer
@@ -3320,6 +3320,10 @@ PrefabInstance:
       propertyPath: mapController
       value: 
       objectReference: {fileID: 2095060470}
+    - target: {fileID: 8839415128743130412, guid: ab82005eee36f7a4e86dc2242abdc560, type: 3}
+      propertyPath: debug
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8839415128743130413, guid: ab82005eee36f7a4e86dc2242abdc560, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

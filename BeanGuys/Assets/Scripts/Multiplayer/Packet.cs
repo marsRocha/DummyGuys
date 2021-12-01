@@ -15,14 +15,12 @@ public enum ServerPackets
     playerRespawn,
     playerFinish,
     playerCorrection,
-    playerMovement,
     playerGrab,
     playerLetGo,
     playerPush,
     map,
     startGame,
     endGame,
-
     serverTick,
     pong
 }
@@ -30,17 +28,13 @@ public enum ServerPackets
 /// <summary>Sent from client to server.</summary>
 public enum ClientPackets
 {
-    introduction = 19,
+    introduction = 18,
     playerMovement,
-    playerAnim,
     playerRespawn,
-    playerFinish,
     playerReady,
     playerGrab,
     playerLetGo,
     playerPush,
-    map,
-    startGame,
     ping
 }
 

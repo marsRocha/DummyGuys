@@ -18,7 +18,7 @@ public class Player : MonoBehaviour
     private const int CACHE_SIZE = 1024;
     private SimulationState[] simStateCache;
     private ClientInputState[] inputStateCache;
-    public int simulationFrame { get; private set; }
+    public int simulationTick { get; private set; }
 
     private ClientInputState currentInputState;
 
@@ -27,6 +27,9 @@ public class Player : MonoBehaviour
     private int lastCorrectedFrame;
 
     private Vector3 velocity, angularVelocity;
+
+    // Player State Send
+    public float stateTimeInterval, stateLastSent;
 
     [Header("State")]
     public bool Online = false;
@@ -47,7 +50,7 @@ public class Player : MonoBehaviour
         rb.freezeRotation = true;
         rb.isKinematic = true;
 
-        simulationFrame = 0;
+        simulationTick = 0;
         lastCorrectedFrame = 0;
         velocity = Vector3.zero;
         angularVelocity = Vector3.zero;
@@ -56,6 +59,9 @@ public class Player : MonoBehaviour
         serverSimulationState = new PlayerState();
         simStateCache = new SimulationState[CACHE_SIZE];
         inputStateCache = new ClientInputState[CACHE_SIZE];
+
+        stateTimeInterval = MapController.instance.gameLogic.SecPerState;
+        stateLastSent = stateTimeInterval;
     }
 
     void Start()
@@ -90,7 +96,7 @@ public class Player : MonoBehaviour
         currentInputState = new ClientInputState
         {
             Tick = MapController.instance.gameLogic.Tick,
-            SimulationFrame = simulationFrame,
+            SimulationFrame = simulationTick,
             ForwardAxis = Input.GetAxisRaw(playerInput.ForwardAxis),
             LateralAxis = Input.GetAxisRaw(playerInput.LateralAxis),
             Jump = jump,
@@ -147,12 +153,12 @@ public class Player : MonoBehaviour
                 SendMovement();
 
             // Reconciliate
-            if (serverSimulationState != null) Reconciliate();
+            if (serverSimulationState != null) Reconcile();
 
             // Determine current simulationState
             SimulationState simulationState = new SimulationState(currentInputState.SimulationFrame, transform.position, transform.rotation, velocity, angularVelocity, Ragdolled);
 
-            int cacheSlot = simulationFrame % CACHE_SIZE;
+            int cacheSlot = simulationTick % CACHE_SIZE;
 
             // Store the SimulationState into the simulationStateCache 
             simStateCache[cacheSlot] = simulationState;
@@ -161,7 +167,7 @@ public class Player : MonoBehaviour
             inputStateCache[cacheSlot] = currentInputState;
 
             // Move next frame
-            ++simulationFrame;
+            ++simulationTick;
         }
     }
 
@@ -192,12 +198,17 @@ public class Player : MonoBehaviour
 
     private void SendMovement()
     {
-        // Send player state to the network
-        ClientSend.PlayerMovement(new PlayerState(currentInputState.Tick, transform.position, transform.rotation, Ragdolled, playerController.currentAnimation));
+        stateLastSent += logicTimer.FixedDeltaTime;
+        if (stateLastSent >= stateTimeInterval)
+        {
+            stateLastSent = 0;
+            // Send player state to the network
+            ClientSend.PlayerMovement(new PlayerState(currentInputState.Tick, transform.position, transform.rotation, Ragdolled, playerController.currentAnimation));
+        }
     }
 
     #region Client-Server Reconciliation
-    private void Reconciliate()
+    private void Reconcile()
     {
         // Don't reconciliate for old states.
         if (serverSimulationState.tick <= lastCorrectedFrame) return;
@@ -230,14 +241,13 @@ public class Player : MonoBehaviour
         SetPlayerToSimulationState(serverSimulationState);
 
         // Declare the rewindFrame as we're about to resimulate our cached inputs. 
-        int rewindFrame = serverSimulationState.tick;
+        int rewindTick = serverSimulationState.tick;
 
-        // Loop through and apply cached inputs until we're 
-        // caught up to our current simulation frame. 
-        while (rewindFrame < simulationFrame)
+        // Loop through and apply cached inputs until it has reached the current simulation tick
+        while (rewindTick < simulationTick)
         {
             // Determine the cache index 
-            int rewindCacheIndex = rewindFrame % CACHE_SIZE;
+            int rewindCacheIndex = rewindTick % CACHE_SIZE;
 
             // Obtain the cached input and simulation states.
             ClientInputState rewindCachedInputState = inputStateCache[rewindCacheIndex];
@@ -247,7 +257,7 @@ public class Player : MonoBehaviour
             // increment the rewindFrame and continue.
             if (rewindCachedInputState == null || rewindCachedSimulationState == null)
             {
-                ++rewindFrame;
+                ++rewindTick;
                 continue;
             }
 
@@ -255,11 +265,12 @@ public class Player : MonoBehaviour
             ProcessInput(rewindCachedInputState);
 
             // Replace the simulationStateCache index with the new value.
-            SimulationState rewoundSimulationState = new SimulationState(rewindFrame, transform.position, transform.rotation, velocity, angularVelocity, Ragdolled);
+            SimulationState rewoundSimulationState = new SimulationState(rewindTick, 
+                transform.position, transform.rotation, velocity, angularVelocity, Ragdolled);
             simStateCache[rewindCacheIndex] = rewoundSimulationState;
 
-            // Increase the amount of frames that we've rewound.
-            ++rewindFrame;
+            // Increase the amount of ticks rewinded.
+            ++rewindTick;
         }
 
         // Once we're complete, update the lastCorrectedFrame to match.
