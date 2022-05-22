@@ -9,8 +9,8 @@ public class Client
     public readonly string Username;
     public readonly int Color;
 
-    public int SpawnId;
-    public readonly Guid RoomID;
+    public int ClientRoomId { get; private set; }
+    public readonly int RoomID;
     public bool ready, finished;
 
     public Player Player { get; private set; }
@@ -20,14 +20,14 @@ public class Client
     public TCP tcp;
     public UDP udp;
 
-    public Client(Guid _id, string _username, int _color, Guid _roomId)
+    public Client(Guid _id, string _username, int _color, int _roomId)
     {
         Id = _id;
         Username = _username;
         Color = _color;
         RoomID = _roomId;
 
-        tcp = new TCP(Id, RoomID);
+        tcp = new TCP(RoomID);
         udp = new UDP(RoomID);
     }
 
@@ -37,12 +37,11 @@ public class Client
         private NetworkStream stream;
         private Packet receivedData;
         private byte[] receiveBuffer;
-        private readonly Guid id;
-        private readonly Guid roomId;
+        private int clientRoomId;
+        private readonly int roomId;
 
-        public TCP(Guid _clientId, Guid _roomId)
+        public TCP(int _roomId)
         {
-            id = _clientId;
             roomId = _roomId;
         }
 
@@ -68,9 +67,9 @@ public class Client
                     stream.BeginWrite(packet.ToArray(), 0, packet.Length(), null, null);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.Log($"Error sending data to player {id} via TCP: {ex}");
+                //Debug.Log($"Error sending data to player {playerRoomId} via TCP: {ex}");
             }
         }
 
@@ -81,7 +80,7 @@ public class Client
                 int byteLength = stream.EndRead(result);
                 if (byteLength <= 0)
                 {
-                    Server.Rooms[roomId].RemovePlayer(id);
+                    Server.Rooms[roomId].RemovePlayer(clientRoomId);
                     return;
                 }
 
@@ -105,27 +104,27 @@ public class Client
             receivedData.SetBytes(data);
             if (receivedData.UnreadLength() >= 4)
             {
-                packetLength = receivedData.ReadInt();
+                packetLength = receivedData.GetInt();
                 if (packetLength <= 0)
                     return true;
             }
 
             while (packetLength > 0 && packetLength <= receivedData.UnreadLength())
             {
-                byte[] packetBytes = receivedData.ReadBytes(packetLength);
-                Server.MainThread.ExecuteOnMainThread(() =>
+                byte[] packetBytes = receivedData.GetBytes(packetLength);
+                Server.MainThread.ExecuteOnMain(() =>
                 {
                     using (Packet packet = new Packet(packetBytes))
                     {
-                        int packetId = packet.ReadInt();
-                        RoomHandle.packetHandlers[packetId](roomId, id, packet);
+                        int packetId = packet.GetInt();
+                        RoomHandle.packetHandlers[packetId](roomId, clientRoomId, packet);
                     }
                 });
 
                 packetLength = 0;
                 if (receivedData.UnreadLength() >= 4)
                 {
-                    packetLength = receivedData.ReadInt();
+                    packetLength = receivedData.GetInt();
                     if (packetLength <= 0)
                         return true;
                 }
@@ -144,14 +143,19 @@ public class Client
             receiveBuffer = null;
             socket = null;
         }
+
+        public void SetClientRoomId(int _playerRoomId)
+        {
+            clientRoomId = _playerRoomId;
+        }
     }
 
     public class UDP
     {
         public IPEndPoint endPoint;
-        private readonly Guid roomId;
+        private readonly int roomId;
 
-        public UDP(Guid _roomId)
+        public UDP(int _roomId)
         {
             roomId = _roomId;
         }
@@ -177,10 +181,15 @@ public class Client
         }
     }
 
-    public void Pong()
+    public void Ping()
     {
-        if(Player != null)
-            Player.Pong();
+        if (Player != null)
+        {
+            lock (Player)
+            {
+                Player.Ping();
+            }
+        }
     }
 
     public void Disconnect()
@@ -190,6 +199,13 @@ public class Client
 
         if (Player)
             Player.Deactivate();
+    }
+
+    public void SetPlayerRoomId(int _playerRoomId)
+    {
+        ClientRoomId = _playerRoomId;
+
+        tcp.SetClientRoomId(_playerRoomId);
     }
 
     public void SetPlayer(Player _player)

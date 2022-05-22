@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class ServerData
 {
-    public static int TICKRATE { get; private set; }
+    public static int TICK_RATE { get; private set; }
     public static int MAX_ROOM_PLAYERS { get; private set; }
     public static int MAX_ROOMS { get; private set; }
     public static bool PLAYER_INTERACTION { get; private set; }
@@ -13,6 +13,8 @@ public class ServerData
     public static int PORT { get; private set; }
     public static int ROOM_MIN_PORT { get; private set; }
     public static bool DEBUG { get; private set; }
+    public static bool LOCAL { get; private set; }
+    public static bool COUNT_PROCESSES { get; private set; }
     public static bool DORMENT_ROOMS { get; private set; }
     public static bool LAG_COMPENSATION { get; private set; }
 
@@ -22,7 +24,7 @@ public class ServerData
         string[] properties = ReadProperties();
 
         // Set properties
-        TICKRATE = int.Parse(properties[0]);
+        TICK_RATE = int.Parse(properties[0]);
         MAX_ROOM_PLAYERS = int.Parse(properties[2]);
         MAX_ROOMS = int.Parse(properties[3]);
         PLAYER_INTERACTION = bool.Parse(properties[4]);
@@ -30,10 +32,12 @@ public class ServerData
         PORT = int.Parse(properties[6]);
         ROOM_MIN_PORT = int.Parse(properties[7]);
         DEBUG = bool.Parse(properties[8]);
-        DORMENT_ROOMS = bool.Parse(properties[9]);
-        LAG_COMPENSATION = bool.Parse(properties[10]);
+        LOCAL = bool.Parse(properties[9]);
+        COUNT_PROCESSES = bool.Parse(properties[10]);
+        DORMENT_ROOMS = bool.Parse(properties[11]);
+        LAG_COMPENSATION = bool.Parse(properties[12]);
 
-        Application.targetFrameRate = TICKRATE;
+        Application.targetFrameRate = TICK_RATE;
         QualitySettings.vSyncCount = int.Parse(properties[1]);
     }
 
@@ -51,7 +55,7 @@ public class ServerData
 
         string[] content = File.ReadAllLines(path);
 
-        string[] values = new string[11];
+        string[] values = new string[13];
 
         for (int i = 0; i < content.Length; i++)
         {

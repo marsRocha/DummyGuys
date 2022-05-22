@@ -7,31 +7,41 @@ using UnityEngine;
 
 public partial class Room
 {
-    public Guid RoomId { get; set; }
+    public int RoomId { get; set; }
     public RoomState RoomState { get; set; }
 
     public MulticastUDP multicastUDP { get; private set; }
-    private MainThread _roomThread;
+    private MessageQueue _roomThread;
 
-    private readonly int tickrate = ServerData.TICKRATE;
+    private readonly int tickrate = ServerData.TICK_RATE;
     private int mapIndex;
 
     public RoomScene roomScene { get; set; }
-    public Dictionary<Guid, Client> Clients { get; set; }
+    public Dictionary<int, Client> Clients { get; set; }
     public List<int> UsedSpawnIds { get; set; }
 
-    public Room(Guid _id, string _multicastIP, int _multicastPort)
+    public Room(int _id, string _multicastIP, int _multicastPort)
     {
         RoomId = _id;
 
         multicastUDP = new MulticastUDP(this, IPAddress.Parse(_multicastIP), _multicastPort);
 
-        _roomThread = new MainThread();
-        ThreadManager.AddThread(_roomThread);
+        _roomThread = new MessageQueue();
+        MessageQueuer.AddQueue(_roomThread);
 
         RoomState = RoomState.dormant;
-        Clients = new Dictionary<Guid, Client>();
+        Clients = new Dictionary<int, Client>();
         UsedSpawnIds = new List<int>();
+
+        // Check if maximum player capacity has been reached
+        if (ServerData.MAX_ROOM_PLAYERS == 0)
+        {
+            RoomState = RoomState.full;
+            // Initialize map scene
+            LoadMap();
+        }
+
+        Debug.Log($"Room[{RoomId}] started [Ip:{_multicastIP} Port:{_multicastPort}]");
     }
 
     public void Awaken()
@@ -41,24 +51,25 @@ public partial class Room
     }
 
     #region Methods
-    public int AddPlayer(Client _client)
+    public void AddPlayer(Client _client)
     {
-        Console.WriteLine($"Player[{_client.Id}] has joined the Room[{RoomId}]");
-        // Add player to the room clients
-        Clients.Add(_client.Id, _client);
+        Console.WriteLine($"Player[{_client.Id}] has joined the Room[{RoomId}][c:{Clients.Count}]");
         // Get room id (user for spawning) and set it to the client
-        int spawnId = GetServerPos();
-        _client.SpawnId = spawnId;
+        int playerRoomId = GetServerPos();
+        // Add player to the room clients
+        Clients.Add(playerRoomId, _client);
         // Add room id to the used list
-        UsedSpawnIds.Add(spawnId);
+        _client.SetPlayerRoomId(playerRoomId);
+
+        UsedSpawnIds.Add(playerRoomId);
 
         // Inform the client that joined the room and it's information
-        RoomSend.JoinedRoom(_client.RoomID, _client.Id, multicastUDP.Ip.ToString(), multicastUDP.Port, _client.SpawnId, tickrate);
+        RoomSend.JoinedRoom(_client.RoomID, multicastUDP.Ip.ToString(), multicastUDP.Port, _client.ClientRoomId, tickrate);
         // Send the players already in the room, if any
-        RoomSend.PlayersInRoom(RoomId, _client.Id);
+        RoomSend.PlayersInRoom(RoomId, _client.ClientRoomId);
 
         // Finally, tell everyone in the room that the player has joined
-        RoomSend.NewPlayer(RoomId, _client.Id, _client.Username, _client.Color, _client.SpawnId);
+        RoomSend.NewPlayer(RoomId, _client.Id, _client.ClientRoomId, _client.Username, _client.Color);
 
         // Check if maximum player capacity has been reached
         if (Clients.Count >= ServerData.MAX_ROOM_PLAYERS)
@@ -67,19 +78,17 @@ public partial class Room
             // Initialize map scene
             LoadMap();
         }
-
-        return spawnId;
     }
 
-    public void RemovePlayer(Guid _clientId)
+    public void RemovePlayer(int _clientRoomId)
     {
         // Had to put on here because it's not called by a message thus not being locked, this is called by an event
-        _roomThread.ExecuteOnMainThread(() =>
+        _roomThread.ExecuteOnMain(() =>
         {
-            Console.WriteLine($"Player[{_clientId}] has left the Room[{RoomId}]");
-            Clients[_clientId].Disconnect();
-            UsedSpawnIds.Remove(Clients[_clientId].SpawnId);
-            Clients.Remove(_clientId);
+            Console.WriteLine($"Player[{_clientRoomId}] has left the Room[{RoomId}][c:{Clients.Count}]");
+            Clients[_clientRoomId].Disconnect();
+            UsedSpawnIds.Remove(Clients[_clientRoomId].ClientRoomId);
+            Clients.Remove(_clientRoomId);
 
             if (Clients.Count == 0)
             {
@@ -91,12 +100,14 @@ public partial class Room
                 RoomState = RoomState.looking;
             }
 
-            RoomSend.PlayerLeft(RoomId, _clientId);
+            RoomSend.PlayerLeft(RoomId, _clientRoomId);
         });
     }
 
     public void LoadMap()
     {
+        Console.WriteLine($"Room[{RoomId}] is loading scene.");
+
         if (ServerData.DEBUG) 
         {
             mapIndex = 1; // Equivalates to the test map
@@ -107,7 +118,7 @@ public partial class Room
             mapIndex = 2;
         }
 
-        //Add new room scene
+        // Load new room scene
         PhysicsSceneManager.AddSimulation(RoomId, mapIndex);
     }
 
@@ -115,14 +126,20 @@ public partial class Room
     {
         roomScene.Initialize(RoomId);
 
-        // Used to give time for the players connected
-        Thread.Sleep(2000);
-        RoomSend.Map(RoomId, mapIndex);
+        if(ServerData.MAX_ROOM_PLAYERS != 0) 
+        {
+            Thread.Sleep(2000); // Used to give time for the players connected
+            RoomSend.Map(RoomId, mapIndex);
+        }
+        else
+        {
+            StartGame();
+        }
     }
 
-    public void PlayerReady(Guid _clientId)
+    public void PlayerReady(int _clientRoomId)
     {
-        Clients[_clientId].ready = true;
+        Clients[_clientRoomId].ready = true;
 
         // Check if room can start game
         int count = 0;
@@ -137,7 +154,7 @@ public partial class Room
 
     public void StartGame()
     {
-        Console.WriteLine($"Game has started on Room[{RoomId}]");
+        Console.WriteLine($"\nGame has started on Room[{RoomId}]\n");
         RoomState = RoomState.playing;
 
         if (!ServerData.DEBUG)
@@ -148,25 +165,23 @@ public partial class Room
         RoomSend.StartGame(RoomId);
     }
 
-    public void PlayerFinish(Guid _clientId, int _simulationFrame)
+    public void PlayerFinish(int _clientRoomId, int _simulationFrame)
     {
-        //TODO: Check if is correct
-
-        roomScene.FinishRacePlayer(_clientId);
-        RoomSend.PlayerFinish(RoomId, _clientId);
+        roomScene.FinishRacePlayer(_clientRoomId);
+        RoomSend.PlayerFinish(RoomId, _clientRoomId);
     }
 
-    public void PlayerGrab(Guid _grabber, int _tick)
+    public void PlayerGrab(int _grabber, int _tick)
     {
         roomScene.PlayerGrab(_grabber, _tick);        
     }
 
-    public void PlayerLetGo(Guid _grabber, Guid _grabbed)
+    public void PlayerLetGo(int _grabber, int _grabbed)
     {
         roomScene.PlayerLetGo(_grabber, _grabbed);
     }
 
-    public void PlayerPush(Guid _pusher, int _tick)
+    public void PlayerPush(int _pusher, int _tick)
     {
         roomScene.PlayerPush(_pusher, _tick);
     }
@@ -183,7 +198,7 @@ public partial class Room
         if(RoomState != RoomState.closing)
             RoomSend.Disconnected(RoomId);
 
-        ThreadManager.RemoveThread(_roomThread);
+        MessageQueuer.RemoveQueue(_roomThread);
         if (roomScene)
             roomScene.Stop();
         multicastUDP.Close();
@@ -213,11 +228,11 @@ public partial class Room
     private int GetServerPos()
     {
         System.Random r = new System.Random();
-        int rInt = r.Next(0, 60);
+        int rInt = r.Next(1, 61);
 
         while (UsedSpawnIds.Contains(rInt))
         {
-            rInt = r.Next(0, 60);
+            rInt = r.Next(1, 61);
         }
 
         return rInt;
@@ -250,9 +265,14 @@ public partial class Room
             _localEndPoint = new IPEndPoint(_localIPaddress, Port);
             // Create and configure UdpClient
             RoomUdp = new UdpClient();
-            // The following two lines allow multiple clients on the same PC
-            RoomUdp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            RoomUdp.ExclusiveAddressUse = false;
+            if (ServerData.LOCAL)
+            {
+                // The following two lines allow multiple clients on the same PC
+                RoomUdp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                RoomUdp.ExclusiveAddressUse = false;
+            }
+            else RoomUdp.MulticastLoopback = false;
+
             // Bind, Join
             RoomUdp.Client.Bind(_localEndPoint);
             RoomUdp.JoinMulticastGroup(Ip);
@@ -277,40 +297,35 @@ public partial class Room
             //Handle Data
             using (Packet packet = new Packet(data))
             {
-                int packetLength = packet.ReadInt();
-                byte[] packetBytes = packet.ReadBytes(packetLength);
+                int packetLength = packet.GetInt();
+                byte[] packetBytes = packet.GetBytes(packetLength);
 
-                _room._roomThread.ExecuteOnMainThread(() =>
+                _room._roomThread.ExecuteOnMain(() =>
                 {
                     // Handle Message Data
                     using (Packet message = new Packet(packetBytes))
                     {
-                        int packetId = message.ReadInt();
+                        int packetId = message.GetInt();
 
-                        Guid clientId = Guid.Empty;
-                        try
-                        {
-                            clientId = message.ReadGuid();
-                        }
-                        catch { };
+                        int id = message.GetInt();
 
-                        if (clientId == Guid.Empty || clientId == _room.RoomId)
+                        if (id == 0 || id == _room.RoomId)
                             return;
 
-                        if (_room.Clients[clientId].udp.endPoint == null)
+                        if (_room.Clients[id] == null)
+                            return;
+
+                        if (_room.Clients[id].udp.endPoint == null)
                         {
                             // If this is a new connection
-                            _room.Clients[clientId].udp.Connect(_clientEndPoint);
+                            _room.Clients[id].udp.Connect(_clientEndPoint);
                             return;
                         }
 
                         //verify if the endpoint corresponds to the endpoint that sent the data
-                        //this is for security reasons otherwise hackers could inpersonate other clients by send a clientId that does not corresponds to them
                         //without the string conversion even if the endpoint matched it returned false
-                        if (_room.Clients[clientId] != null) // && Clients[clientId].udp.endPoint.ToString() == _clientEndPoint.ToString())
-                        {
-                            RoomHandle.packetHandlers[packetId](_room.RoomId, clientId, message);
-                        }
+                        //if (_room.Clients[id] != null) // && Clients[clientId].udp.endPoint.ToString() == _clientEndPoint.ToString())
+                        RoomHandle.packetHandlers[packetId](_room.RoomId, id, message);
                     }
                 });
             }

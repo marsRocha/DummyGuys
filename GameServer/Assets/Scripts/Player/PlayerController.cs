@@ -64,7 +64,7 @@ public class PlayerController : MonoBehaviour
     }
 
     #region Actions
-    public Guid TryGrab()
+    public int TryGrab()
     {
         RaycastHit hit;
         physicsScene.Raycast(pelvis.position, transform.forward, out hit, 1, interactionMask);
@@ -73,7 +73,7 @@ public class PlayerController : MonoBehaviour
             return hit.collider.transform.root.gameObject.GetComponent<Player>().Id;
         }
 
-        return Guid.Empty;
+        return -1; // meaning it didn't find anyone
     }
 
     public void Grab()
@@ -91,7 +91,7 @@ public class PlayerController : MonoBehaviour
         Grabbing = false;
     }
 
-    public Guid TryPush()
+    public int TryPush()
     {
         RaycastHit hit;
         physicsScene.Raycast(pelvis.position, transform.forward, out hit, 2, interactionMask);
@@ -100,7 +100,7 @@ public class PlayerController : MonoBehaviour
             return hit.collider.transform.root.GetComponent<Player>().Id;
         }
 
-        return Guid.Empty;
+        return -1; // meaning it didn't find anyone
     }
     #endregion
 }

@@ -11,7 +11,7 @@ public class GameLogic
 
     public GameLogic()
     {
-        Tickrate = ServerData.TICKRATE;
+        Tickrate = ServerData.TICK_RATE;
         playerInteraction = ServerData.PLAYER_INTERACTION;
 
         Tick = 0;

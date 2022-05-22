@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    public Guid Id { get; private set; }
-    private Guid roomId;
+    public int Id { get; private set; }
+    private int roomId;
 
     private Rigidbody rb;
     private LogicTimer logicTimer;
@@ -18,11 +18,11 @@ public class Player : MonoBehaviour
     private PlayerState lastState;
     public int tick;
 
-    private const float AFK_TIMEOUT = 20f;
+    private const float AFK_TIMEOUT = 10f;
     private float _afkTimer;
     private bool _inputThisFrame;
     //-----
-    private const float HEARTBEAT_TIMEOUT = 5f;
+    private const float HEARTBEAT_TIMEOUT = 10f;
     private float _heartbeat;
 
     public bool Ragdolled = false;
@@ -55,9 +55,14 @@ public class Player : MonoBehaviour
     private void Update()
     {
         logicTimer.Update();
+
+        Pong_Check();
+
+        if(Running)
+            AFK_Check();
     }
 
-    public void Initialize(Guid _id, Guid _roomId)
+    public void Initialize(int _id, int _roomId)
     {
         Id = _id;
         roomId = _roomId;
@@ -88,11 +93,7 @@ public class Player : MonoBehaviour
                 // Check if the state received is inside certain params
                 CheckSimulationState();
             }
-
-            AFK_Check();
         }
-
-        Pong_Check();
     }
 
     #region Client-Server State Validation
@@ -161,7 +162,7 @@ public class Player : MonoBehaviour
     }
 
     #region Actions
-    public Guid TryGrab()
+    public int TryGrab()
     {
         return playerController.TryGrab();
     }
@@ -181,23 +182,23 @@ public class Player : MonoBehaviour
         playerController.LetGo();
     }
 
-    public Guid TryPush()
+    public int TryPush()
     {
         return playerController.TryPush();
     }
     #endregion
 
-    public void Pong()
+    public void Ping()
     {
         _heartbeat = 0.0f;
     }
 
     public void Pong_Check()
     {
-        _heartbeat += logicTimer.FixedDeltaTime;
+        _heartbeat += Time.deltaTime;
         if (_heartbeat > HEARTBEAT_TIMEOUT)
         {
-            //Console.WriteLine("HEARTBEAT_TIMEOUT from player[" + Id + "]");
+            Console.WriteLine("HEARTBEAT_TIMEOUT from player[" + Id + "]");
             // Disconnect player
             Server.Rooms[roomId].RemovePlayer(Id);
             Deactivate();
@@ -212,10 +213,10 @@ public class Player : MonoBehaviour
         }
         else
         {
-            _afkTimer += logicTimer.FixedDeltaTime;
+            _afkTimer += Time.deltaTime;
             if (_afkTimer > AFK_TIMEOUT)
             {
-                //Console.WriteLine("AFK_TIMEOUT from player[" + Id + "]");
+                Console.WriteLine("AFK_TIMEOUT from player[" + Id + "] on Room[{roomId}]");
                 // Disconnect player
                 Server.Rooms[roomId].RemovePlayer(Id);
                 Deactivate();

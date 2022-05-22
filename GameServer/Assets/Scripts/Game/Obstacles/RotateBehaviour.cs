@@ -12,7 +12,7 @@ public class RotateBehaviour : Obstacle
 #pragma warning restore 0649
 
     // Start is called before the first frame update
-    private void Start()
+    private void Awake()
     {
         rb.centerOfMass = Vector3.zero;
     }

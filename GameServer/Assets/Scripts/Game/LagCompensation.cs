@@ -5,9 +5,9 @@ using UnityEngine;
 public class LagCompensation
 {
     private RoomScene roomScene;
-    private Dictionary<Guid, List<PlayerRecord>> playerRecords;
+    private Dictionary<int, List<PlayerRecord>> playerRecords;
 #pragma warning disable 0649
-    private Dictionary<Guid, PlayerRecord> backupRecords;
+    private Dictionary<int, PlayerRecord> backupRecords;
 #pragma warning restore 0649
 
     private static float maxLagComp = 1;
@@ -22,7 +22,7 @@ public class LagCompensation
     public void Start()
     {
         //Initialize playerRecords
-        playerRecords = new Dictionary<Guid, List<PlayerRecord>>();
+        playerRecords = new Dictionary<int, List<PlayerRecord>>();
         foreach (Player player in roomScene.players.Values)
         {
             playerRecords.Add(player.Id, new List<PlayerRecord>());
@@ -43,30 +43,30 @@ public class LagCompensation
         if (isActive)
         {
             // Loop through every player
-            foreach (Guid _clientId in playerRecords.Keys)
+            foreach (int _clientRoomId in playerRecords.Keys)
             {
                 // Player doesnt exist, so clear all records
-                if (!roomScene.players[_clientId])
+                if (!roomScene.players[_clientRoomId])
                 {
-                    playerRecords.Remove(_clientId);
+                    playerRecords.Remove(_clientRoomId);
                     continue;
                 }
 
                 // Add a record this tick
-                playerRecords[_clientId].Add(new PlayerRecord(roomScene.players[_clientId].transform.position, roomScene.players[_clientId].transform.rotation, roomScene.players[_clientId].tick));
+                playerRecords[_clientRoomId].Add(new PlayerRecord(roomScene.players[_clientRoomId].transform.position, roomScene.players[_clientRoomId].transform.rotation, roomScene.players[_clientRoomId].tick));
 
                 // Loop through every record
-                for (int i = 0; i < playerRecords[_clientId].Count; i++)
+                for (int i = 0; i < playerRecords[_clientRoomId].Count; i++)
                 {
                     // Check if the playerRecord doesnt exist or if the element doesnt exist
-                    if (playerRecords[_clientId][i] == null)
+                    if (playerRecords[_clientRoomId][i] == null)
                         continue;
 
                     // Check difference with the server
-                    if (roomScene.gameLogic.Tick - playerRecords[_clientId][i].tick > Utils.timeToTicks(maxLagComp))
+                    if (roomScene.gameLogic.Tick - playerRecords[_clientRoomId][i].tick > Utils.timeToTicks(maxLagComp))
                     {
                         // Remove if the difference is to big
-                        playerRecords[_clientId].RemoveAt(i);
+                        playerRecords[_clientRoomId].RemoveAt(i);
                     }
                 }
             }
@@ -74,17 +74,17 @@ public class LagCompensation
     }
 
     #region Backtrack players (Backup, Backtrack and Restore)
-    public void Backtrack(Guid _clientId, int _tick, float _lerpAmount = 0.1f)
+    public void Backtrack(int _clientRoomId, int _tick, float _lerpAmount = 0.1f)
     {
-        if (!roomScene.players[_clientId])
+        if (!roomScene.players[_clientRoomId])
             return;
 
-        backupRecords = new Dictionary<Guid, PlayerRecord>();
+        backupRecords = new Dictionary<int, PlayerRecord>();
         // Backtrack and backup the players
         foreach (Player player in roomScene.players.Values)
         {
             // Dont backtrack the player who requested the backtack
-            if (player.Id == _clientId)
+            if (player.Id == _clientRoomId)
                 continue;
 
             Backup(player);
@@ -156,7 +156,7 @@ public class LagCompensation
 
     /// <summary>Restore players back to their positions, with the exception of whom asked for the backtrack</summary>
     /// <param name="_playerException">player who requested backtrack</param>
-    public void Restore(Guid _playerException)
+    public void Restore(int _playerException)
     {
         foreach (Player player in roomScene.players.Values)
         {

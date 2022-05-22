@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using UnityEngine;
 
 public class Server
 {
@@ -11,9 +12,9 @@ public class Server
 
     public static bool isActive = false;
 
-    public static MainThread MainThread;
+    public static MessageQueue MainThread;
 
-    public static Dictionary<Guid, Room> Rooms;
+    public static Dictionary<int, Room> Rooms;
 
     private static TCP tcp;
 
@@ -31,8 +32,8 @@ public class Server
         Address = ServerData.IP;
         Port = ServerData.PORT;
 
-        MainThread = new MainThread();
-        ThreadManager.AddThread(MainThread);
+        MainThread = new MessageQueue();
+        MessageQueuer.AddQueue(MainThread);
 
         InitializeData();
         GetMulticastAdresses();
@@ -52,18 +53,17 @@ public class Server
 
     private static void InitializeRooms()
     {
-        Rooms = new Dictionary<Guid, Room>();
+        Rooms = new Dictionary<int, Room>();
 
         for(int i = 0; i < ServerData.MAX_ROOMS; i++)
         {
-            Guid newGuid = Guid.NewGuid();
-            Rooms.Add(newGuid, new Room(newGuid, GetNextAdress(), ServerData.ROOM_MIN_PORT + Rooms.Count));
+            Rooms.Add(-(i + 1), new Room(-(i + 1), GetNextAdress(), ServerData.ROOM_MIN_PORT + Rooms.Count));
         }
-        Console.WriteLine("Rooms initialized.");
+        Console.WriteLine("Room(s) Initialized.");
     }
 
     // "Matchmaking"
-    public static Guid SearchForRoom()
+    public static int SearchForRoom()
     {
         Room foundRoom = null;
 
@@ -94,10 +94,10 @@ public class Server
             return foundRoom.RoomId;
         }
 
-        return foundRoom != null ? foundRoom.RoomId : Guid.Empty;
+        return foundRoom != null ? foundRoom.RoomId : 0; // 0 means it didn't found any room
     }
 
-    public static void AddClientToRoom(Client _client, Guid _roomId)
+    public static void AddClientToRoom(Client _client, int _roomId)
     {
         Rooms[_roomId].AddPlayer(_client);
     }
@@ -161,7 +161,7 @@ public class Server
         {
             tcp.Stop();
 
-            MainThread.ExecuteOnMainThread(() =>
+            MainThread.ExecuteOnMain(() =>
             {
                 foreach (Room room in Rooms.Values)
                     room.Stop();

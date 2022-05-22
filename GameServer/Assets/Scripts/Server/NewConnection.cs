@@ -76,31 +76,32 @@ public class NewConnection
         receivedData.SetBytes(data);
         if (receivedData.UnreadLength() >= 4)
         {
-            packetLength = receivedData.ReadInt();
+            packetLength = receivedData.GetInt();
             if (packetLength <= 0)
                 return true;
         }
 
         while (packetLength > 0 && packetLength <= receivedData.UnreadLength())
         {
-            byte[] packetBytes = receivedData.ReadBytes(packetLength);
-            Server.MainThread.ExecuteOnMainThread(() =>
+            byte[] packetBytes = receivedData.GetBytes(packetLength);
+
+            Server.MainThread.ExecuteOnMain(() =>
             {
                 // Check if packet sent is the correct one and has all the right information
                 using (Packet _packet = new Packet(packetBytes))
                 {
-                    int packetId = _packet.ReadInt();
+                    int packetId = _packet.GetInt();
 
                     if (packetId == (int)ClientPackets.introduction)
                     {
-                        Guid _id = _packet.ReadGuid();
-                        string _username = _packet.ReadString();
-                        int _color = _packet.ReadInt();
+                        Guid _id = _packet.GetGuid();
+                        string _username = _packet.GetString();
+                        int _color = _packet.GetInt();
 
                         // Look for a room for player
-                        Guid roomId = Server.SearchForRoom();
+                        int roomId = Server.SearchForRoom();
 
-                        if(roomId == Guid.Empty)
+                        if (roomId == 0) // Found no room
                         {
                             //Console.WriteLine($"No rooms available, disconnecting new connection.");
                             Disconnect();
@@ -122,11 +123,10 @@ public class NewConnection
                 }
                 Close();
             });
-
             packetLength = 0;
             if (receivedData.UnreadLength() >= 4)
             {
-                packetLength = receivedData.ReadInt();
+                packetLength = receivedData.GetInt();
                 if (packetLength <= 0)
                     return true;
             }

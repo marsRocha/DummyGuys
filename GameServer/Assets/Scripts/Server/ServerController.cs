@@ -16,13 +16,13 @@ public class ServerController : MonoBehaviour
             Console.WriteLine("Instance already exists, destroying object.");
             Destroy(this);
         }
+
+        ServerData.GetData();
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        ServerData.GetData();
-
         // Initiate server
         Server.Start();
     }

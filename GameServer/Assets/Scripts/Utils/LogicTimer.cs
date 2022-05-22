@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 public class LogicTimer
 {
-    public float FramesPerSecond = ServerData.TICKRATE;
+    public float FramesPerSecond = ServerData.TICK_RATE;
     public float FixedDeltaTime = Utils.TickInterval();
 
     private double _accumulator;

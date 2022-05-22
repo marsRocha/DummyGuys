@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class RoomHandle
 {
-    public delegate void PacketHandler(Guid RoomId, Guid ClientId, Packet packet);
+    public delegate void PacketHandler(int RoomId, int ClientRoomId, Packet packet);
     public static Dictionary<int, PacketHandler> packetHandlers;
 
     public static void InitializeData()
@@ -20,61 +20,72 @@ public class RoomHandle
             };
     }
 
-    public static void PlayerReady(Guid _roomId, Guid _clientId, Packet _packet)
+    public static void PlayerReady(int _roomId, int _clientRoomId, Packet _packet)
     {
-        Server.Rooms[_roomId].PlayerReady(_clientId);
+        Server.Rooms[_roomId].Clients[_clientRoomId].Ping();
+
+        Server.Rooms[_roomId].PlayerReady(_clientRoomId);
     }
     
-    public static void PlayerMovement(Guid _roomId, Guid _clientId, Packet _packet)
+    public static void PlayerMovement(int _roomId, int _clientRoomId, Packet _packet)
     {
+        Server.Rooms[_roomId].Clients[_clientRoomId].Ping();
+
         PlayerState state = new PlayerState
         {
-            tick = _packet.ReadInt(),
-            position = _packet.ReadVector3(),
-            rotation = _packet.ReadQuaternion(),
-            ragdoll = _packet.ReadBool(),
-            animation = _packet.ReadInt()
+            tick = _packet.GetInt(),
+            position = _packet.GetVector3(),
+            rotation = _packet.GetQuaternion(),
+            ragdoll = _packet.GetBool(),
+            animation = _packet.GetInt()
         };
 
         //Add new input state received
-        Server.Rooms[_roomId].Clients[_clientId].Player.ReceivedClientState(state);
-
-        //RoomSend.PlayerMovement(_roomId, _clientId, state);
+        Server.Rooms[_roomId].Clients[_clientRoomId].Player.ReceivedClientState(state);
     }
 
-    public static void PlayerRespawn(Guid _roomId, Guid _clientId, Packet _packet)
+    public static void PlayerRespawn(int _roomId, int _clientRoomId, Packet _packet)
     {
-        Server.Rooms[_roomId].roomScene.PlayerRespawn(_clientId);
+        Server.Rooms[_roomId].Clients[_clientRoomId].Ping();
+
+        Server.Rooms[_roomId].roomScene.PlayerRespawn(_clientRoomId);
     }
 
     /// <summary> Handles request from player1 to grab player2. </summary>
-    public static void PlayerGrab(Guid _roomId, Guid _clientId, Packet _packet)
+    public static void PlayerGrab(int _roomId, int _clientRoomId, Packet _packet)
     {
-        int _tick = _packet.ReadInt();
+        Server.Rooms[_roomId].Clients[_clientRoomId].Ping();
 
-        Server.Rooms[_roomId].PlayerGrab(_clientId, _tick);
+        int _tick = _packet.GetInt();
+
+        Server.Rooms[_roomId].PlayerGrab(_clientRoomId, _tick);
     }
 
     /// <summary> Handles request from player1 to let go of player2. </summary>
-    public static void PlayerLetGo(Guid _roomId, Guid _clientId, Packet _packet)
+    public static void PlayerLetGo(int _roomId, int _clientRoomId, Packet _packet)
     {
-        Guid _playerFreed = _packet.ReadGuid();
+        Server.Rooms[_roomId].Clients[_clientRoomId].Ping();
 
-        Server.Rooms[_roomId].PlayerLetGo(_clientId, _playerFreed);
+        int _playerFreed = _packet.GetInt();
+
+        Server.Rooms[_roomId].PlayerLetGo(_clientRoomId, _playerFreed);
     }
 
     /// <summary> Handles request from player1 to puff player2. </summary>
-    public static void PlayerPush (Guid _roomId, Guid _clientId, Packet _packet)
+    public static void PlayerPush (int _roomId, int _clientRoomId, Packet _packet)
     {
-        int _tick = _packet.ReadInt();
+        Server.Rooms[_roomId].Clients[_clientRoomId].Ping();
 
-        Server.Rooms[_roomId].PlayerPush(_clientId, _tick);
+        int _tick = _packet.GetInt();
+
+        Server.Rooms[_roomId].PlayerPush(_clientRoomId, _tick);
     }
 
-    public static void Ping(Guid _roomId, Guid _clientId, Packet _packet)
+    public static void Ping(int _roomId, int _clientRoomId, Packet _packet)
     {
-        Server.Rooms[_roomId].Clients[_clientId].Pong();
+        //string dt = _packet.GetString();
+        Server.Rooms[_roomId].Clients[_clientRoomId].Ping();
 
-        RoomSend.Pong(_roomId, _clientId);
+        RoomSend.Pong(_roomId, _clientRoomId);
     }
 }

@@ -7,7 +7,7 @@ public class MoveBehaviour : Obstacle
     public Vector3[] points;
 
     // Start is called before the first frame update
-    private void Start()
+    private void Awake()
     {
         initialPos = transform.position;
     }

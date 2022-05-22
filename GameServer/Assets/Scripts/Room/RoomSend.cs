@@ -3,13 +3,13 @@
 public class RoomSend
 {
     #region Methods of sending data
-    private static void SendTCPData(Guid _roomId, Guid _toClient, Packet _packet)
+    private static void SendTCPData(int _roomId, int _toClient, Packet _packet)
     {
         _packet.WriteLength();
         Server.Rooms[_roomId].Clients[_toClient].tcp.SendData(_packet);
     }
 
-    private static void SendTCPDataToAll(Guid _roomId, Packet _packet)
+    private static void SendTCPDataToAll(int _roomId, Packet _packet)
     {
         _packet.WriteLength();
 
@@ -19,13 +19,13 @@ public class RoomSend
         }
     }
 
-    private static void SendUDPData(Guid _roomId, Guid _toClient, Packet _packet)
+    private static void SendUDPData(int _roomId, int _toClient, Packet _packet)
     {
         _packet.WriteLength();
         Server.Rooms[_roomId].Clients[_toClient].udp.SendData(_packet);
     }
 
-    private static void SendUDPDataToAll(Guid _roomId, Packet _packet)
+    private static void SendUDPDataToAll(int _roomId, Packet _packet)
     {
         _packet.WriteLength();
 
@@ -35,20 +35,20 @@ public class RoomSend
         }
     }
 
-    private static void SendUDPDataToAll(Guid _roomId, Guid _clientId, Packet _packet)
+    private static void SendUDPDataToAll(int _roomId, int _clientId, Packet _packet)
     {
         _packet.WriteLength();
 
         foreach (Client client in Server.Rooms[_roomId].Clients.Values)
         {
-            if (client.Id == _clientId)
+            if (client.ClientRoomId == _clientId)
                 continue;
 
             client.udp.SendData(_packet);
         }
     }
 
-    public static void MulticastUDPData(Guid _roomId, Packet _packet)
+    public static void MulticastUDPData(int _roomId, Packet _packet)
     {
         _packet.WriteLength();
         Server.Rooms[_roomId].multicastUDP.MulticastUDPData(_packet);
@@ -57,276 +57,262 @@ public class RoomSend
     }
     #endregion
 
-    public static void StartGame(Guid _roomId)
+    public static void StartGame(int _roomId)
     {
         using (Packet _packet = new Packet((int)ServerPackets.startGame))
         {
-            _packet.Write(_roomId.ToString("N"));
+            _packet.Add(_roomId);
 
             SendTCPDataToAll(_roomId, _packet);
         }
     }
 
-    public static void StartGameDebug(Guid _roomId)
-    {
-        using (Packet _packet = new Packet((int)ServerPackets.startGame))
-        {
-            _packet.Write(_roomId.ToString("N"));
-
-            MulticastUDPData(_roomId, _packet);
-        }
-    }
-
-    public static void EndGame(Guid _roomId)
+    public static void EndGame(int _roomId)
     {
         using (Packet _packet = new Packet((int)ServerPackets.endGame))
         {
-            _packet.Write(_roomId.ToString("N"));
+            _packet.Add(_roomId);
 
             SendTCPDataToAll(_roomId, _packet);
         }
     }
     
-    public static void Map(Guid _roomId, int _mapIndex)
+    public static void Map(int _roomId, int _mapIndex)
     {
         using (Packet _packet = new Packet((int)ServerPackets.map))
         {
-            _packet.Write(_roomId.ToString("N"));
+            _packet.Add(_roomId);
 
-            _packet.Write(_mapIndex);
+            _packet.Add(_mapIndex);
 
             SendTCPDataToAll(_roomId, _packet);
         }
     }
 
-    public static void JoinedRoom(Guid _roomId, Guid _toClient, string _lobbyIP, int _lobbyPort, int _spawnId, int _tickrate)
+    public static void JoinedRoom(int _roomId, string _lobbyIP, int _lobbyPort, int _clientRoomId, int _tickrate)
     {
         using (Packet _packet = new Packet((int)ServerPackets.joinedRoom))
         {
-            _packet.Write(_roomId.ToString("N"));
+            _packet.Add(_roomId);
 
-            _packet.Write(_lobbyIP);
-            _packet.Write(_lobbyPort);
-            _packet.Write(_spawnId);
+            _packet.Add(_lobbyIP);
+            _packet.Add(_lobbyPort);
+            _packet.Add(_clientRoomId);
 
             // Room configurations
-            _packet.Write(_tickrate);
-            _packet.Write(ServerData.PLAYER_INTERACTION);
+            _packet.Add(_tickrate);
+            _packet.Add(ServerData.PLAYER_INTERACTION);
 
-            SendTCPData(_roomId, _toClient, _packet);
+            SendTCPData(_roomId, _clientRoomId, _packet);
         }
     }
 
-    public static void PlayersInRoom(Guid _roomId, Guid _toClient)
+    public static void PlayersInRoom(int _roomId, int _toClient)
     {
         foreach(Client c in Server.Rooms[_roomId].Clients.Values)
         {
-            if (c.Id == _toClient)
+            if (c.ClientRoomId == _toClient)
                 continue;
 
             using (Packet _packet = new Packet((int)ServerPackets.playerJoined))
             {
-                _packet.Write(_roomId.ToString("N"));
+                _packet.Add(_roomId);
 
-                _packet.Write(c.Id.ToString("N"));
-                _packet.Write(c.Username);
-                _packet.Write(c.Color);
-                _packet.Write(c.SpawnId);
+                _packet.Add(c.Id);
+                _packet.Add(c.ClientRoomId);
+                _packet.Add(c.Username);
+                _packet.Add(c.Color);
 
                 SendTCPData(_roomId, _toClient, _packet);
             }
         }
     }
 
-    public static void NewPlayer(Guid _roomId, Guid _id, string _username, int _color, int _spawnId)
+    public static void NewPlayer(int _roomId, Guid _clientId, int _clientRoomId, string _username, int _color)
     {
         using (Packet _packet = new Packet((int)ServerPackets.playerJoined))
         {
-            _packet.Write(_roomId.ToString("N")); // 16
+            _packet.Add(_roomId);
 
-            _packet.Write(_id.ToString("N")); // 16
-            _packet.Write(_username); // 9
-            _packet.Write(_color); // 4
-            _packet.Write(_spawnId); // 4
+            _packet.Add(_clientId.ToString("N"));
+            _packet.Add(_clientRoomId);
+            _packet.Add(_username);
+            _packet.Add(_color);
 
             SendTCPDataToAll(_roomId, _packet);
         }
     }
     
-    public static void PlayerLeft(Guid _roomId, Guid _clientId)
+    public static void PlayerLeft(int _roomId, int _clientId)
     {
         using (Packet _packet = new Packet((int)ServerPackets.playerLeft))
         {
-            _packet.Write(_roomId.ToString("N"));
+            _packet.Add(_roomId);
 
-            _packet.Write(_clientId.ToString("N"));
+            _packet.Add(_clientId);
 
             SendTCPDataToAll(_roomId, _packet);
         }
     }
     
-    public static void CorrectPlayer(Guid _roomId, Guid _clientId, PlayerState _playerState)
+    public static void CorrectPlayer(int _roomId, int _clientRoomId, PlayerState _playerState)
     {
         using (Packet _packet = new Packet((int)ServerPackets.playerCorrection))
         {
-            _packet.Write(_roomId.ToString("N"));
+            _packet.Add(_roomId);
 
-            _packet.Write(_clientId.ToString("N"));
+            _packet.Add(_clientRoomId);
 
-            _packet.Write(_playerState.tick);
-            _packet.Write(_playerState.position);
-            _packet.Write(_playerState.rotation);
-            _packet.Write(_playerState.ragdoll);
-            _packet.Write(_playerState.animation);
+            _packet.Add(_playerState.tick);
+            _packet.Add(_playerState.position);
+            _packet.Add(_playerState.rotation);
+            _packet.Add(_playerState.ragdoll);
+            _packet.Add(_playerState.animation);
 
-            SendUDPData(_roomId, _clientId, _packet);
+            SendUDPData(_roomId, _clientRoomId, _packet);
         }
     }
 
-    /*public static void PlayerMovement(Guid _roomId, Guid _clientId, PlayerState _playerState)
-    {
-        using (Packet _packet = new Packet((int)ServerPackets.playerMovement))
-        {
-            _packet.Write(_clientId);
-
-            _packet.Write(_playerState.tick);
-            _packet.Write(_playerState.position);
-            _packet.Write(_playerState.rotation);
-            _packet.Write(_playerState.ragdoll);
-            _packet.Write(_playerState.animation);
-
-            SendUDPDataToAll(_roomId, _clientId, _packet);
-        }
-    }*/
-
-    public static void PlayerRespawn(Guid _roomId, Guid _clientId, int _checkPointNum)
+    public static void PlayerRespawn(int _roomId, int _clientRoomId, int _checkPointNum)
     {
         using (Packet _packet = new Packet((int)ServerPackets.playerRespawn))
         {
-            _packet.Write(_roomId.ToString("N"));
+            _packet.Add(_roomId);
 
-            _packet.Write(_clientId.ToString("N"));
-            _packet.Write(_checkPointNum);
+            _packet.Add(_clientRoomId);
+            _packet.Add(_checkPointNum);
 
-            SendTCPData(_roomId, _clientId, _packet);
+            SendTCPData(_roomId, _clientRoomId, _packet);
         }
     }
 
-    public static void PlayerFinish(Guid _roomId, Guid _clientId)
-    {
-        using (Packet _packet = new Packet((int)ServerPackets.playerFinish))
-        {
-            _packet.Write(_roomId.ToString("N"));
-
-            _packet.Write(_clientId.ToString("N"));
-
-            SendTCPDataToAll(_roomId, _packet);
-        }
-    }
-
-    public static void PlayerGrab(Guid _roomId, Guid _grabber, Guid _grabbed)
+    public static void PlayerGrab(int _roomId, int _grabber, int _grabbed)
     {
         // Send message to the grabber
         using (Packet _packet = new Packet((int)ServerPackets.playerGrab))
         {
-            _packet.Write(_roomId.ToString("N"));
+            _packet.Add(_roomId);
 
-            _packet.Write(_grabber.ToString("N"));
-            _packet.Write(_grabbed.ToString("N"));
+            _packet.Add(_grabber);
+            _packet.Add(_grabbed);
 
-            SendTCPData(_roomId, _grabber, _packet);
+            SendUDPData(_roomId, _grabber, _packet);
         }
 
         // Send message to the grabbed
         using (Packet _packet = new Packet((int)ServerPackets.playerGrab))
         {
-            _packet.Write(_roomId);
+            _packet.Add(_roomId);
 
-            _packet.Write(_grabber);
-            _packet.Write(_grabbed);
+            _packet.Add(_grabber);
+            _packet.Add(_grabbed);
 
-            SendTCPData(_roomId, _grabbed, _packet);
+            SendUDPData(_roomId, _grabbed, _packet);
         }
     }
 
-    public static void PlayerLetGo(Guid _roomId, Guid _grabber, Guid _grabbed)
+    public static void PlayerLetGo(int _roomId, int _grabber, int _grabbed)
     {
         // Send message to the grabber
         using (Packet _packet = new Packet((int)ServerPackets.playerLetGo))
         {
-            _packet.Write(_roomId.ToString("N"));
+            _packet.Add(_roomId);
 
-            _packet.Write(_grabber.ToString("N"));
-            _packet.Write(_grabbed.ToString("N"));
+            _packet.Add(_grabber);
+            _packet.Add(_grabbed);
 
-            SendTCPData(_roomId, _grabber, _packet);
+            SendUDPData(_roomId, _grabber, _packet);
         }
 
         // Send message to the grabbed
         using (Packet _packet = new Packet((int)ServerPackets.playerLetGo))
         {
-            _packet.Write(_roomId);
+            _packet.Add(_roomId);
 
-            _packet.Write(_grabber);
-            _packet.Write(_grabbed);
+            _packet.Add(_grabber);
+            _packet.Add(_grabbed);
 
-            SendTCPData(_roomId, _grabbed, _packet);
+            SendUDPData(_roomId, _grabbed, _packet);
         }
     }
 
-    public static void PlayerPush(Guid _roomId, Guid _pusher, Guid _pushed)
+    public static void PlayerPush(int _roomId, int _pusher, int _pushed)
     {
         // Send message to the pusher
         using (Packet _packet = new Packet((int)ServerPackets.playerPush))
         {
-            _packet.Write(_roomId.ToString("N"));
+            _packet.Add(_roomId);
 
-            _packet.Write(_pusher.ToString("N"));
-            _packet.Write(_pushed.ToString("N"));
+            _packet.Add(_pusher);
+            _packet.Add(_pushed);
 
-            SendTCPData(_roomId, _pusher, _packet);
+            SendUDPData(_roomId, _pusher, _packet);
         }
 
         // Send message to the pushed
         using (Packet _packet = new Packet((int)ServerPackets.playerPush))
         {
-            _packet.Write(_roomId);
+            _packet.Add(_roomId);
 
-            _packet.Write(_pusher);
-            _packet.Write(_pushed);
+            _packet.Add(_pusher);
+            _packet.Add(_pushed);
 
-            SendTCPData(_roomId, _pushed, _packet);
+            SendUDPData(_roomId, _pushed, _packet);
         }
     }
 
-    public static void ServerTick(Guid _roomId, int _tick, float _clock)
+    public static void PlayerFinish(int _roomId, int _clientRoomId)
     {
-        using (Packet _packet = new Packet((int)ServerPackets.serverTick))
+        using (Packet _packet = new Packet((int)ServerPackets.playerFinish))
         {
-            _packet.Write(_roomId.ToString("N"));
+            _packet.Add(_roomId);
 
-            _packet.Write(_tick);
-            _packet.Write(_clock);
-
-            MulticastUDPData(_roomId, _packet);
-        }
-    }
-
-    public static void Disconnected(Guid _roomId)
-    {
-        using (Packet _packet = new Packet((int)ServerPackets.disconnected))
-        {
-            _packet.Write(_roomId.ToString("N"));
+            _packet.Add(_clientRoomId);
 
             SendTCPDataToAll(_roomId, _packet);
         }
     }
 
-    public static void Pong(Guid _roomId, Guid _toClient)
+    public static void ServerTick(int _roomId, int _tick)
+    {
+        using (Packet _packet = new Packet((int)ServerPackets.serverTick))
+        {
+            _packet.Add(_roomId);
+
+            _packet.Add(_tick);
+
+            MulticastUDPData(_roomId, _packet);
+        }
+    }
+
+    public static void ServerClock(int _roomId, float _clock)
+    {
+        using (Packet _packet = new Packet((int)ServerPackets.serverClock))
+        {
+            _packet.Add(_roomId);
+
+            _packet.Add(_clock);
+
+            MulticastUDPData(_roomId, _packet);
+        }
+    }
+
+    public static void Disconnected(int _roomId)
+    {
+        using (Packet _packet = new Packet((int)ServerPackets.disconnected))
+        {
+            _packet.Add(_roomId);
+
+            SendTCPDataToAll(_roomId, _packet);
+        }
+    }
+
+    public static void Pong(int _roomId, int _toClient)
     {
         using (Packet _packet = new Packet((int)ServerPackets.pong))
         {
-            SendUDPData( _roomId, _toClient, _packet);
+            //_packet.Add(_dt);
+            SendUDPData(_roomId, _toClient, _packet);
         }
     }
 }

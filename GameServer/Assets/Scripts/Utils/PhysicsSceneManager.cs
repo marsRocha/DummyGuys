@@ -3,20 +3,21 @@ using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using UnityEngine;
 using System.Collections;
+using System.Threading;
 
 public class PhysicsSceneManager : MonoBehaviour
 {
     public static PhysicsSceneManager instance;
 
-    private static Dictionary<Guid, Scene> physicsScenes;
+    private static Dictionary<int, Scene> physicsScenes;
 
     private void Awake()
     {
         instance = this;
-        physicsScenes = new Dictionary<Guid, Scene>();
+        physicsScenes = new Dictionary<int, Scene>();
     }
 
-    public static void AddSimulation(Guid _roomId, int _physicsSceneIndex)
+    public static void AddSimulation(int _roomId, int _physicsSceneIndex)
     {
         // Load the scene to place in a local physics scene
         LoadSceneParameters param = new LoadSceneParameters(LoadSceneMode.Additive, LocalPhysicsMode.Physics3D);
@@ -28,7 +29,7 @@ public class PhysicsSceneManager : MonoBehaviour
         instance.StartCoroutine(WaitFrame(scene, _roomId));
     }
 
-    public static void RemoveSimulation(Guid _roomId)
+    public static void RemoveSimulation(int _roomId)
     {
         // Unload the scene
         SceneManager.UnloadSceneAsync(physicsScenes[_roomId]);
@@ -37,7 +38,7 @@ public class PhysicsSceneManager : MonoBehaviour
     }
 
     // Necessary because we need to 1 frame to load scene, used by physicsSceneManager ienumerator
-    private static IEnumerator WaitFrame(Scene _scene, Guid _roomId)
+    private static IEnumerator WaitFrame(Scene _scene, int _roomId)
     {
         // returning 0 makes it wait 1 frame (needed to load scene)
         yield return 0;

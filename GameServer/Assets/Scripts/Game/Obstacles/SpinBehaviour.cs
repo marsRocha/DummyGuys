@@ -5,6 +5,11 @@ public class SpinBehaviour : Obstacle
     public Rigidbody rb;
     public float rotationSpeed;
 
+    public void Awake()
+    {
+        
+    }
+
     // Update is called once per frame
     void Update()
     {

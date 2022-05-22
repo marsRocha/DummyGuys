@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class RoomScene : MonoBehaviour
@@ -22,17 +21,17 @@ public class RoomScene : MonoBehaviour
     public GameLogic gameLogic;
 #pragma warning restore 0649
 
-    public Dictionary<Guid, Player> players;
+    public Dictionary<int, Player> players;
     public bool isRunning { get; private set; } = false;
 
     //Stores every player's info on checkpoint
-    public Dictionary<Guid, int> playerCheckPoint;
+    public Dictionary<int, int> playerCheckPoint;
 
     private int qualifiedPlayers;
 
     // Tick state
-    public float tickCountdown = 1f;
-    public float tickCountdownLimit = 1f;
+    private float tickCountdown = 1f;
+    private float tickCountdownLimit = 1f;
 
     private void Start()
     {
@@ -73,15 +72,17 @@ public class RoomScene : MonoBehaviour
             p.tick = gameLogic.Tick;
         }
 
-        tickCountdown += Time.fixedDeltaTime;
+        RoomSend.ServerTick(room.RoomId, gameLogic.Tick);
+
+        tickCountdown += Time.deltaTime;
         if (tickCountdown >= tickCountdownLimit)
         {
             tickCountdown = 0;
-            RoomSend.ServerTick(room.RoomId, gameLogic.Tick, gameLogic.Clock);
+            RoomSend.ServerClock(room.RoomId, gameLogic.Clock);
         }
     }
 
-    public void Initialize(Guid _roomId)
+    public void Initialize(int _roomId)
     {
         physicsScene = gameObject.scene.GetPhysicsScene();
         gameLogic = new GameLogic();
@@ -92,9 +93,9 @@ public class RoomScene : MonoBehaviour
         isRunning = false;
 
         qualifiedPlayers = 0;
-        playerCheckPoint = new Dictionary<Guid, int>();
+        playerCheckPoint = new Dictionary<int, int>();
 
-        players = new Dictionary<Guid, Player>();
+        players = new Dictionary<int, Player>();
 
         spawns = new Vector3[60];
         for (int i = 0; i <= 3; i++)
@@ -134,28 +135,28 @@ public class RoomScene : MonoBehaviour
     {
         foreach(Client client in room.Clients.Values)
         {
-            Player p = SpawnPlayer(client.Id, client.SpawnId);
-            room.Clients[client.Id].SetPlayer(p);
-            players.Add(client.Id, p);
-            playerCheckPoint.Add(client.Id, 0);
+            Player p = SpawnPlayer(client.ClientRoomId);
+            room.Clients[client.ClientRoomId].SetPlayer(p);
+            players.Add(client.ClientRoomId, p);
+            playerCheckPoint.Add(client.ClientRoomId, 0);
         }
     }
     
-    public Player SpawnPlayer(Guid _playerId, int _spawnId)
+    public Player SpawnPlayer(int _clientRoomId)
     {
-        playerObjs[_spawnId].gameObject.SetActive(true);
-        Player p = playerObjs[_spawnId].GetComponent<Player>();
-        p.Initialize(_playerId, room.RoomId);
+        playerObjs[_clientRoomId - 1].gameObject.SetActive(true);
+        Player p = playerObjs[_clientRoomId - 1].GetComponent<Player>();
+        p.Initialize(_clientRoomId, room.RoomId);
 
         return p;
     }
 
-    public void PlayerGrab(Guid _grabber, int _tick)
+    public void PlayerGrab(int _grabber, int _tick)
     {
         if (!gameLogic.playerInteraction)
             return;
 
-        Guid grabbed = Guid.Empty;
+        int grabbed = -1;
 
         if (!players[_grabber].GetGrab())
         {
@@ -166,7 +167,7 @@ public class RoomScene : MonoBehaviour
 
                 // Check if player has someone to grab
                 grabbed = players[_grabber].TryGrab();
-                if (grabbed != Guid.Empty)
+                if (grabbed != -1)
                     players[_grabber].Grab();
 
                 lagCompensation.Restore(_grabber);
@@ -175,16 +176,16 @@ public class RoomScene : MonoBehaviour
             {
                 // Check if player has someone to grab
                 grabbed = players[_grabber].TryGrab();
-                if (grabbed != Guid.Empty)
+                if (grabbed != -1)
                     players[_grabber].Grab();
             }
         }
 
-        if(grabbed != Guid.Empty)
+        if(grabbed != -1)
             RoomSend.PlayerGrab(room.RoomId, _grabber, grabbed);
     }
 
-    public void PlayerLetGo(Guid _grabber, Guid _grabbed)
+    public void PlayerLetGo(int _grabber, int _grabbed)
     {
         if (!gameLogic.playerInteraction)
             return;
@@ -197,12 +198,12 @@ public class RoomScene : MonoBehaviour
         RoomSend.PlayerLetGo(room.RoomId, _grabber, _grabbed);
     }
 
-    public void PlayerPush (Guid _pusher, int _tick)
+    public void PlayerPush (int _pusher, int _tick)
     {
         if (!gameLogic.playerInteraction)
             return;
 
-        Guid pushed = Guid.Empty;
+        int pushed = -1;
 
         // Check if lag compensation system is active
         if (lagCompensation.isActive)
@@ -220,15 +221,15 @@ public class RoomScene : MonoBehaviour
             pushed = players[_pusher].TryPush();
         }
 
-        if (pushed != Guid.Empty)
+        if (pushed != -1)
             RoomSend.PlayerPush(room.RoomId, _pusher, pushed);
     }
 
     #region Respawn Player
     //Sent from other players to respawn
-    public void PlayerRespawn(Guid _playerId)
+    public void PlayerRespawn(int _playerId)
     {
-        Vector3 newPos = GetRespawnPosition(room.Clients[_playerId].SpawnId, playerCheckPoint[_playerId]);
+        Vector3 newPos = GetRespawnPosition(room.Clients[_playerId].ClientRoomId, playerCheckPoint[_playerId]);
         players[_playerId].ReceivedRespawn(newPos, Quaternion.identity);
         RoomSend.PlayerRespawn(room.RoomId, _playerId, playerCheckPoint[_playerId]);
     }
@@ -236,20 +237,20 @@ public class RoomScene : MonoBehaviour
     private Vector3 GetRespawnPosition(int id, int checkPointNum)
     {
         if (checkPointNum == 0)
-            return spawns[id];
+            return spawns[id - 1];
         else
             return checkPoints[checkPointNum - 1].position;
     }
     #endregion
 
-    public void FinishRacePlayer(Guid _clientId)
+    public void FinishRacePlayer(int _clientRoomId)
     {
         // Check if player has already finished
-        if (!room.Clients[_clientId].finished)
+        if (!room.Clients[_clientRoomId].finished)
         {
-            room.Clients[_clientId].finished = true;
-            RoomSend.PlayerFinish(room.RoomId, _clientId);
-            players[_clientId].gameObject.SetActive(false);
+            room.Clients[_clientRoomId].finished = true;
+            RoomSend.PlayerFinish(room.RoomId, _clientRoomId);
+            players[_clientRoomId].gameObject.SetActive(false);
 
             // Update number of qualified players
             qualifiedPlayers++;
@@ -265,7 +266,7 @@ public class RoomScene : MonoBehaviour
         room.EndGame();
     }
 
-    public void SetCheckPoint(Guid _playerId, int newCheckPoint)
+    public void SetCheckPoint(int _playerId, int newCheckPoint)
     {
         playerCheckPoint[_playerId] = newCheckPoint;
     }
@@ -274,7 +275,7 @@ public class RoomScene : MonoBehaviour
     {
         foreach (Player p  in players.Values)
         {
-            p.Reset(spawns[playerCheckPoint[p.Id]]);
+            p.Reset(spawns[p.Id - 1]);
             p.gameObject.SetActive(false);
         }
 
