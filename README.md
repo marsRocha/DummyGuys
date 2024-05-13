@@ -1,4 +1,4 @@
-# DummyGuys - A Massive Multiplayer Distributed System & Game
+# DummyGuys - A Massive Multiplayer Online Distributed System & Game
 
 This is the source code for a multiplayer game system built for my master's dissertation. This project features a multiplayer system capable of handling hundreds of clients and running multiple game sessions simultaneously and independently. Additionaly, a party game was also developed based on “Fall Guys”, supporting up to sixty players per game session.
 
